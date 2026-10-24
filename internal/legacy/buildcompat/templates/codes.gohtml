@@ -1,0 +1,91 @@
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card card-success">
+        <div class="card-header">
+          <h3 class="card-title">{{trans "InvitationCodes::admin.available.title"}}</h3>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>{{trans "InvitationCodes::general.code"}}</th>
+                <th>{{trans "InvitationCodes::admin.generated_at"}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Free}}
+                <tr>
+                  <td>{{.Code}}</td>
+                  <td>{{.GeneratedAt}}</td>
+                </tr>
+              {{else}}
+                <tr>
+                  <td colspan="2">{{trans "InvitationCodes::admin.available.empty"}}</td>
+                </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer">
+          <form method="post" action="{{.GenerateURL}}">
+            <input type="hidden" name="_token" value="{{.CSRF}}">
+            <div class="input-group mb-2">
+              <div class="input-group-prepend">
+                <span class="input-group-text">
+                  {{trans "InvitationCodes::admin.available.amount"}}
+                </span>
+              </div>
+              <input
+                type="number"
+                class="form-control"
+                name="amount"
+                style="width: 50%;"
+                placeholder="{{trans "InvitationCodes::admin.available.placeholder"}}"
+              >
+            </div>
+            {{if .Error}}
+              <div class="alert alert-danger">{{.Error}}</div>
+            {{end}}
+            <button type="submit" class="btn btn-primary">
+              {{trans "InvitationCodes::admin.title"}}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card card-secondary">
+        <div class="card-header">
+          <h3 class="card-title">{{trans "InvitationCodes::admin.used.title"}}</h3>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>{{trans "InvitationCodes::general.code"}}</th>
+                <th>{{trans "InvitationCodes::admin.generated_at"}}</th>
+                <th>{{trans "InvitationCodes::admin.used.user_id"}}</th>
+                <th>{{trans "InvitationCodes::admin.used.used_at"}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Used}}
+                <tr>
+                  <td>{{.Code}}</td>
+                  <td>{{.GeneratedAt}}</td>
+                  <td>{{.UsedBy}}</td>
+                  <td>{{.UsedAt}}</td>
+                </tr>
+              {{else}}
+                <tr>
+                  <td colspan="4">{{trans "InvitationCodes::admin.used.empty"}}</td>
+                </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
