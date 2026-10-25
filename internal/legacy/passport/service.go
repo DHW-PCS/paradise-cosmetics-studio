@@ -85,8 +85,12 @@ type codePayload struct {
 	CodeChallenge       string   `json:"code_challenge"`
 	CodeChallengeMethod string   `json:"code_challenge_method"`
 	// ApprovedRev is the account session version observed under the lock when
-	// the approval issued this code. Redemption requires the same generation.
-	ApprovedRev int64 `json:"approved_rev,omitempty"`
+	// the approval issued this code. New Go codes always write it, including a
+	// zero generation, so redemption can tell "approved at generation 0" from
+	// "native code that never recorded an approval generation". A nil pointer
+	// means the native PHP writer produced the payload; that compatibility path
+	// keeps the frozen row-revocation, expiry and client checks.
+	ApprovedRev *int64 `json:"approved_rev"`
 }
 
 type refreshPayload struct {

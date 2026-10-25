@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"blessing-skin-go/internal/legacy/revocation"
+	"blessing-skin-go/internal/legacy/users"
 )
 
 // IssueCode is the native equivalent of completing an authorized
@@ -46,7 +47,7 @@ func (s *Service) IssueCode(ctx context.Context, clientID, uid int64, redirectUR
 		if user == nil {
 			return errInvalidGrant("The user credentials were incorrect.")
 		}
-		approvedRev, err := tx.approvedVersion(ctx, sqlTx, uid)
+		approvedRev, err := tx.approvedVersion(ctx, sqlTx, uid, user)
 		if err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func (s *Service) IssueCode(ctx context.Context, clientID, uid int64, redirectUR
 			ExpireTime:          expires.Unix(),
 			CodeChallenge:       challenge,
 			CodeChallengeMethod: method,
-			ApprovedRev:         approvedRev,
+			ApprovedRev:         &approvedRev,
 		})
 		return err
 	})
@@ -79,13 +80,41 @@ func (s *Service) IssueCode(ctx context.Context, clientID, uid int64, redirectUR
 	return code, id, expires, nil
 }
 
-// approvedVersion reads the account's current session generation inside tx. No
-// state row means no revocation has been recorded yet, which is generation 0.
-func (s *Service) approvedVersion(ctx context.Context, tx *sql.Tx, uid int64) (int64, error) {
-	state, err := revocation.New(s.cfg.DB, s.cfg.Prefix).GetTx(ctx, tx, uid)
-	if errors.Is(err, revocation.ErrNoState) {
-		return 0, nil
+// approvedVersion reads the account's current session generation with a locking
+// read inside tx, materializing the baseline state when the account has none.
+// The caller must hold the users row lock (it does, through lockUser) so the
+// read cannot invert the users -> revocation lock order.
+//
+// A plain consistent read is not enough here: IssueCode and ExchangeCode may
+// have established an earlier snapshot before waiting for the account lock, and
+// such a snapshot would hide a generation committed in the meantime. Write
+// paths (ChangePassword, RevokeSessions) advance the generation while holding
+// the same account lock, so a current read plus that lock gives the linearized
+// answer.
+func (s *Service) approvedVersion(ctx context.Context, tx *sql.Tx, uid int64, user *users.User) (int64, error) {
+	store := revocation.New(s.cfg.DB, s.cfg.Prefix)
+	// A missing account cannot create a baseline (issuance already failed); a
+	// locking read is safe there because this transaction never inserts into the
+	// revocation table afterwards.
+	if user == nil {
+		state, err := store.GetCurrentTx(ctx, tx, uid)
+		if errors.Is(err, revocation.ErrNoState) {
+			return 0, nil
+		}
+		if err != nil {
+			return 0, err
+		}
+		return state.SessionVersion, nil
 	}
+	// Materialize the generation-1 baseline under the same account lock so later
+	// logins and password changes compare against the same value.
+	//
+	// Do not probe with a locking read first: SELECT ... FOR UPDATE on a missing
+	// key takes a gap lock, and two concurrent first-time issuances for different
+	// accounts then each wait for the other's insert intention lock inside the
+	// same empty gap (InnoDB reports 1213). EnsureTx already probes with a plain
+	// read, inserts idempotently, and returns the current generation.
+	state, err := store.EnsureTx(ctx, tx, uid, user.Password, s.cfg.AppKey, s.cfg.now())
 	if err != nil {
 		return 0, err
 	}
@@ -119,18 +148,29 @@ func (s *Service) exchangeCode(ctx context.Context, sqlTx *sql.Tx, code, clientI
 	}
 	// Lock the account before consuming the code so a concurrent password
 	// change cannot revoke the old generation and then lose to this issuance.
-	if _, err := s.lockUser(ctx, sqlTx, uid); err != nil {
-		return nil, err
+	account, lockErr := s.lockUser(ctx, sqlTx, uid)
+	if lockErr != nil {
+		return nil, lockErr
 	}
-	if payload.ApprovedRev > 0 {
-		current, err := s.approvedVersion(ctx, sqlTx, uid)
+	if payload.ApprovedRev != nil {
+		if *payload.ApprovedRev < 0 {
+			return nil, errInvalidRequest("Authorization code malformed")
+		}
+		// A Go code always records its approval generation, including zero, and
+		// must match the current one. Skipping the comparison for zero would let
+		// a code approved before the first generation advance be redeemed after
+		// it, even if the row itself was never revoked.
+		current, err := s.approvedVersion(ctx, sqlTx, uid, account)
 		if err != nil {
 			return nil, err
 		}
-		if current != payload.ApprovedRev {
+		if current != *payload.ApprovedRev {
 			return nil, errInvalidGrant("Authorization code has been revoked")
 		}
 	}
+	// A native PHP code carries no approval generation. It keeps the frozen
+	// row-revocation, expiry, client, redirect, PKCE and scope checks below; no
+	// generation is fabricated for it.
 	if s.cfg.now().Unix() > payload.ExpireTime {
 		return nil, errInvalidRequest("Authorization code has expired")
 	}

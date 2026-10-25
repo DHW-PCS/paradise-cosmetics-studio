@@ -374,3 +374,193 @@ func TestWrittenPayloadRoundTrip(t *testing.T) {
 		t.Fatalf("round trip failed: %v", err)
 	}
 }
+
+// TestKeepLoginReusesExistingRememberToken covers R07: SessionGuard::
+// ensureRememberTokenIsSet only creates a token when the account has none, so a
+// second keep login must report and reuse the committed token instead of
+// rotating it and invalidating the first device's recaller.
+func TestKeepLoginReusesExistingRememberToken(t *testing.T) {
+	db := testdb.Open(t)
+	svc := newService(t, db)
+	ctx := context.Background()
+	uid := seedUser(t, db, "reuse@example.invalid", "old-password-1", "existing-token")
+
+	result, err := svc.Login(ctx, "reuse@example.invalid", "old-password-1", true)
+	if err != nil {
+		t.Fatalf("keep login failed: %v", err)
+	}
+	if result.Remember != "existing-token" {
+		t.Fatalf("LoginResult.Remember = %q, want the committed token", result.Remember)
+	}
+	if result.User.RememberToken != result.Remember {
+		t.Fatalf("result user token = %q, remember = %q; the caller would encode a different value",
+			result.User.RememberToken, result.Remember)
+	}
+	if got := storedRememberToken(t, db, uid); got != "existing-token" {
+		t.Fatalf("users.remember_token = %q after a keep login, want the committed token", got)
+	}
+	if _, _, err := svc.RememberState(ctx, uid, "existing-token"); err != nil {
+		t.Fatalf("the first device's recaller no longer validates: %v", err)
+	}
+}
+
+// TestKeepLoginReuseNeedsNoRememberTokenWrite proves the reuse path is really
+// conditional: with an existing token, a keep login must not touch users at all,
+// so a failing remember-token write cannot break it.
+func TestKeepLoginReuseNeedsNoRememberTokenWrite(t *testing.T) {
+	db := testdb.Open(t)
+	svc := newService(t, db)
+	ctx := context.Background()
+	uid := seedUser(t, db, "nowrite@example.invalid", "old-password-1", "existing-token")
+	installUserUpdateFailure(t, db)
+
+	result, err := svc.Login(ctx, "nowrite@example.invalid", "old-password-1", true)
+	if err != nil {
+		t.Fatalf("keep login with an existing token performed a users write: %v", err)
+	}
+	if result.Remember != "existing-token" {
+		t.Fatalf("LoginResult.Remember = %q, want the committed token", result.Remember)
+	}
+	if got := storedRememberToken(t, db, uid); got != "existing-token" {
+		t.Fatalf("users.remember_token = %q after the failed write path", got)
+	}
+}
+
+// TestKeepLoginCreatesRememberTokenWhenEmpty is the other half of the frozen
+// rule: an account without a token gets one, and later keep logins reuse it.
+func TestKeepLoginCreatesRememberTokenWhenEmpty(t *testing.T) {
+	db := testdb.Open(t)
+	svc := newService(t, db)
+	ctx := context.Background()
+	uid := seedUser(t, db, "create@example.invalid", "old-password-1", "")
+
+	first, err := svc.Login(ctx, "create@example.invalid", "old-password-1", true)
+	if err != nil {
+		t.Fatalf("first keep login failed: %v", err)
+	}
+	if len(first.Remember) != 60 {
+		t.Fatalf("remember token length = %d, want 60", len(first.Remember))
+	}
+	if first.User.RememberToken != first.Remember {
+		t.Fatalf("result user token = %q, remember = %q", first.User.RememberToken, first.Remember)
+	}
+	if got := storedRememberToken(t, db, uid); got != first.Remember {
+		t.Fatalf("users.remember_token = %q, want the issued token", got)
+	}
+
+	second, err := svc.Login(ctx, "create@example.invalid", "old-password-1", true)
+	if err != nil {
+		t.Fatalf("second keep login failed: %v", err)
+	}
+	if second.Remember != first.Remember {
+		t.Fatalf("second keep login rotated the token: %q -> %q", first.Remember, second.Remember)
+	}
+	if _, _, err := svc.RememberState(ctx, uid, first.Remember); err != nil {
+		t.Fatalf("the first device's recaller no longer validates: %v", err)
+	}
+}
+
+// TestNonKeepLoginLeavesRememberToken keeps the frozen rule that remember=false
+// does not create, rotate or clear the recaller token.
+func TestNonKeepLoginLeavesRememberToken(t *testing.T) {
+	db := testdb.Open(t)
+	svc := newService(t, db)
+	ctx := context.Background()
+	uid := seedUser(t, db, "nokeep@example.invalid", "old-password-1", "existing-token")
+
+	result, err := svc.Login(ctx, "nokeep@example.invalid", "old-password-1", false)
+	if err != nil {
+		t.Fatalf("login failed: %v", err)
+	}
+	if result.Remember != "" {
+		t.Fatalf("non-keep login reported remember token %q", result.Remember)
+	}
+	if got := storedRememberToken(t, db, uid); got != "existing-token" {
+		t.Fatalf("users.remember_token = %q after a non-keep login", got)
+	}
+	if _, _, err := svc.RememberState(ctx, uid, "existing-token"); err != nil {
+		t.Fatalf("non-keep login invalidated an existing recaller: %v", err)
+	}
+}
+
+// TestConcurrentFirstKeepLoginSharesOneToken checks that simultaneous first keep
+// logins serialize on the users row and converge on one token all of them can
+// report and validate.
+func TestConcurrentFirstKeepLoginSharesOneToken(t *testing.T) {
+	db := testdb.Open(t)
+	svc := newService(t, db)
+	ctx := context.Background()
+	uid := seedUser(t, db, "concurrent-keep@example.invalid", "old-password-1", "")
+
+	// Initialize the revocation state first so this test isolates the remember
+	// token decision from first-state initialization.
+	user, found, err := svc.Repo.ByUID(ctx, uid)
+	if err != nil || !found {
+		t.Fatalf("load user: %v %v", found, err)
+	}
+	if _, err := svc.EnsureState(ctx, uid, user.Password); err != nil {
+		t.Fatalf("initialize revocation state: %v", err)
+	}
+
+	const callers = 8
+	var wg sync.WaitGroup
+	errs := make(chan error, callers)
+	tokens := make(chan string, callers)
+	for i := 0; i < callers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			result, err := svc.Login(ctx, "concurrent-keep@example.invalid", "old-password-1", true)
+			if err != nil {
+				errs <- err
+				return
+			}
+			tokens <- result.Remember
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	close(tokens)
+	for err := range errs {
+		t.Fatalf("concurrent keep login failed: %v", err)
+	}
+	var token string
+	for got := range tokens {
+		if token == "" {
+			token = got
+			continue
+		}
+		if got != token {
+			t.Fatalf("concurrent keep logins reported different tokens: %q and %q", token, got)
+		}
+	}
+	if token == "" {
+		t.Fatal("no keep login reported a token")
+	}
+	if stored := storedRememberToken(t, db, uid); stored != token {
+		t.Fatalf("users.remember_token = %q, all logins reported %q", stored, token)
+	}
+	if _, _, err := svc.RememberState(ctx, uid, token); err != nil {
+		t.Fatalf("the shared token does not validate: %v", err)
+	}
+}
+
+// storedRememberToken reads the committed value, treating NULL as empty.
+func storedRememberToken(t *testing.T, db *sql.DB, uid int64) string {
+	t.Helper()
+	var token string
+	if err := db.QueryRow("SELECT COALESCE(remember_token,'') FROM users WHERE uid=?", uid).Scan(&token); err != nil {
+		t.Fatalf("read remember token: %v", err)
+	}
+	return token
+}
+
+// installUserUpdateFailure makes any UPDATE on users fail so a test can prove a
+// path performs no write. The trigger dies with the disposable test database.
+func installUserUpdateFailure(t *testing.T, db *sql.DB) {
+	t.Helper()
+	if _, err := db.Exec(`CREATE TRIGGER m1_fail_remember BEFORE UPDATE ON users
+		FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'm1 remember write'`); err != nil {
+		t.Fatalf("install failure trigger: %v", err)
+	}
+}

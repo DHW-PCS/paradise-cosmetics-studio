@@ -64,6 +64,14 @@ func (c *inputCache) load(r *http.Request) {
 	c.form = r.Form
 }
 
+// trimPHPDefault reproduces PHP's trim() with its default character set:
+// 0x20, 0x09, 0x0A, 0x0D, 0x00 and 0x0B are removed from both ends. It must not
+// be replaced by strings.TrimSpace, which is Unicode-aware: PHP keeps U+00A0,
+// U+3000 and U+000C, and removes NUL, while TrimSpace does the opposite.
+func trimPHPDefault(value string) string {
+	return strings.Trim(value, " \t\n\r\x00\x0b")
+}
+
 // inputString returns a trimmed scalar input, mirroring TrimStrings and
 // ConvertEmptyStringsToNull. The password is trimmed by the frozen 8.75 stack
 // as well because its $except list is empty.
@@ -76,17 +84,17 @@ func inputString(r *http.Request, name string) string {
 	if cache.json != nil {
 		switch value := cache.json[name].(type) {
 		case string:
-			return strings.TrimSpace(value)
+			return trimPHPDefault(value)
 		case nil:
 			return ""
 		default:
-			return strings.TrimSpace(fmt.Sprint(value))
+			return trimPHPDefault(fmt.Sprint(value))
 		}
 	}
 	if cache.form == nil {
 		return ""
 	}
-	return strings.TrimSpace(cache.form.Get(name))
+	return trimPHPDefault(cache.form.Get(name))
 }
 
 // inputTruthy follows PHP truthiness for the keep flag.

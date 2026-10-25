@@ -162,9 +162,10 @@ func (s *Server) handleAPIUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// writeRecaller sets the recaller cookie for a token already committed by the
-// authentication transaction; it never updates the database outside that
-// transaction.
+// writeRecaller sets the recaller cookie from the effective token reported by
+// the authentication transaction. That token may be newly created or already
+// committed (a keep login reuses it when present); this function never updates
+// the database outside the transaction.
 func (s *Server) writeRecaller(w http.ResponseWriter, r *http.Request, user *users.User, token string) error {
 	value, err := remember.CookieValue(s.cfg.Encrypter, s.cfg.RememberCookie,
 		&remember.Recaller{UID: user.UID, Token: token, Password: user.Password})

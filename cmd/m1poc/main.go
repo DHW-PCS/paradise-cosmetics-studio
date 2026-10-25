@@ -415,7 +415,10 @@ func rememberMint(args []string) error {
 	dsn := fs.String("dsn", "", "MySQL DSN")
 	prefix := fs.String("prefix", "", "legacy table prefix")
 	outFile := fs.String("out", "", "write the result JSON here")
-	if err := fs.Parse(args[1:]); err != nil {
+	// The caller (cmdRemember) already removed the "mint" subcommand, so the
+	// remaining arguments start with the first flag. Slicing again dropped the
+	// leading --vectors and made the documented invocation unusable (R10).
+	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *vectorPath == "" || *uid <= 0 || *dsn == "" {

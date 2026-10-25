@@ -56,8 +56,9 @@ func (s *Service) now() time.Time {
 }
 
 // LoginResult binds an authentication to the account state that was actually
-// verified. Remember is the new recaller token when keep was requested; the
-// caller only writes its cookie.
+// verified. Remember is the recaller token the caller must write to the cookie
+// when keep was requested: the token already committed for the account when one
+// exists, otherwise the newly created value. It is empty for keep=false.
 type LoginResult struct {
 	User     *users.User
 	State    *revocation.State
@@ -114,12 +115,23 @@ func (s *Service) Login(ctx context.Context, identification, raw string, keep bo
 			return err
 		}
 		if keep {
-			token, err := remember.NewToken()
-			if err != nil {
-				return err
-			}
-			if err := s.Repo.UpdateRememberTokenTx(ctx, tx, user.UID, token); err != nil {
-				return err
+			// SessionGuard::ensureRememberTokenIsSet only creates a token when
+			// the account has none. Reusing the committed value keeps recallers
+			// already handed to other devices valid, and avoids rewriting users
+			// on every keep login.
+			token := user.RememberToken
+			if token == "" {
+				created, err := remember.NewToken()
+				if err != nil {
+					return err
+				}
+				if err := s.Repo.UpdateRememberTokenTx(ctx, tx, user.UID, created); err != nil {
+					return err
+				}
+				token = created
+				// Report the committed account state, so the recaller cookie
+				// encodes the same token the database now holds.
+				user.RememberToken = created
 			}
 			result.Remember = token
 		}

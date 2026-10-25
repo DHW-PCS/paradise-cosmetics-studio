@@ -101,9 +101,22 @@ func (s *Store) Get(ctx context.Context, uid int64) (*State, error) {
 	return s.get(ctx, s.db, uid)
 }
 
-// GetTx loads a user's state inside the caller's transaction.
+// GetTx loads a user's state inside the caller's transaction. It is a plain
+// consistent read, so a transaction that already established an earlier
+// snapshot may observe an older generation; it must not be used to decide
+// whether a credential may be issued.
 func (s *Store) GetTx(ctx context.Context, tx *sql.Tx, uid int64) (*State, error) {
 	return s.get(ctx, tx, uid)
+}
+
+// GetCurrentTx loads a user's state with a locking read inside the caller's
+// transaction. It observes the latest committed row instead of the caller's
+// older consistent snapshot, so a transaction that first read something else and
+// then waited for the account lock still sees a generation committed while it
+// was waiting. Callers must already hold the users row lock (lock order:
+// users -> revocation) so this read cannot invert the order used by writers.
+func (s *Store) GetCurrentTx(ctx context.Context, tx *sql.Tx, uid int64) (*State, error) {
+	return s.getCurrent(ctx, tx, uid)
 }
 
 // Ensure creates a baseline row when the user has none. Callers that serialize
@@ -122,23 +135,39 @@ func (s *Store) Ensure(ctx context.Context, uid int64, passwordHash string, secr
 // first: two concurrent first-time initializations otherwise deadlock between
 // the duplicate-key insert and the current read. Callers that already hold the
 // user lock simply re-acquire it in the same transaction.
+//
+// Both branches read with a current read. The caller may have established an
+// earlier snapshot before waiting for the account lock, in which case a plain
+// consistent read would return a generation that a committed revocation already
+// advanced.
 func (s *Store) EnsureTx(ctx context.Context, tx *sql.Tx, uid int64, passwordHash string, secret []byte, now time.Time) (*State, error) {
 	if err := s.lockUserRow(ctx, tx, uid); err != nil {
 		return nil, err
 	}
-	st, err := s.get(ctx, tx, uid)
-	if err == nil {
-		return st, nil
-	}
-	if !errors.Is(err, ErrNoState) {
+	// Fast path for an existing baseline: the plain read (which takes no lock and
+	// therefore no gap lock) decides whether creation is needed, then the current
+	// read refreshes it so a generation committed while this transaction waited
+	// for the account lock is observed instead of the caller's older snapshot.
+	if _, err := s.get(ctx, tx, uid); err == nil {
+		st, err := s.getCurrent(ctx, tx, uid)
+		if err == nil {
+			return st, nil
+		}
+		if !errors.Is(err, ErrNoState) {
+			return nil, err
+		}
+	} else if !errors.Is(err, ErrNoState) {
 		return nil, err
 	}
+	// Lazy creation. INSERT IGNORE must come before any locking read: a locking
+	// read of the missing key takes a gap lock, and two concurrent first-time
+	// initializations of different accounts then each wait for the insert
+	// intention lock inside the other's gap, so InnoDB picks a deadlock victim.
+	// INSERT IGNORE is idempotent and never overwrites an existing row.
 	q := fmt.Sprintf(`INSERT IGNORE INTO %s%s (user_uid, session_version, password_fingerprint, revoked_before, updated_at) VALUES (?, ?, ?, ?, ?)`, s.prefix, Table)
 	if _, err := tx.ExecContext(ctx, q, uid, 1, Fingerprint(secret, passwordHash), 0, now); err != nil {
 		return nil, err
 	}
-	// A failed INSERT IGNORE may mean another transaction created the row; read
-	// it with a current read rather than the EARLIER snapshot.
 	return s.getCurrent(ctx, tx, uid)
 }
 
@@ -166,9 +195,12 @@ func (s *Store) BumpTx(ctx context.Context, tx *sql.Tx, uid int64, passwordHash 
 // password-change transaction so both writers keep the same version, fingerprint
 // and clock semantics.
 func BumpTx(ctx context.Context, tx *sql.Tx, prefix string, uid int64, passwordHash string, secret []byte, now time.Time) error {
+	// session_version only increases and revoked_before takes the greatest
+	// observed watermark: a retried or clock-skewed writer must not move either
+	// backwards, because session validation compares against them.
 	q := fmt.Sprintf(`INSERT INTO %s%s (user_uid, session_version, password_fingerprint, revoked_before, updated_at)
 VALUES (?, 1, ?, ?, ?)
-ON DUPLICATE KEY UPDATE session_version = session_version + 1, password_fingerprint = VALUES(password_fingerprint), revoked_before = VALUES(revoked_before), updated_at = VALUES(updated_at)`, prefix, Table)
+ON DUPLICATE KEY UPDATE session_version = session_version + 1, password_fingerprint = VALUES(password_fingerprint), revoked_before = GREATEST(revoked_before, VALUES(revoked_before)), updated_at = VALUES(updated_at)`, prefix, Table)
 	_, err := tx.ExecContext(ctx, q, uid, Fingerprint(secret, passwordHash), now.Unix(), now)
 	return err
 }

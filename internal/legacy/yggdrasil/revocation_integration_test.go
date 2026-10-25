@@ -118,3 +118,62 @@ func TestTombstoneFailureDoesNotReportSuccess(t *testing.T) {
 		t.Fatalf("import after a rolled-back revoke: %v", err)
 	}
 }
+
+// TestMissingTombstoneTableFailsClosed keeps the fail-closed contract: if the
+// additive tombstone table is absent (for example an unadapted rollback build),
+// every path that must consult it refuses instead of silently accepting revoked
+// tokens.
+func TestMissingTombstoneTableFailsClosed(t *testing.T) {
+	db := testdb.Open(t)
+	store := newStore(t, db)
+	ctx := context.Background()
+	uid, profile := seedYggUser(t, db, "missing@example.invalid", "MissingPlayer")
+
+	token, err := Mint(uid, "missing@example.invalid", profile, "", testKey, time.Now(), 300, 600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec("DROP TABLE go_yggdrasil_revocations"); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Revoke(ctx, token.AccessToken); err == nil {
+		t.Fatal("revoke reported success without the tombstone table")
+	}
+	if err := store.Import(ctx, token); err == nil {
+		t.Fatal("import succeeded without the tombstone table")
+	}
+	if _, err := store.Validate(ctx, token.AccessToken, ""); err == nil {
+		t.Fatal("validate succeeded without the tombstone table")
+	}
+}
+
+// TestSetupIsIdempotentAndKeepsRows keeps Setup usable on a populated database:
+// the additive tables are created or kept, never recreated, so a revoked token
+// stays revoked and an advanced watermark is not reset.
+func TestSetupIsIdempotentAndKeepsRows(t *testing.T) {
+	db := testdb.Open(t)
+	store := newStore(t, db)
+	ctx := context.Background()
+	uid, profile := seedYggUser(t, db, "setup@example.invalid", "SetupPlayer")
+
+	token, err := Mint(uid, "setup@example.invalid", profile, "", testKey, time.Now(), 300, 600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Revoke(ctx, token.AccessToken); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Setup(ctx); err != nil {
+		t.Fatalf("repeated setup: %v", err)
+	}
+	var tombstones int
+	if err := db.QueryRow("SELECT COUNT(*) FROM go_yggdrasil_revocations").Scan(&tombstones); err != nil {
+		t.Fatal(err)
+	}
+	if tombstones != 1 {
+		t.Fatalf("tombstone rows after repeated setup = %d, want 1", tombstones)
+	}
+	if _, err := store.Validate(ctx, token.AccessToken, ""); err == nil {
+		t.Fatal("revoked token validated after repeated setup")
+	}
+}
