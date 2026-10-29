@@ -1,0 +1,13 @@
+{{define "copyright"}}
+<div id="copyright-text" class="float-right d-none d-sm-inline">
+{{if eq .CopyrightStyle 0}}Powered with ❤ by <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a>.
+{{else if eq .CopyrightStyle 1}}Powered by <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a>.
+{{else if eq .CopyrightStyle 2}}Proudly powered by <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a>.
+{{else if eq .CopyrightStyle 3}}由 <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a> 强力驱动。
+{{else if eq .CopyrightStyle 4}}采用 <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a> 搭建。
+{{else if eq .CopyrightStyle 5}}使用 <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a> 稳定运行。
+{{else}}自豪地采用 <a href="https://github.com/bs-community/blessing-skin-server" target="_blank">Blessing Skin Server</a>。
+{{end}}
+</div>
+{{.CustomCopyright}}
+{{end}}

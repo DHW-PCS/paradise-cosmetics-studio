@@ -1,0 +1,30 @@
+{{define "page"}}<!DOCTYPE html>
+<html lang="{{.Language}}"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{.CSRF}}">
+<title>{{.Title}} - {{.SiteName}}</title>
+<script id="blessing-globals" type="application/json">{{.Globals}}</script>
+{{range .MetaJS}}<script src="{{.}}"></script>{{end}}
+<link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" crossorigin>
+{{range .CSS}}<link rel="stylesheet" href="{{.}}">{{end}}
+</head>
+{{if .Login}}
+<body class="hold-transition login-page"><div class="login-box"><div class="login-logo"><a href="{{.BaseURL}}/">{{.SiteName}}</a></div><div class="card"><div class="card-body login-card-body"><p class="login-box-msg">{{.LoginNotice}}</p><main></main><div class="mt-3"><a href="{{.BaseURL}}/auth/register">{{.RegisterLink}}</a></div></div></div></div>
+{{else}}
+<body class="{{if .Dark}}dark-mode {{end}}hold-transition sidebar-mini"><div class="wrapper">
+<nav class="main-header navbar navbar-expand navbar-{{.NavbarColor}} navbar-{{.NavbarMode}}">
+<ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a></li></ul>
+<ul class="navbar-nav ml-auto"><li class="nav-item" id="toggle-dark-mode"></li>
+<li class="nav-item dropdown" data-t="{{.NoUnread}}" data-notifications="{{.NotificationsJSON}}"></li>
+<li class="nav-item dropdown"><a class="nav-link" data-toggle="dropdown" href="#"><i class="fas fa-language" aria-hidden="true"></i><span class="d-none d-sm-inline">{{.CurrentLanguage}}</span></a><div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">{{range .Languages}}<a class="dropdown-item locale" href="{{.URL}}">{{.Name}}</a><div class="dropdown-divider"></div>{{end}}</div></li>
+<li class="nav-item dropdown user-menu"><a class="nav-link" data-toggle="dropdown" href="#"><i class="fas fa-user"></i><span class="d-none d-sm-inline ml-2" data-mark="nickname">{{.Nickname}}</span></a><div class="dropdown-menu dropdown-menu-lg dropdown-menu-right"><a class="dropdown-item" href="{{.BaseURL}}/user">{{.UserCenter}}</a><a class="dropdown-item" href="{{.BaseURL}}/user/profile">{{.Profile}}</a><div class="dropdown-divider"></div>{{if .Admin}}<a class="dropdown-item" href="{{.BaseURL}}/admin">{{.AdminPanel}}</a><a class="dropdown-item" href="{{.BaseURL}}/admin/users">{{.Users}}</a><a class="dropdown-item" href="{{.BaseURL}}/admin/reports">{{.Reports}}</a>{{if .AdminPage}}<a class="dropdown-item" href="#" id="launch-cli">Web CLI</a>{{end}}<div class="dropdown-divider"></div>{{end}}<a class="dropdown-item" href="#" id="logout-button">{{.Logout}}</a></div></li></ul></nav>
+<aside class="main-sidebar sidebar-{{.SidebarColor}} elevation-3"><a href="{{.BaseURL}}/" class="brand-link text-center"><span class="brand-text font-weight-light">{{.SiteName}}</span></a><div class="sidebar"><div class="user-panel mt-3 mb-3 {{if .Admin}}pb-2{{end}}"><div class="d-flex"><div class="info"><a class="d-block" data-mark="nickname">{{.Nickname}}</a></div></div>{{if .Admin}}<div class="mt-3 ml-2 mr-2 d-flex flex-wrap"><span class="badge bg-primary mb-1 mr-2">STAFF</span></div>{{end}}</div><nav class="mt-2"><ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu">
+{{range .MenuGroups}}<li class="nav-header">{{.Title}}</li>{{range .Items}}{{template "menu-item" .}}{{end}}{{end}}
+</ul></nav></div></aside>
+<div class="content-wrapper"><div class="content-header"><div class="container-fluid"><h1 class="m-0">{{.Title}}</h1></div></div><section class="content"><div class="container-fluid">{{if eq (index .Globals "route") "user"}}<div class="row"><div class="col-md-7"><div id="email-verification"></div><div id="usage-box"></div></div><div class="col-md-5"><div class="card card-primary card-outline"><div class="card-header"><h3 class="card-title">{{.AnnouncementTitle}}</h3>{{if .Admin}}&nbsp;<a href="{{.BaseURL}}/admin/options"><i class="fas fa-edit"></i></a>{{end}}</div><div class="card-body">{{.Announcement}}</div></div></div></div>{{end}}</div></section></div>
+{{if eq (index .Globals "route") "user"}}<div id="modal-score-instruction" class="modal fade" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">{{.ScoreTitle}}</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body">{{.ScoreIntroduction}}<hr><div class="row"><div class="col-md-4"><p class="text-center">{{.ScoreStorage}}</p></div><div class="col-md-4"><p class="text-center">{{.ScorePlayer}}</p></div><div class="col-md-4"><p class="text-center">{{.ScoreCloset}}</p></div></div></div><div class="modal-footer"><button class="btn btn-default" data-dismiss="modal">{{.Close}}</button></div></div></div></div>{{end}}
+<footer class="main-footer">{{template "copyright" .}}</footer></div>
+{{end}}
+<script id="blessing-extra" type="application/json">{{.Extra}}</script>
+{{range .AppJS}}<script src="{{.}}"></script>{{end}}
+</body></html>{{end}}

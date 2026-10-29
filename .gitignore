@@ -1,1 +1,12 @@
 .DS_Store
+/.env
+/.env.*
+!/.env.example
+/configs/*.env
+!/configs/example.env
+/storage/
+/web/frontend/node_modules/
+/web/static/*
+!/web/static/.keep
+/dist/
+*.tsbuildinfo
