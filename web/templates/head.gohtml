@@ -1,0 +1,17 @@
+{{define "head"}}<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="csrf-token" content="{{.CSRF}}">
+<meta name="theme-color" content="{{.ThemeColor}}">
+<meta name="keywords" content="{{.Keywords}}"><meta name="description" content="{{.Description}}">
+{{.MetaExtras}}
+<link rel="preconnect" href="https://unpkg.com/" crossorigin>
+{{if .CDNHost}}<link rel="preconnect" href="{{.CDNHost}}" id="cdn-host" crossorigin>{{end}}
+<script id="blessing-globals" type="application/json">{{.Globals}}</script>
+{{range .MetaJS}}<script src="{{.}}"></script>{{end}}
+<link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" crossorigin>
+{{range .CSS}}<link rel="stylesheet" href="{{.}}">{{end}}
+{{.HeadLinks}}
+<link rel="shortcut icon" href="{{.Favicon}}"><link rel="icon" type="image/png" href="{{.Favicon}}" sizes="192x192"><link rel="apple-touch-icon" href="{{.Favicon}}" sizes="180x180">
+{{if .CustomCSS}}<style>{{.CustomCSS}}</style>{{end}}
+{{.ExtraHead}}{{end}}

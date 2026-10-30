@@ -3,6 +3,7 @@ package maintenance
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -96,4 +97,50 @@ func TestCleanupBatchMeasurement(t *testing.T) {
 		t.Fatalf("cleanup batch n=%d err=%v", n, err)
 	}
 	t.Logf("synthetic_sessions=1000 data_bytes=%d index_bytes=%d delete_rows=%d elapsed=%s", allocated, indexed, n, elapsed)
+}
+
+func TestAccountTemporaryResetRollbackAndCleanup(t *testing.T) {
+	store, id := testsupport.Database(t, "account-reset-")
+	if err := oauthserver.Migrate(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	b, err := id.Guest(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.DB.Exec("INSERT INTO "+store.Table("go_captchas")+" VALUES (?,?,?)", identity.Digest(b.Token), identity.Digest("answer"), b.Expires.Unix()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.DB.Exec("INSERT INTO "+store.Table("go_mail_challenges")+" (digest,user_uid,version,purpose,target_email,issued_at) VALUES (?,1,1,'verify','other@example.invalid',1)", identity.Digest("challenge")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.DB.Exec("CREATE TRIGGER reject_reset BEFORE DELETE ON " + store.Table("go_captchas") + " FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic reset fault'"); err != nil {
+		t.Fatal(err)
+	}
+	if err = ResetAuthentication(t.Context(), store); err == nil {
+		t.Fatal("reset failure ignored")
+	}
+	if _, err = id.Session(t.Context(), b.Token); err != nil {
+		t.Fatal("failed reset was partially committed", err)
+	}
+	if _, err = store.DB.Exec("DROP TRIGGER reject_reset"); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := Cleanup(t.Context(), store, time.Now(), 1); err != nil || n != 1 {
+		t.Fatalf("stale-email challenge cleanup n=%d err=%v", n, err)
+	}
+	if err = ResetAuthentication(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = id.Session(t.Context(), b.Token); !errors.Is(err, identity.ErrSession) {
+		t.Fatal("successful reset retained session")
+	}
+	var namespaces int
+	if err = store.DB.QueryRow("SELECT COUNT(*) FROM " + store.Table("go_account_namespaces")).Scan(&namespaces); err != nil || namespaces != 5 {
+		t.Fatal("reset deleted business coordination", err)
+	}
+	var uuidNamespace int
+	if err = store.DB.QueryRow("SELECT COUNT(*) FROM " + store.Table("go_account_namespaces") + " WHERE name='uuid'").Scan(&uuidNamespace); err != nil || uuidNamespace != 1 {
+		t.Fatal("reset deleted uuid coordination", err)
+	}
 }

@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"blessing-skin-go/internal/account"
 	"blessing-skin-go/internal/admission"
 	"blessing-skin-go/internal/config"
 	"blessing-skin-go/internal/database"
@@ -28,6 +29,8 @@ import (
 	"blessing-skin-go/internal/outbox"
 	"blessing-skin-go/internal/processlock"
 	"blessing-skin-go/internal/site"
+	"blessing-skin-go/internal/textures"
+	"blessing-skin-go/web"
 )
 
 func main() {
@@ -38,23 +41,30 @@ func main() {
 }
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: blessing-skin <serve|worker|migrate|auth-reset|version> [-env declared.env]")
+		return errors.New("usage: blessing-skin <serve|worker|migrate|auth-reset|outbox-retry|version> [-env declared.env]")
 	}
 	command := args[0]
 	if command == "version" {
 		fmt.Printf("blessing-skin-go m2-dev (%s)\n", runtime.Version())
 		return nil
 	}
-	if command != "serve" && command != "worker" && command != "migrate" && command != "auth-reset" {
+	if command != "serve" && command != "worker" && command != "migrate" && command != "auth-reset" && command != "outbox-retry" {
 		return errors.New("unknown command")
 	}
 	flags := flag.NewFlagSet(command, flag.ContinueOnError)
 	envFile := flags.String("env", "", "explicit dotenv file (process environment overrides)")
+	var taskID *int64
+	if command == "outbox-retry" {
+		taskID = flags.Int64("id", 0, "blocked outbox task ID")
+	}
 	if err := flags.Parse(args[1:]); err != nil {
 		return err
 	}
 	if flags.NArg() != 0 {
 		return errors.New("unexpected arguments")
+	}
+	if taskID != nil && *taskID <= 0 {
+		return errors.New("outbox-retry requires a positive task ID")
 	}
 	c, err := config.FromEnvironment(*envFile)
 	if err != nil {
@@ -94,11 +104,31 @@ func run(args []string) error {
 		if err = outbox.Migrate(ctx, store); err != nil {
 			return errors.New("outbox migration failed")
 		}
+		if err = database.MigrateAccounts(ctx, store); err != nil {
+			return errors.New("account migration failed")
+		}
+		if err = database.MigratePlayers(ctx, store); err != nil {
+			return errors.New("player migration failed")
+		}
+		if err = database.MigrateTextures(ctx, store); err != nil {
+			return errors.New("texture migration failed")
+		}
+		if err = database.MigrateCloset(ctx, store); err != nil {
+			return errors.New("closet migration failed")
+		}
 		slog.Info("Go additive migrations complete")
 		return nil
 	}
 	if err = maintenance.CheckSchema(ctx, store); err != nil {
 		return err
+	}
+	if command == "outbox-retry" {
+		queue := &outbox.Store{Database: store, Now: time.Now}
+		if err = queue.RetryBlocked(ctx, *taskID); err != nil {
+			return err
+		}
+		slog.Info("blocked outbox task requeued", "task_id", *taskID)
+		return nil
 	}
 	if command == "auth-reset" {
 		if err = maintenance.ResetAuthentication(ctx, store); err != nil {
@@ -191,9 +221,40 @@ func readKey(path string) (*rsa.PrivateKey, error) {
 }
 func worker(ctx context.Context, c config.Config, store *database.Store) error {
 	queue := &outbox.Store{Database: store, Now: time.Now}
-	// M3/M4 register mail/cache/file handlers with their owning domains. Unknown
-	// work is retained and stops this worker rather than being acknowledged.
 	handlers := map[string]outbox.Handler{}
+	if c.Mail.Mailer != "" {
+		assets, err := web.Load()
+		if err != nil {
+			return err
+		}
+		overrides, err := site.LoadOptionSnapshot(c.OptionsFile)
+		if err != nil {
+			return err
+		}
+		view := &site.Service{Store: store, OptionSnapshot: overrides, Location: c.Location}
+		transport, err := account.DefaultTransport(c.Mail)
+		if err != nil {
+			return err
+		}
+		mail, err := account.NewMail(c.AppKey, c.BaseURL, c.FallbackLocale, view, assets.Messages, transport, c.Mail.RetryDelay)
+		if err != nil {
+			return err
+		}
+		id := &identity.Service{Store: store, Now: time.Now}
+		accounts := account.New(store, id, view, mail)
+		handlers[account.MailTopic] = mail.Handler(accounts)
+	}
+	overrides, err := site.LoadOptionSnapshot(c.OptionsFile)
+	if err != nil {
+		return err
+	}
+	view := &site.Service{Store: store, OptionSnapshot: overrides, Location: c.Location}
+	texturesDir := c.TexturesDir
+	if texturesDir == "" {
+		texturesDir = "storage/textures"
+	}
+	texturesService := textures.New(store, &identity.Service{Store: store, Now: time.Now}, view, texturesDir, time.Now)
+	handlers[textures.CollectTopic] = texturesService.Handler()
 	cleanup := func() error { _, err := maintenance.Cleanup(ctx, store, time.Now(), c.CleanupBatch); return err }
 	if err := cleanup(); err != nil {
 		if ctx.Err() != nil {
@@ -222,7 +283,7 @@ func worker(ctx context.Context, c config.Config, store *database.Store) error {
 				if ctx.Err() != nil {
 					return nil
 				}
-				return errors.New("pending outbox task requires its domain handler")
+				return errors.New("outbox delivery failed; inspect task state and domain handler")
 			}
 			wait := c.WorkerPollInterval
 			if worked {

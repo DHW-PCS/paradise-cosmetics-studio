@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"os"
 	"strconv"
 	"strings"
@@ -17,10 +18,11 @@ import (
 )
 
 type Service struct {
-	Store          *database.Store
-	Identity       *identity.Service
-	OptionSnapshot map[string]string
-	Location       *time.Location
+	HeadLinks, ExtraHead, Scripts, ExtraFoot template.HTML
+	Store                                    *database.Store
+	Identity                                 *identity.Service
+	OptionSnapshot                           map[string]string
+	Location                                 *time.Location
 }
 
 // LoadOptionSnapshot accepts an authoritative JSON export, never executable options.php.
@@ -42,6 +44,11 @@ func LoadOptionSnapshot(path string) (map[string]string, error) {
 func (s *Service) Options(ctx context.Context) (map[string]any, error) {
 	// Defaults from the frozen 6.0.2 config/options.php for this slice.
 	values := map[string]any{
+		"cache_expire_time": "31536000", "enable_avatar_cache": false, "enable_preview_cache": false,
+		"ygg_uuid_algorithm": "v3", "register_with_player_name": true, "regs_per_ip": "3",
+		"max_upload_file_size": "1024", "private_score_per_storage": "10", "score_award_per_texture": "0", "score_award_per_like": "0", "texture_name_regexp": "", "allow_downloading_texture": true, "take_back_scores_after_deletion": true, "auto_del_invalid_texture": false, "status_code_for_private": "403", "reporter_score_modification": "0", "content_policy": "", "player_name_rule": "official", "custom_player_name_regexp": "", "player_name_length_min": "3", "player_name_length_max": "16", "plugins_enabled": "",
+		"recaptcha_sitekey": "", "recaptcha_secretkey": "", "recaptcha_invisible": false,
+		"favicon_url": "app/favicon.ico", "meta_keywords": "", "meta_description": "", "meta_extras": "", "custom_css": "", "custom_js": "", "cdn_address": "", "site_description": "Open-source PHP Minecraft Skin Hosting Service", "home_pic_url": "./app/bg.webp", "transparent_navbar": false,
 		"site_name": "Blessing Skin", "site_url": "", "navbar_color": "cyan", "sidebar_color": "dark-maroon",
 		"copyright_prefer": "0", "copyright_text": `<b>Copyright &copy; {year} <a href="{site_url}">{site_name}</a>.</b> All rights reserved.`,
 		"announcement": "Welcome to Blessing Skin {version}!", "user_initial_score": "1000", "sign_score": "10,100", "return_score": true,
@@ -212,3 +219,18 @@ func (s *Service) ToggleDarkMode(ctx context.Context, b *identity.BrowserSession
 }
 
 func LocaleTag(locale string) string { return strings.ReplaceAll(locale, "_", "-") }
+
+// Avatar supplies the original sidebar's TID-based WebP/PNG pair. Rendering
+// and fallback responses belong to the image distribution service.
+func (s *Service) Avatar(ctx context.Context, uid int64) (int64, error) {
+	var tid int64
+	err := s.Store.DB.QueryRowContext(ctx, "SELECT avatar FROM "+s.Store.Table("users")+" WHERE uid=?", uid).Scan(&tid)
+	return tid, err
+}
+
+// CountClosetItem reports whether a texture is already in the user's closet.
+func (s *Service) CountClosetItem(ctx context.Context, uid, tid int64) (int64, error) {
+	var count int64
+	err := s.Store.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("user_closet")+" WHERE user_uid=? AND texture_tid=?", uid, tid).Scan(&count)
+	return count, err
+}

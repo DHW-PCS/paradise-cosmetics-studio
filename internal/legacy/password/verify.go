@@ -92,19 +92,15 @@ func (h *Hasher) Verify(raw, hash string) (bool, error) {
 	}
 }
 
-// Hash produces a hash in the legacy format. It exists for fixtures and
-// rollback-shim tests; production code never rewrites stored hashes during
-// the rollback window.
+// Hash produces the configured legacy format for new passwords. Existing
+// account hashes are preserved until an authorized password change.
 func (h *Hasher) Hash(raw string) (string, error) {
 	switch h.method {
-	case BCRYPT:
-		out, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.DefaultCost)
+	case BCRYPT, PHP_PASSWORD:
+		out, err := bcrypt.GenerateFromPassword(bcryptInput(raw), bcrypt.DefaultCost)
 		return string(out), err
 	case ARGON2I:
 		return hashArgon2(raw, argon2i)
-	case PHP_PASSWORD:
-		out, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.DefaultCost)
-		return string(out), err
 	case MD5, SHA256, SHA512, SALTED2MD5, SALTED2SHA256, SALTED2SHA512:
 		return h.compute(raw)
 	default:
@@ -288,4 +284,13 @@ func hashArgon2(raw string, variant argonVariant) (string, error) {
 		return strings.TrimRight(base64.StdEncoding.EncodeToString(b), "=")
 	}
 	return fmt.Sprintf("$%s$v=19$m=%d,t=%d,p=%d$%s$%s", name, memory, time, threads, enc(salt), enc(out)), nil
+}
+
+// PHP's bcrypt hashes the first 72 bytes, including when the accepted
+// character count produces a longer UTF-8 byte sequence.
+func bcryptInput(raw string) []byte {
+	if len(raw) > 72 {
+		raw = raw[:72]
+	}
+	return []byte(raw)
 }

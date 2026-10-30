@@ -1,6 +1,7 @@
 import { showModal, toast } from '@/scripts/notify'
 import { t } from '@/scripts/i18n'
 import { post, ResponseBody } from '@/scripts/net'
+import updateUserAvatar from '@/scripts/userAvatar'
 
 export default async function resetAvatar() {
   try {
@@ -9,13 +10,13 @@ export default async function resetAvatar() {
     return
   }
 
-  const { message }: ResponseBody = await post('/user/profile/avatar', {
+  const { code, message }: ResponseBody = await post('/user/profile/avatar', {
     tid: 0,
   })
-  toast.success(message)
-  document
-    .querySelectorAll<HTMLImageElement>('[alt="User Image"]')
-    .forEach((el) => {
-      el.src = `${blessing.base_url}/avatar/0`
-    })
+  if (code === 0) {
+    toast.success(message)
+    updateUserAvatar(0)
+  } else {
+    toast.error(message)
+  }
 }

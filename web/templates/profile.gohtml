@@ -1,0 +1,149 @@
+{{define "profile"}}<div class="row"><div class="col-md-6">
+<div class="card card-primary">
+  <div class="card-header">
+    <h3 class="card-title">
+      {{index .Texts "user.profile.avatar.title"}}
+    </h3>
+  </div>
+  <div class="card-body">
+    {{index .TextHTML "user.profile.avatar.notice"}}
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-primary" id="reset-avatar">
+      {{index .Texts "user.profile.avatar.reset"}}
+    </button>
+  </div>
+</div>
+
+<form class="card card-warning" method="post" id="change-password">
+  <div class="card-header">
+    <h3 class="card-title">
+      {{index .Texts "user.profile.password.title"}}
+    </h3>
+  </div>
+  <div class="card-body">
+    <div class="form-group">
+      <label>{{index .Texts "user.profile.password.old"}}</label>
+      <input type="password" class="form-control" name="oldPassword"
+        required autocomplete="current-password">
+    </div>
+
+    <div class="form-group">
+      <label>{{index .Texts "user.profile.password.new"}}</label>
+      <input type="password" class="form-control" name="newPassword" required
+        minlength="8" maxlength="32" autocomplete="new-password">
+    </div>
+
+    <div class="form-group">
+      <label>{{index .Texts "user.profile.password.confirm"}}</label>
+      <input type="password" class="form-control" name="confirm" required
+        minlength="8" maxlength="32" autocomplete="new-password">
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-primary" type="submit">
+      {{index .Texts "user.profile.password.button"}}
+    </button>
+  </div>
+</form>
+
+</div><div class="col-md-6">
+<form class="card card-primary" method="post" id="change-nickname">
+  <div class="card-header">
+    <h3 class="card-title">
+      {{index .Texts "user.profile.nickname.title"}}
+    </h3>
+  </div>
+  <div class="card-body">
+    <div class="form-group">
+      <input type="text" class="form-control" name="nickname" required
+        value="{{.User.Nickname}}">
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-primary" type="submit">
+      {{index .Texts "general.submit"}}
+    </button>
+  </div>
+</form>
+
+<form class="card card-warning" method="post" id="change-email">
+  <div class="card-header">
+    <h3 class="card-title">
+      {{index .Texts "user.profile.email.title"}}
+    </h3>
+  </div>
+  <div class="card-body">
+    <div class="form-group">
+      <input type="email" class="form-control" name="email" required
+        value="{{.User.Email}}"
+        placeholder="{{index .Texts "user.profile.email.new"}}">
+    </div>
+    <div class="form-group">
+      <input type="password" class="form-control" name="password" required
+        placeholder="{{index .Texts "user.profile.email.password"}}" autocomplete="current-password">
+    </div>
+  </div>
+  <div class="card-footer">
+    <button class="btn btn-primary" type="submit">
+      {{index .Texts "user.profile.email.button"}}
+    </button>
+  </div>
+</form>
+
+<div class="card card-danger">
+  <div class="card-header">
+    <h3 class="card-title">
+      {{index .Texts "user.profile.delete.title"}}
+    </h3>
+  </div>
+  <div class="card-body">
+    {{if .Admin}}
+      <p>{{index .Texts "user.profile.delete.admin"}}</p>
+      <button class="btn btn-danger" disabled="disabled">
+        {{index .Texts "user.profile.delete.button"}}
+      </button>
+    {{else}}
+      <p>{{index .Texts "user.profile.delete.notice"}}</p>
+      <button
+        class="btn btn-danger"
+        data-toggle="modal"
+        data-target="#modal-delete-account"
+      >
+        {{index .Texts "user.profile.delete.button"}}
+      </button>
+    {{end}}
+  </div>
+</div>
+
+</div></div>
+  <form id="modal-delete-account" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content bg-danger">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{index .Texts "user.profile.delete.modal-title"}}
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div>{{index .TextHTML "user.profile.delete.modal-notice"}}</div>
+          <br>
+          <input type="password" class="form-control" required name="password"
+            placeholder="{{index .Texts "user.profile.delete.password"}}" autocomplete="current-password">
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-light" data-dismiss="modal">
+            {{index .Texts "general.close"}}
+          </button>
+          <button type="submit" class="btn btn-outline-light">
+            {{index .Texts "general.submit"}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+{{end}}

@@ -330,8 +330,6 @@ func cmdRisk(args []string) error {
 			response["error"] = "new_challenge"
 		case errors.Is(e, yggdrasil.ErrDenied) || errors.Is(e, links.ErrDenied) || errors.Is(e, registration.ErrDenied) || errors.Is(e, media.ErrDenied):
 			response["error"] = "denied"
-		case errors.Is(e, rules.ErrUnsupported):
-			response["error"] = "unsupported_rule"
 		default:
 			response["error"] = "operation_failed"
 		}

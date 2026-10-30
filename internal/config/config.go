@@ -19,11 +19,13 @@ import (
 )
 
 type Config struct {
+	Mail                                                                                              MailConfig
 	Address, BaseURL, Prefix, LockFile, PrivateKeyFile, OptionsFile                                   string
 	SessionDomain, PasswordMethod, PasswordSalt                                                       string
 	Locale, FallbackLocale                                                                            string
 	SecureCookie                                                                                      bool
 	Location                                                                                          *time.Location
+	TexturesDir                                                                                       string
 	Login                                                                                             admission.Config
 	LoginConnections, BusinessConnections, WorkerConnections                                          int
 	CleanupBatch                                                                                      int
@@ -31,6 +33,12 @@ type Config struct {
 	AppKey                                                                                            []byte
 	WorkerPollInterval                                                                                time.Duration
 	dsn                                                                                               string
+}
+
+type MailConfig struct {
+	Mailer, Host, Encryption, Username, Password, FromAddress, FromName string
+	Port                                                                int
+	SendTimeout, RetryDelay                                             time.Duration
 }
 
 func (c Config) DSN() string { return c.dsn }
@@ -95,6 +103,16 @@ func Load(file string, lookup func(string) (string, bool)) (Config, error) {
 	if OptionValue(c.SessionDomain) == nil {
 		c.SessionDomain = ""
 	}
+	if driver := get("FS_DRIVER", "local"); driver != "local" {
+		return c, errors.New("only the local textures filesystem driver is supported")
+	}
+	resolvedTextures := resolve(get("TEXTURES_DIR", "storage/textures"))
+	cleanTextures := filepath.Clean(resolvedTextures)
+	cleanRoot := filepath.Clean(root)
+	if cleanRoot == "." || cleanTextures == cleanRoot || !strings.HasPrefix(cleanTextures, cleanRoot+string(filepath.Separator)) {
+		return c, errors.New("TEXTURES_DIR must stay inside APP_ROOT")
+	}
+	c.TexturesDir = cleanTextures
 	c.PasswordMethod = get("PWD_METHOD", "BCRYPT")
 	c.PasswordSalt = get("SALT", "")
 	c.Locale = get("APP_LOCALE", "zh_CN")
@@ -142,6 +160,30 @@ func Load(file string, lookup func(string) (string, bool)) (Config, error) {
 	c.WorkerConnections, err = integer("DB_WORKER_CONNECTIONS", "1")
 	if err != nil {
 		return c, err
+	}
+	c.Mail.Mailer = get("MAIL_MAILER", "smtp")
+	c.Mail.Host = get("MAIL_HOST", "smtp.mailgun.org")
+	c.Mail.Encryption = get("MAIL_ENCRYPTION", "tls")
+	if OptionValue(c.Mail.Encryption) == nil {
+		c.Mail.Encryption = ""
+	}
+	c.Mail.Username = get("MAIL_USERNAME", "")
+	c.Mail.Password = get("MAIL_PASSWORD", "")
+	c.Mail.FromAddress = get("MAIL_FROM_ADDRESS", "hello@example.com")
+	c.Mail.FromName = get("MAIL_FROM_NAME", "Example")
+	c.Mail.Port, err = integer("MAIL_PORT", "587")
+	if err != nil {
+		return c, err
+	}
+	// The deadline follows go-mail's default; retries retain the existing
+	// worker's one-minute failed-lease cadence unless explicitly configured.
+	c.Mail.SendTimeout, err = time.ParseDuration(get("MAIL_SEND_TIMEOUT", "15s"))
+	if err != nil || c.Mail.SendTimeout <= 0 || c.Mail.SendTimeout >= time.Minute {
+		return c, errors.New("MAIL_SEND_TIMEOUT must be positive and less than the one-minute worker lease")
+	}
+	c.Mail.RetryDelay, err = time.ParseDuration(get("MAIL_RETRY_DELAY", "1m"))
+	if err != nil || c.Mail.RetryDelay <= 0 {
+		return c, errors.New("MAIL_RETRY_DELAY must be positive")
 	}
 	c.CleanupBatch, err = integer("AUTH_CLEANUP_BATCH", "500")
 	if err != nil || c.CleanupBatch < 1 {

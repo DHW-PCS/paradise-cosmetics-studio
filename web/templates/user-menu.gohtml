@@ -1,0 +1,21 @@
+{{define "user-menu"}}<li class="nav-item dropdown user-menu"><a href="#" class="nav-link d-flex align-items-center" data-toggle="dropdown">
+  <picture>
+    <source srcset="{{.AvatarWebP}}" type="image/webp">
+    <img src="{{.AvatarPNG}}" class="bs-avatar mr-2" alt="User Image">
+  </picture>
+  <span class="d-none d-md-inline d-sm-block" data-mark="nickname">{{.Nickname}}</span>
+</a>
+<div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+  <a class="dropdown-item" href="{{.BaseURL}}/user">{{.UserCenter}}</a>
+  <a class="dropdown-item" href="{{.BaseURL}}/user/profile">{{.Profile}}</a>
+  <div class="dropdown-divider"></div>
+  {{if .Admin}}
+  <a class="dropdown-item" href="{{.BaseURL}}/admin">{{.AdminPanel}}</a>
+  <a class="dropdown-item" href="{{.BaseURL}}/admin/users">{{.Users}}</a>
+  <a class="dropdown-item" href="{{.BaseURL}}/admin/reports">{{.Reports}}</a>
+  {{if .AdminPage}}<a class="dropdown-item" href="#" id="launch-cli">Web CLI</a>{{end}}
+  <div class="dropdown-divider"></div>
+  {{end}}
+  <a class="dropdown-item" href="#" id="logout-button">{{.Logout}}</a>
+</div>
+</li>{{end}}

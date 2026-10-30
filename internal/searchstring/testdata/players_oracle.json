@@ -1,0 +1,1012 @@
+{
+ "": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "John": {
+  "invalid": false,
+  "where": "name LIKE ?",
+  "args": [
+   "%John%"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "John Doe": {
+  "invalid": false,
+  "where": "(name LIKE ? AND name LIKE ?)",
+  "args": [
+   "%John%",
+   "%Doe%"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid:5": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid=5": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid>=5": {
+  "invalid": false,
+  "where": "pid >= ?",
+  "args": [
+   5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid<5": {
+  "invalid": false,
+  "where": "pid < ?",
+  "args": [
+   5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid<=5": {
+  "invalid": false,
+  "where": "pid <= ?",
+  "args": [
+   5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid>5": {
+  "invalid": false,
+  "where": "pid > ?",
+  "args": [
+   5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid in (1,2,3)": {
+  "invalid": false,
+  "where": "pid IN (?, ?, ?)",
+  "args": [
+   "1",
+   "2",
+   "3"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not pid in (1,2)": {
+  "invalid": false,
+  "where": "pid NOT IN (?, ?)",
+  "args": [
+   "1",
+   "2"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "name:'John Doe'": {
+  "invalid": false,
+  "where": "name = ?",
+  "args": [
+   "John Doe"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "name:\"John\"": {
+  "invalid": false,
+  "where": "name = ?",
+  "args": [
+   "John"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not name:John": {
+  "invalid": false,
+  "where": "name != ?",
+  "args": [
+   "John"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not (pid=1 or pid=2)": {
+  "invalid": false,
+  "where": "(pid != ? AND pid != ?)",
+  "args": [
+   1,
+   2
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not (pid=1 and pid=2)": {
+  "invalid": false,
+  "where": "(pid != ? OR pid != ?)",
+  "args": [
+   1,
+   2
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not not pid=1": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   1
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "skin:3 cape:4": {
+  "invalid": false,
+  "where": "(tid_skin = ? AND tid_cape = ?)",
+  "args": [
+   3,
+   4
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-01 00:00:00",
+   "2020-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified:2020-01": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-01 00:00:00",
+   "2020-01-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-01-02": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-02 00:00:00",
+   "2020-01-02 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified>=2020-01": {
+  "invalid": false,
+  "where": "last_modified >= ?",
+  "args": [
+   "2020-01-01 00:00:00"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified<2020-01": {
+  "invalid": false,
+  "where": "last_modified < ?",
+  "args": [
+   "2020-01-01 00:00:00"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not last_modified:2020": {
+  "invalid": false,
+  "where": "(last_modified < ? AND last_modified > ?)",
+  "args": [
+   "2020-01-01 00:00:00",
+   "2020-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-01-02 12:30": {
+  "invalid": true
+ },
+ "last_modified=2020-01-02 12:30:45": {
+  "invalid": true
+ },
+ "last_modified=2020-01-02T12:30:45Z": {
+  "invalid": true
+ },
+ "last_modified": {
+  "invalid": false,
+  "where": "last_modified IS NOT NULL",
+  "args": [],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not last_modified": {
+  "invalid": false,
+  "where": "last_modified IS NULL",
+  "args": [],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "sort:-pid": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [
+   {
+    "column": "pid",
+    "desc": true
+   }
+  ],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "sort:name,-last_modified": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [
+   {
+    "column": "name",
+    "desc": false
+   },
+   {
+    "column": "last_modified",
+    "desc": true
+   }
+  ],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "fields:pid,name": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": [
+   "pid",
+   "name"
+  ]
+ },
+ "not fields:pid": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": [
+   "uid",
+   "tid_skin",
+   "tid_cape",
+   "name",
+   "last_modified"
+  ]
+ },
+ "limit:5 from:2": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [],
+  "limit": 5,
+  "offset": 2,
+  "select": []
+ },
+ "limit:abc": {
+  "invalid": true
+ },
+ "unknown:1": {
+  "invalid": true
+ },
+ "(pid=1 or pid=2) and name:John": {
+  "invalid": false,
+  "where": "((pid = ? OR pid = ?) AND name = ?)",
+  "args": [
+   1,
+   2,
+   "John"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid=1 or pid=2": {
+  "invalid": false,
+  "where": "(pid = ? OR pid = ?)",
+  "args": [
+   1,
+   2
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "name=John and (pid=1 or pid=2)": {
+  "invalid": false,
+  "where": "(name = ? AND (pid = ? OR pid = ?))",
+  "args": [
+   "John",
+   1,
+   2
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified:null": {
+  "invalid": false,
+  "where": "last_modified = ?",
+  "args": [
+   "null"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid:5 name:John": {
+  "invalid": false,
+  "where": "(pid = ? AND name = ?)",
+  "args": [
+   5,
+   "John"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid:0": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   0
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid:-1": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   -1
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid:5.5": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   5.5
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "name:'空 格'": {
+  "invalid": false,
+  "where": "name = ?",
+  "args": [
+   "空 格"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "name:John": {
+  "invalid": false,
+  "where": "name = ?",
+  "args": [
+   "John"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid!=5": {
+  "invalid": true
+ },
+ "last_modified='2020-01-02 12:30:45.123'": {
+  "invalid": false,
+  "where": "last_modified = ?",
+  "args": [
+   "2020-01-02 12:30:45"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-1-2": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-02 00:00:00",
+   "2020-01-02 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='Jan 5 2020'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-05 00:00:00",
+   "2020-01-05 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2019/1/1": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2019-01-01 00:00:00",
+   "2019-01-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "name in ('a','b')": {
+  "invalid": false,
+  "where": "name IN (?, ?)",
+  "args": [
+   "a",
+   "b"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not name in ('a')": {
+  "invalid": false,
+  "where": "name NOT IN (?)",
+  "args": [
+   "a"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid>=5 name:John": {
+  "invalid": false,
+  "where": "(pid >= ? AND name = ?)",
+  "args": [
+   5,
+   "John"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "fields:": {
+  "invalid": true
+ },
+ "sort:": {
+  "invalid": true
+ },
+ "limit:": {
+  "invalid": true
+ },
+ "name:": {
+  "invalid": true
+ },
+ "()": {
+  "invalid": true
+ },
+ "and": {
+  "invalid": true
+ },
+ "(pid=1)": {
+  "invalid": false,
+  "where": "pid = ?",
+  "args": [
+   1
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid in (1)": {
+  "invalid": false,
+  "where": "pid IN (?)",
+  "args": [
+   "1"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "pid in ('1','2')": {
+  "invalid": false,
+  "where": "pid IN (?, ?)",
+  "args": [
+   "1",
+   "2"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-13-01": {
+  "invalid": false,
+  "where": "last_modified = ?",
+  "args": [
+   "2020-13-01"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=notadate": {
+  "invalid": false,
+  "where": "last_modified = ?",
+  "args": [
+   "notadate"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "sort:-pid limit:abc": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [
+   {
+    "column": "pid",
+    "desc": true
+   }
+  ],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "fields:pid limit:abc": {
+  "invalid": false,
+  "where": "",
+  "args": [],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": [
+   "pid"
+  ]
+ },
+ "pid=1 limit:abc": {
+  "invalid": true
+ },
+ "sort:-pid unknown:1": {
+  "invalid": true
+ },
+ "limit:abc sort:-pid": {
+  "invalid": true
+ },
+ "last_modified=NULL": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2026-01-01 00:00:00",
+   "2026-01-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified!=NULL": {
+  "invalid": true
+ },
+ "last_modified>NULL": {
+  "invalid": false,
+  "where": "last_modified > ?",
+  "args": [
+   "2026-01-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "not last_modified=NULL": {
+  "invalid": false,
+  "where": "(last_modified < ? AND last_modified > ?)",
+  "args": [
+   "2026-01-01 00:00:00",
+   "2026-01-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-02-31": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-03-02 00:00:00",
+   "2020-03-02 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-02-30": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-03-01 00:00:00",
+   "2020-03-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-04-31": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-05-01 00:00:00",
+   "2020-05-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2019-02-29": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2019-03-01 00:00:00",
+   "2019-03-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-02-29": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-02-29 00:00:00",
+   "2020-02-29 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-00-10": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2019-12-10 00:00:00",
+   "2019-12-10 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2020-01-00": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2019-12-31 00:00:00",
+   "2019-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=69": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2069-01-01 00:00:00",
+   "2069-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=70": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "1970-01-01 00:00:00",
+   "1970-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=1969": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "1969-01-01 00:00:00",
+   "1969-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=2069": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2069-01-01 00:00:00",
+   "2069-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=1970": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "1970-01-01 00:00:00",
+   "1970-12-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=01-70": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "1970-01-01 00:00:00",
+   "1970-01-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=01-69": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2069-01-01 00:00:00",
+   "2069-01-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='Jan 70'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "1970-01-01 00:00:00",
+   "1970-01-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='Jan 69'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2069-01-01 00:00:00",
+   "2069-01-31 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='next monday'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2026-01-05 00:00:00",
+   "2026-01-05 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=tomorrow": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2026-01-02 00:00:00",
+   "2026-01-02 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='2 days ago'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2025-12-30 00:00:00",
+   "2025-12-30 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified=today": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2026-01-01 00:00:00",
+   "2026-01-01 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='3. März 2020'": {
+  "invalid": false,
+  "where": "last_modified = ?",
+  "args": [
+   "3. März 2020"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='2020年1月2日'": {
+  "invalid": false,
+  "where": "last_modified = ?",
+  "args": [
+   "2020年1月2日"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='XYZ 2020'": {
+  "invalid": true
+ },
+ "last_modified='2020-01-02 12:30:60'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-02 12:31:00",
+   "2020-01-02 12:31:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ },
+ "last_modified='2020-01-02 24:00'": {
+  "invalid": false,
+  "where": "(last_modified >= ? AND last_modified <= ?)",
+  "args": [
+   "2020-01-03 00:00:00",
+   "2020-01-03 23:59:59"
+  ],
+  "order": [],
+  "limit": null,
+  "offset": null,
+  "select": []
+ }
+}

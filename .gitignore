@@ -10,3 +10,4 @@
 !/web/static/.keep
 /dist/
 *.tsbuildinfo
+/vendor/

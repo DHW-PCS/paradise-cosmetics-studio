@@ -23,13 +23,21 @@ const ReportsManagement: React.FC = () => {
 
   const getReports = async () => {
     setIsLoading(true)
-    const { data, last_page }: Paginator<Report> = await fetch.get(
+    const response = await fetch.get<Paginator<Report> | fetch.ResponseBody>(
       '/admin/reports/list',
       {
         q: query,
         page,
       },
     )
+    if ('code' in response) {
+      toast.error(response.message)
+      setReports(() => [])
+      setTotalPages(1)
+      setIsLoading(false)
+      return
+    }
+    const { data, last_page } = response
     setTotalPages(last_page)
     setReports(() => data)
     setIsLoading(false)

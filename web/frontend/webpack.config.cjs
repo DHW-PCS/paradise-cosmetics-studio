@@ -2,6 +2,23 @@ const path = require('path')
 const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+class FixedAssetPlugin {
+  // The frozen release ships bg.webp and favicon.ico under public/app by name;
+  // home_pic_url and favicon_url reference them literally, so they must not be
+  // content-hashed like normal bundle assets.
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap('FixedAssets', compilation => {
+      compilation.hooks.processAssets.tap({name:'FixedAssets',stage:webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL}, () => {
+        for (const name of ['bg.webp', 'favicon.ico']) {
+          const file = path.resolve(__dirname, 'resources/assets/src/images', name)
+          if (require('fs').existsSync(file)) {
+            compilation.emitAsset(name, new webpack.sources.RawSource(require('fs').readFileSync(file)))
+          }
+        }
+      })
+    })
+  }
+}
 
 class ManifestPlugin {
   apply(compiler) {
@@ -29,7 +46,9 @@ module.exports = {
     {test:/\.css$/,use:[MiniCssExtractPlugin.loader,{loader:'css-loader',options:{importLoaders:1}},'postcss-loader']},
     {test:/\.(png|webp|svg|woff2?|eot|ttf)$/,type:'asset'},
   ]},
-  plugins: [new MiniCssExtractPlugin({filename:'[name].[contenthash:7].css',chunkFilename:'[id].[contenthash:7].css'}),new ManifestPlugin(),new webpack.DefinePlugin({'window.Deno':'true',Deno:{args:[],build:{},version:{}},'process.platform':'"browser"',__blessing_public_path__:JSON.stringify('/app/')})],
+  plugins: [
+    new FixedAssetPlugin(),
+    new MiniCssExtractPlugin({filename:'[name].[contenthash:7].css',chunkFilename:'[id].[contenthash:7].css'}),new ManifestPlugin(),new webpack.DefinePlugin({'window.Deno':'true',Deno:{args:[],build:{},version:{}},'process.platform':'"browser"',__blessing_public_path__:JSON.stringify('/app/')})],
   resolve:{extensions:['.js','.ts','.tsx'],alias:{'react-dom':'@hot-loader/react-dom','@':path.resolve(__dirname,'resources/assets/src'),readline:'@/scripts/cli/readline.ts',prompts:'prompts/lib/index.js',assert:false}},
   optimization:{minimizer:[new CssMinimizerPlugin({}),'...']},
   experiments:{syncWebAssembly:true},

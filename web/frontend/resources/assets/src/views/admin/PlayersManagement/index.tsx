@@ -33,13 +33,21 @@ const PlayersManagement: React.FC = () => {
 
   const getPlayers = async () => {
     setIsLoading(true)
-    const { data, last_page }: Paginator<Player> = await fetch.get(
+    const response = await fetch.get<Paginator<Player> | fetch.ResponseBody>(
       urls.admin.players.list(),
       {
         q: query,
         page,
       },
     )
+    if ('code' in response) {
+      toast.error(response.message)
+      setPlayers(() => [])
+      setTotalPages(1)
+      setIsLoading(false)
+      return
+    }
+    const { data, last_page } = response
     setTotalPages(last_page)
     setPlayers(() => data)
     setIsLoading(false)

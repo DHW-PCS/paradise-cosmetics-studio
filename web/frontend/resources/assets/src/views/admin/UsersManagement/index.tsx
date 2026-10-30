@@ -37,13 +37,21 @@ const UsersManagement: React.FC = () => {
 
   const getUsers = async () => {
     setIsLoading(true)
-    const { data, last_page }: Paginator<User> = await fetch.get(
+    const response = await fetch.get<Paginator<User> | fetch.ResponseBody>(
       urls.admin.users.list(),
       {
         q: query,
         page,
       },
     )
+    if ('code' in response) {
+      toast.error(response.message)
+      setUsers(() => [])
+      setTotalPages(1)
+      setIsLoading(false)
+      return
+    }
+    const { data, last_page } = response
     setUsers(() => data)
     setTotalPages(last_page)
     setIsLoading(false)

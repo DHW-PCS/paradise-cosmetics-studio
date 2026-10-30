@@ -14,6 +14,7 @@ import (
 	"blessing-skin-go/internal/database"
 	"blessing-skin-go/internal/identity"
 	"blessing-skin-go/internal/legacy/password"
+	"blessing-skin-go/internal/outbox"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -52,14 +53,18 @@ func Database(t *testing.T, prefix string) (*database.Store, *identity.Service) 
 	}
 	t.Cleanup(func() { store.DB.Close(); admin.Exec("DROP DATABASE `" + name + "`"); admin.Close() })
 	statements := []string{
-		"CREATE TABLE " + store.Table("users") + ` (uid INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,email VARCHAR(100) NOT NULL,nickname VARCHAR(50) NOT NULL,password VARCHAR(255) NOT NULL,remember_token VARCHAR(100) NULL,permission INT NOT NULL,verified BOOLEAN NOT NULL,score INT NOT NULL,locale VARCHAR(10) NULL,is_dark_mode BOOLEAN NOT NULL DEFAULT 0,last_sign_at DATETIME NOT NULL DEFAULT '2020-01-01 00:00:00',register_at DATETIME NOT NULL DEFAULT '2020-01-01 00:00:00') ENGINE=InnoDB`,
-		"CREATE TABLE " + store.Table("players") + ` (pid INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,uid INT NOT NULL,name VARCHAR(50) NOT NULL,tid_skin INT NOT NULL DEFAULT 0,tid_cape INT NOT NULL DEFAULT 0) ENGINE=InnoDB`,
-		"CREATE TABLE " + store.Table("textures") + ` (tid INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,uploader INT NOT NULL,size INT NOT NULL) ENGINE=InnoDB`,
+		"CREATE TABLE " + store.Table("users") + ` (uid INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,email VARCHAR(100) NOT NULL,nickname VARCHAR(50) NOT NULL,avatar INT NOT NULL DEFAULT 0,ip VARCHAR(45) NOT NULL DEFAULT '127.0.0.1',password VARCHAR(255) NOT NULL,remember_token VARCHAR(100) NULL,permission INT NOT NULL,verified BOOLEAN NOT NULL,score INT NOT NULL,locale VARCHAR(255) NULL,is_dark_mode BOOLEAN NOT NULL DEFAULT 0,last_sign_at DATETIME NOT NULL DEFAULT '2020-01-01 00:00:00',register_at DATETIME NOT NULL DEFAULT '2020-01-01 00:00:00') ENGINE=InnoDB`,
+		"CREATE TABLE " + store.Table("players") + ` (pid INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,uid INT NOT NULL,name VARCHAR(50) NOT NULL,tid_skin INT NOT NULL DEFAULT -1,tid_cape INT NOT NULL DEFAULT -1,last_modified DATETIME NOT NULL DEFAULT '2020-01-01 00:00:00') ENGINE=InnoDB`,
+
 		"CREATE TABLE " + store.Table("options") + ` (id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,option_name VARCHAR(50) NOT NULL,option_value LONGTEXT NOT NULL) ENGINE=InnoDB`,
 		"CREATE TABLE " + store.Table("language_lines") + " (id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,`group` VARCHAR(255) NOT NULL,`key` VARCHAR(255) NOT NULL,text TEXT NOT NULL) ENGINE=InnoDB",
 		"CREATE TABLE " + store.Table("scopes") + " (id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(255) NOT NULL UNIQUE,description VARCHAR(255) NOT NULL) ENGINE=InnoDB",
 		"CREATE TABLE " + store.Table("notifications") + " (id CHAR(36) PRIMARY KEY,notifiable_type VARCHAR(255) NOT NULL,notifiable_id BIGINT NOT NULL,data TEXT NOT NULL,read_at TIMESTAMP NULL,created_at TIMESTAMP NULL) ENGINE=InnoDB",
 		"CREATE TABLE " + store.Table("oauth_clients") + ` (id INT UNSIGNED PRIMARY KEY,user_id INT NULL,name VARCHAR(255) NOT NULL,secret VARCHAR(255) NOT NULL,provider VARCHAR(255) NULL,redirect TEXT NOT NULL,personal_access_client BOOLEAN NOT NULL DEFAULT 0,password_client BOOLEAN NOT NULL DEFAULT 0,revoked BOOLEAN NOT NULL DEFAULT 0) ENGINE=InnoDB`,
+		"CREATE TABLE " + store.Table("uuid") + ` (id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(255) NOT NULL,uuid VARCHAR(255) NOT NULL) ENGINE=InnoDB`,
+		"CREATE TABLE " + store.Table("textures") + ` (tid INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,name VARCHAR(50) NOT NULL,type VARCHAR(10) NOT NULL,hash VARCHAR(64) NOT NULL,size INT NOT NULL,uploader INT NOT NULL,public TINYINT NOT NULL,likes INT NOT NULL DEFAULT 0,upload_at DATETIME NOT NULL DEFAULT '2020-01-01 00:00:00') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+		"CREATE TABLE " + store.Table("user_closet") + ` (user_uid INT NOT NULL,texture_tid INT NOT NULL,item_name TEXT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+		"CREATE TABLE " + store.Table("reports") + ` (id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,tid INT NOT NULL,uploader INT NOT NULL,reporter INT NOT NULL,reason LONGTEXT NOT NULL,status INT NOT NULL,report_at DATETIME NOT NULL) ENGINE=InnoDB`,
 	}
 	for _, statement := range statements {
 		if _, err = store.DB.Exec(statement); err != nil {
@@ -67,6 +72,21 @@ func Database(t *testing.T, prefix string) (*database.Store, *identity.Service) 
 		}
 	}
 	if err = store.Migrate(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if err = database.MigrateAccounts(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err = outbox.Migrate(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err = database.MigratePlayers(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err = database.MigrateTextures(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err = database.MigrateCloset(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}
 	hasher, _ := password.New("BCRYPT", "")

@@ -111,6 +111,29 @@ const Viewer: React.FC<Props> = (props) => {
   }, [])
 
   useEffect(() => {
+    const canvas = containerRef.current
+    if (!canvas) {
+      return
+    }
+    const resize = () => {
+      const viewer = viewRef.current
+      const parent = canvas.parentElement
+      const width = parent?.clientWidth ?? canvas.clientWidth
+      if (!viewer || !width) {
+        return
+      }
+      viewer.setSize(width, Math.max(canvas.clientHeight, 500))
+    }
+    const observer = new ResizeObserver(resize)
+    observer.observe(canvas)
+    window.addEventListener('resize', resize)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
+
+  useEffect(() => {
     const viewer = viewRef.current
     viewer.loadSkin(props.skin || SkinSteve, props.isAlex ? 'slim' : 'default')
   }, [props.skin, props.isAlex])

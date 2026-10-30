@@ -131,12 +131,24 @@ func (p *PasswordProof) UID() int64     { return p.user.UID }
 func (p *PasswordProof) Version() int64 { return p.version }
 
 func (s *Service) WithPassword(ctx context.Context, identification, raw string, lookup Lookup, accept func(*PasswordProof) error) error {
+	return s.withPassword(ctx, raw, func() (*account, error) { return s.lookupAccount(ctx, identification, lookup) }, identification, lookup, accept)
+}
+
+// WithUserPassword verifies the current account by UID, including accounts
+// whose email is empty. Callers must recheck the proof in their transaction.
+func (s *Service) WithUserPassword(ctx context.Context, uid int64, raw string, accept func(*PasswordProof) error) error {
+	return s.withPassword(ctx, raw, func() (*account, error) {
+		return scanAccount(s.LoginStore.DB.QueryRowContext(ctx, "SELECT "+accountColumns+" FROM "+s.Store.Table("users")+" u WHERE uid=?", uid))
+	}, "", EmailOnly, accept)
+}
+
+func (s *Service) withPassword(ctx context.Context, raw string, load func() (*account, error), identification string, lookup Lookup, accept func(*PasswordProof) error) error {
 	release, err := s.Admission.Acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer release()
-	candidate, err := s.lookupAccount(ctx, identification, lookup)
+	candidate, err := load()
 	if errors.Is(err, sql.ErrNoRows) {
 		return ErrNoAccount
 	}
@@ -159,7 +171,41 @@ func (s *Service) WithPassword(ctx context.Context, identification, raw string, 
 	if !valid {
 		return ErrCredentials
 	}
+	if identification == "" {
+		identification = candidate.Email
+	}
 	return accept(&PasswordProof{candidate, version, identification, lookup})
+}
+
+// RegisterSession joins the registration owner's transaction after the users
+// row has been created. It initializes the version and replaces the guest.
+func (s *Service) RegisterSession(ctx context.Context, tx *sql.Tx, uid int64, guest string) (*BrowserSession, error) {
+	u, err := s.accountForUpdate(ctx, tx, uid)
+	if err != nil {
+		return nil, err
+	}
+	v, err := s.VersionTx(ctx, tx, uid)
+	if err != nil {
+		return nil, err
+	}
+	var guestUID sql.NullInt64
+	var expiry int64
+	err = tx.QueryRowContext(ctx, "SELECT user_uid,expires_at FROM "+s.Store.Table("go_web_sessions")+" WHERE digest=? FOR UPDATE", Digest(guest)).Scan(&guestUID, &expiry)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrSession
+	}
+	if err != nil {
+		return nil, err
+	}
+	if guestUID.Valid || expiry <= s.now().Unix() {
+		return nil, ErrSession
+	}
+	b, err := s.issue(ctx, tx, &u.User, v, false, "")
+	if err != nil {
+		return nil, err
+	}
+	_, err = tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("go_web_sessions")+" WHERE digest=?", Digest(guest))
+	return b, err
 }
 
 func (s *Service) RecheckPassword(ctx context.Context, tx *sql.Tx, proof *PasswordProof) (*User, error) {

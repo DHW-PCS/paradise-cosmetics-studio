@@ -35,7 +35,7 @@ func decode(r *http.Request) (input, error) {
 			return nil, errors.New("expected one JSON object")
 		}
 		for key, value := range values {
-			if text, ok := value.(string); ok && key != "password" && key != "password_confirmation" {
+			if text, ok := value.(string); ok {
 				text = strings.Trim(text, " \t\n\r\x00\x0b")
 				if text == "" {
 					values[key] = nil
@@ -75,9 +75,7 @@ func decode(r *http.Request) (input, error) {
 	values := input{}
 	for key, texts := range r.Form {
 		text := texts[len(texts)-1]
-		if key != "password" && key != "password_confirmation" {
-			text = strings.Trim(text, " \t\n\r\x00\x0b")
-		}
+		text = strings.Trim(text, " \t\n\r\x00\x0b")
 		if text == "" {
 			values[key] = nil
 		} else {

@@ -1,0 +1,26 @@
+{{define "admindashboard"}}<div class="row">
+<div class="col-md-6"><div class="small-box bg-info"><div class="inner"><h3 class="stats">{{.AdminSumUsers}}</h3><p>{{.AdminUsageUsers}}</p></div><div class="icon"><i class="fas fa-users"></i></div><a href="{{.BaseURL}}/admin/users" class="small-box-footer">{{.Users}}&nbsp;<i class="fa fa-arrow-circle-right"></i></a></div></div>
+<div class="col-md-6"><div class="small-box bg-green"><div class="inner"><h3 class="stats">{{.AdminSumPlayers}}</h3><p>{{.AdminUsagePlayers}}</p></div><div class="icon"><i class="fas fa-gamepad"></i></div><a href="{{.BaseURL}}/admin/players" class="small-box-footer">{{.PlayerManage}}&nbsp;<i class="fa fa-arrow-circle-right"></i></a></div></div>
+</div>
+<div class="row">
+<div class="col-md-6"><div class="small-box bg-purple"><div class="inner"><h3 class="stats">{{.AdminSumTextures}}</h3><p>{{.AdminUsageTextures}}</p></div><div class="icon"><i class="fas fa-file"></i></div></div></div>
+<div class="col-md-6"><div class="small-box bg-yellow"><div class="inner"><h3 class="stats">{{if gt .AdminSumStorage 1024}}{{.AdminStorageMB}}MB{{else}}{{.AdminSumStorage}}KB{{end}}</h3><p>{{.AdminUsageStorage}}</p></div><div class="icon"><i class="fas fa-hdd"></i></div></div></div>
+</div>
+<div class="row">
+<div class="col-md-6">
+<div class="card"><div class="card-header"><h3 class="card-title">{{.AdminNotifyTitle}}</h3></div>
+<form method="post" action="{{.BaseURL}}/admin/notifications/send"><input type="hidden" name="_token" value="{{.CSRF}}"><div class="card-body">
+{{if .NotificationError}}<div class="callout callout-danger">{{.NotificationError}}</div>{{end}}
+{{if .NotificationSent}}<div class="callout callout-success">{{.NotificationSent}}</div>{{end}}
+<div class="form-group"><label>{{.AdminNotifyReceiver}}</label>
+<div class="radio"><label><input type="radio" name="receiver" value="all" required> {{.AdminNotifyAll}}</label></div>
+<div class="radio"><label><input type="radio" name="receiver" value="normal" required> {{.AdminNotifyNormal}}</label></div>
+<div class="radio"><label><input type="radio" name="receiver" value="uid" required> {{.AdminNotifyUID}} &nbsp;<input type="number" name="uid" class="form-control"></label></div>
+<div class="radio"><label><input type="radio" name="receiver" value="email" required> {{.AdminNotifyEmail}} &nbsp;<input type="email" name="email" class="form-control"></label></div>
+</div>
+<div class="form-group"><label>{{.AdminNotifySubject}}</label><input type="text" name="title" class="form-control" required></div>
+<div class="form-group"><label>{{.AdminNotifyContent}}</label><textarea name="content" class="form-control" rows="3"></textarea></div>
+</div><div class="card-footer"><input type="submit" value="{{.AdminSubmit}}" class="btn btn-primary"></div></form></div>
+</div>
+<div class="col-md-6"><div class="card card-primary"><div class="card-header"><h3 class="card-title">{{.AdminOverview}}</h3></div><div class="card-body"><div class="chart" id="chart-users-registration"></div><div class="chart" id="chart-textures-upload"></div></div></div></div>
+</div>{{end}}

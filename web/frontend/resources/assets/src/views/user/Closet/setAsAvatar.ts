@@ -2,6 +2,7 @@ import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { showModal, toast } from '@/scripts/notify'
 import urls from '@/scripts/urls'
+import updateUserAvatar from '@/scripts/userAvatar'
 
 export default async function setAsAvatar(tid: number) {
   try {
@@ -19,11 +20,7 @@ export default async function setAsAvatar(tid: number) {
   )
   if (code === 0) {
     toast.success(message)
-    document
-      .querySelectorAll<HTMLImageElement>('[alt="User Image"]')
-      .forEach((el) => {
-        el.src = `${blessing.base_url}/avatar/${tid}`
-      })
+    updateUserAvatar(tid)
   } else {
     toast.error(message)
   }

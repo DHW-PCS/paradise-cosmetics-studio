@@ -4,6 +4,8 @@ Blessing Skin 6.0.2 的 Go 重写工作区。目前提供认证与页面基础�
 
 构建已使用 Go 1.27.3、Node.js 24.22.1、Yarn 1.22.22 验证。Makefile 固定 Go toolchain，frontend 使用 packageManager 和原 yarn.lock；不使用 PHP 生成 route、翻译或页面资源。
 
+名称校验使用随源码固定的 native PCRE2 10.39 maintenance library。构建需要 C compiler 和 `CGO_ENABLED=1`，library 静态编入 Go binary，不依赖系统 PCRE2。Cross build 需要目标平台的 C toolchain；维护与 qualification 说明见 [internal/pcre/README.md](internal/pcre/README.md)。发行时保留 `dist/licenses/PCRE2.txt` 和 third-party notices。
+
 ```sh
 make build
 dist/blessing-skin version
@@ -21,7 +23,19 @@ dist/blessing-skin serve -env /absolute/path/site.env
 dist/blessing-skin worker -env /absolute/path/site.env
 ```
 
-`migrate` 要求已有业务 schema；不会安装/重建账户、client、业务表或密钥。serve/worker 不自动执行 DDL。当前 worker 实现认证状态 cleanup 和 outbox 基础；未注册的业务 handler 会保留任务并报错，不能当作已投递成功。
+`migrate` 要求已有业务 schema；不会安装/重建账户、client、业务表或密钥。serve/worker 不自动执行 DDL。当前 worker 实现认证状态 cleanup 和账户邮件 outbox handler；未注册的业务 handler 会保留任务并报错，不能当作已投递成功。
+
+账户邮件支持 SMTP 的原 MAIL_* 配置。空 MAIL_MAILER 禁用新邮件挑战；其他 mailer 会明确报不支持。APP_KEY 用于密封 outbox 邮件 payload，不能在有待投递任务时随意更换。MAIL_SEND_TIMEOUT 默认沿 go-mail 的 15s，必须小于 worker 的一分钟 lease；MAIL_RETRY_DELAY 默认保持一分钟失败重投间隔。临时 SMTP/网络错误会重排，永久配置/地址/payload 错误保留为 blocked；未知 topic 保留任务并停止 worker。SMTP 为至少一次投递。
+
+修复 blocked 任务的原因后，按 `go_outbox.id` 重投外部副作用：
+
+```sh
+dist/blessing-skin outbox-retry -id TASK_ID -env /absolute/path/site.env
+```
+
+检查任务时只查询 id、topic、attempts、error_class、blocked_at、available_at 和 completed_at，避免将 payload 导出到普通日志。重投不重做注册、积分或 challenge 签发；已失效的邮件挑战按 obsolete 完成。
+
+首次应用 `010_outbox_failures` 时，ALTER 和 migration ledger 各自 commit。若 ALTER 已成功而 ledger 写入失败，保持停服，先核对实际的 blocked_at/error_class columns、dispatch index 与该 migration 的 DDL/checksum，再由维护人员修复 ledger；不能直接重跑或修改既有 `005_outbox` checksum。Go rollback 前也须核对新 schema/任务 reader，不能让旧发行物接管新邮件任务。
 
 OPTIONS_SNAPSHOT_FILE 可声明原有效 cached options 的 JSON 对象（文本键值）。有 snapshot 时它是权威来源，缺键走原 defaults，空对象也有效；不会把 DB 缺省合入 snapshot。未声明时读取 DB options。迁移时须先核对原 DB/cache 的差异，不执行 options.php。
 

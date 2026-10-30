@@ -2,6 +2,7 @@ package password
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -123,5 +124,27 @@ func TestLengthPolicyUsesCharacters(t *testing.T) {
 	}
 	if err := ValidateLogin(""); !errors.Is(err, ErrEmptyPassword) {
 		t.Fatalf("empty login error = %v", err)
+	}
+}
+
+func TestUnicodeNewPasswordPreservesPHPBcryptByteSemantics(t *testing.T) {
+	raw := strings.Repeat("汉", 25)
+	if err := ValidateRegistration(raw); err != nil {
+		t.Fatal(err)
+	}
+	for _, method := range []Method{BCRYPT, PHP_PASSWORD} {
+		h, err := New(string(method), "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		hash, err := h.Hash(raw)
+		if err != nil {
+			t.Fatalf("%s rejected allowed Unicode password: %v", method, err)
+		}
+		for _, input := range []string{raw, raw[:72]} {
+			if valid, err := h.Verify(input, hash); !valid || err != nil {
+				t.Fatalf("%s bcrypt semantics changed", method)
+			}
+		}
 	}
 }

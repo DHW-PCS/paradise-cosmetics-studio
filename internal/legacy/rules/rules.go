@@ -1,39 +1,50 @@
-// Package rules ports only explicitly audited PCRE configurations to RE2.
-// Unsupported custom rules fail at configuration load and require a bridge.
+// Package rules preserves the frozen player and texture name validation rules.
 package rules
 
 import (
 	"errors"
-	"regexp"
 	"unicode/utf8"
+
+	"blessing-skin-go/internal/pcre"
 )
 
-var ErrUnsupported = errors.New("rules: PCRE requires explicit compatibility review")
-
-// Player compiles the frozen built-in player-name choices. Production's two
-// custom regex options were empty in the M0 inventory, so none are invented.
-func Player(rule, custom string) (*regexp.Regexp, error) {
-	if custom != "" {
-		return nil, ErrUnsupported
+func match(pattern, value string) (bool, error) {
+	matched, err := pcre.Match(pattern, value)
+	var execution *pcre.ExecutionError
+	if errors.As(err, &execution) {
+		return false, nil
 	}
-	switch rule {
-	case "official":
-		return regexp.Compile(`^[A-Za-z0-9_]+$`)
-	case "cjk":
-		return regexp.Compile(`^[A-Za-z0-9_§\x{4e00}-\x{9fff}]+$`)
-	default:
-		return nil, ErrUnsupported
-	}
+	return matched, err
 }
 
-// MatchPlayer mirrors PCRE's non-UCP whitespace set for the utf8 rule.
+// MatchPlayer follows PlayerName::passes, including the custom empty-rule
+// default and the separate UTF encoding check for the utf8 choice.
 func MatchPlayer(rule, custom, value string) (bool, error) {
-	if rule == "utf8" && custom == "" {
-		return utf8.ValidString(value) && !regexp.MustCompile(`[\t\n\x0b\f\r ]`).MatchString(value), nil
+	pattern := `/.*/`
+	switch rule {
+	case "official":
+		pattern = `/^[A-Za-z0-9_]+$/`
+	case "cjk":
+		pattern = `/^[A-Za-z0-9_§\x{4e00}-\x{9fff}]+$/u`
+	case "utf8":
+		if !utf8.ValidString(value) {
+			return false, nil
+		}
+		whitespace, err := match(`/\s/`, value)
+		return !whitespace, err
+	case "custom":
+		if custom != "" && custom != "0" {
+			pattern = custom
+		}
 	}
-	r, e := Player(rule, custom)
-	if e != nil {
-		return false, e
+	return match(pattern, value)
+}
+
+// MatchTexture applies the optional configured PCRE; required/string
+// validation belongs to the calling upload or rename operation.
+func MatchTexture(pattern, value string) (bool, error) {
+	if pattern == "" || pattern == "0" {
+		return true, nil
 	}
-	return r.MatchString(value), nil
+	return match(pattern, value)
 }
