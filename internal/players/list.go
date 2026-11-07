@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"blessing-skin-go/internal/identity"
 	"blessing-skin-go/internal/searchstring"
 )
 
@@ -30,7 +31,42 @@ func (s *Service) schema() searchstring.Schema {
 }
 
 // AdminList returns the frozen admin players paginator for ?q=&page=.
+// It is the browser page entry; authorization is enforced by the
+// browser admin route, as before. Core API callers must use
+// AdminListActor, which rechecks the actor in-transaction.
 func (s *Service) AdminList(ctx context.Context, page int, query, path string) (*Paginator, error) {
+	return s.adminList(ctx, s.Store.DB, page, query, path)
+}
+
+// AdminListActor returns the full players paginator (every account,
+// never the actor's own list) after rechecking the actor in the same
+// transaction with PlayersManagement.Read or PlayersManagement.ReadWrite
+// and requiring current permission >= admin. Pagination, search and
+// ordering are the frozen AdminList semantics.
+func (s *Service) AdminListActor(ctx context.Context, actor identity.Actor, page int, query, path string) (*Paginator, error) {
+	var out *Paginator
+	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
+		current, _, err := s.recheckActor(ctx, tx, actor, playersAdminReadScope)
+		if err != nil {
+			return err
+		}
+		if current.Permission < 1 {
+			return ErrNoPermission
+		}
+		value, err := s.adminList(ctx, tx, page, query, path)
+		if err != nil {
+			return err
+		}
+		out = value
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *Service) adminList(ctx context.Context, q queryer, page int, query, path string) (*Paginator, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -45,7 +81,7 @@ func (s *Service) AdminList(ctx context.Context, page int, query, path string) (
 		args = resolved.Args
 	}
 	var total int
-	if err := s.Store.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("players")+where, args...).Scan(&total); err != nil {
+	if err := q.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("players")+where, args...).Scan(&total); err != nil {
 		return nil, err
 	}
 	order := ""
@@ -64,7 +100,7 @@ func (s *Service) AdminList(ctx context.Context, page int, query, path string) (
 		}
 	}
 	limitArgs := append(append([]any{}, args...), perPage, (page-1)*perPage)
-	rows, err := s.Store.DB.QueryContext(ctx, "SELECT pid,uid,name,tid_skin,tid_cape,last_modified FROM "+s.Store.Table("players")+where+order+" LIMIT ? OFFSET ?", limitArgs...)
+	rows, err := q.QueryContext(ctx, "SELECT pid,uid,name,tid_skin,tid_cape,last_modified FROM "+s.Store.Table("players")+where+order+" LIMIT ? OFFSET ?", limitArgs...)
 	if err != nil {
 		return nil, err
 	}

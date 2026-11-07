@@ -12,7 +12,9 @@ import (
 
 	"blessing-skin-go/internal/account"
 	"blessing-skin-go/internal/identity"
+	"blessing-skin-go/internal/invitation"
 	"blessing-skin-go/internal/legacy/rules"
+	"blessing-skin-go/internal/modules"
 	"blessing-skin-go/internal/site"
 )
 
@@ -159,7 +161,7 @@ func (a *App) registerAccount(w http.ResponseWriter, r *http.Request, b *identit
 	if !a.checkCaptcha(w, r, b, v) {
 		return
 	}
-	result, err := a.accounts.Register(r.Context(), account.Registration{Email: v.text("email"), Nickname: v.text("nickname"), PlayerName: v.text("player_name"), Password: v.text("password"), IP: clientIP(r), Locale: a.locale(r, b), Guest: b.Token})
+	result, err := a.accounts.Register(r.Context(), account.Registration{Email: v.text("email"), Nickname: v.text("nickname"), PlayerName: v.text("player_name"), Password: v.text("password"), IP: clientIP(r), Locale: a.locale(r, b), Guest: b.Token, InvitationCode: v.text("invitationCode")})
 	switch {
 	case errors.Is(err, account.ErrEmailUsed):
 		validation(w, map[string][]string{"email": {a.fieldMessage(r, b, "email", "unique")}})
@@ -169,6 +171,23 @@ func (a *App) registerAccount(w http.ResponseWriter, r *http.Request, b *identit
 		return
 	case errors.Is(err, account.ErrIPQuota):
 		a.business(w, r, b, 1, "auth.register.max", ":regs", optionText(options["regs_per_ip"]))
+		return
+	case errors.Is(err, invitation.ErrEmpty), errors.Is(err, invitation.ErrUnavailable):
+		// The original can_register filter rejected with the plugin message;
+		// the code keeps the original json(reason, 1) shape.
+		key := "InvitationCodes::messages.empty"
+		if errors.Is(err, invitation.ErrUnavailable) {
+			key = "InvitationCodes::messages.invalid"
+		}
+		jsonResponse(w, 200, map[string]any{"code": 1, "message": modules.Message(key, a.locale(r, b))})
+		return
+	case errors.Is(err, account.ErrModuleUnavailable):
+		// An enabled restricting module without a connected consumer refuses
+		// the whole registration. The original can_register filter rejected
+		// with a code=1 JSON (legacy disable-registration uses its general
+		// title text); a deployment config failure (verification without
+		// mail) stays a 503 server error via the generic branch below.
+		jsonResponse(w, 200, map[string]any{"code": 1, "message": modules.Message("Blessing\\DisableRegistration::general.title", a.locale(r, b))})
 		return
 	case err != nil:
 		a.serverError(w, r, b)

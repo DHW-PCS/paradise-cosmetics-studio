@@ -20,7 +20,10 @@ import (
 
 type Config struct {
 	Mail                                                                                              MailConfig
+	YggdrasilPublicKeysEnabled                                                                        bool
+	YggVerboseLog                                                                                     bool
 	Address, BaseURL, Prefix, LockFile, PrivateKeyFile, OptionsFile                                   string
+	ModulesManifestFile                                                                               string
 	SessionDomain, PasswordMethod, PasswordSalt                                                       string
 	Locale, FallbackLocale                                                                            string
 	SecureCookie                                                                                      bool
@@ -78,6 +81,7 @@ func Load(file string, lookup func(string) (string, bool)) (Config, error) {
 	c.LockFile = get("APP_LOCK_FILE", "storage/go-instance.lock")
 	c.PrivateKeyFile = get("OAUTH_PRIVATE_KEY", "storage/oauth-private.key")
 	c.OptionsFile = get("OPTIONS_SNAPSHOT_FILE", "")
+	c.ModulesManifestFile = get("MODULES_MANIFEST_FILE", "")
 	root := ""
 	if file != "" {
 		absolute, err := filepath.Abs(file)
@@ -99,6 +103,7 @@ func Load(file string, lookup func(string) (string, bool)) (Config, error) {
 	c.LockFile = resolve(c.LockFile)
 	c.PrivateKeyFile = resolve(c.PrivateKeyFile)
 	c.OptionsFile = resolve(c.OptionsFile)
+	c.ModulesManifestFile = resolve(c.ModulesManifestFile)
 	c.SessionDomain = get("SESSION_DOMAIN", "")
 	if OptionValue(c.SessionDomain) == nil {
 		c.SessionDomain = ""
@@ -122,6 +127,29 @@ func Load(file string, lookup func(string) (string, bool)) (Config, error) {
 		return c, errors.New("invalid APP_TIMEZONE")
 	}
 	c.SecureCookie = u.Scheme == "https"
+	boolEnv := func(key string) (bool, error) {
+		raw := get(key, "")
+		if raw == "" {
+			return false, nil
+		}
+		if raw == "0" || raw == "1" {
+			return raw == "1", nil
+		}
+		if v := OptionValue(raw); v != nil {
+			if b, ok := v.(bool); ok {
+				return b, nil
+			}
+		}
+		return false, fmt.Errorf("invalid %s", key)
+	}
+	c.YggdrasilPublicKeysEnabled, err = boolEnv("YGGDRASIL_PUBLICKEYS_ENABLED")
+	if err != nil {
+		return c, err
+	}
+	c.YggVerboseLog, err = boolEnv("YGG_VERBOSE_LOG")
+	if err != nil {
+		return c, err
+	}
 	if raw := get("SESSION_SECURE_COOKIE", ""); raw != "" && OptionValue(raw) != nil {
 		v := OptionValue(raw)
 		value, ok := v.(bool)

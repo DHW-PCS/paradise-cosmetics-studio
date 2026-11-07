@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"strconv"
+
 	"net/url"
 	"regexp"
 	"strings"
@@ -15,6 +17,7 @@ import (
 
 	"blessing-skin-go/internal/account"
 	"blessing-skin-go/internal/identity"
+	"blessing-skin-go/internal/invitation"
 	"blessing-skin-go/internal/legacy/password"
 	"blessing-skin-go/internal/outbox"
 	"blessing-skin-go/internal/players"
@@ -41,7 +44,8 @@ func fixture(t *testing.T) (*account.Service, *identity.BrowserSession, *mailbox
 	if _, err := store.DB.Exec("UPDATE "+store.Table("users")+" SET password=?", hash); err != nil {
 		t.Fatal(err)
 	}
-	view := &site.Service{Store: store, Identity: id, Location: time.FixedZone("site", 8*3600), OptionSnapshot: map[string]string{}}
+	modules := testsupport.Modules(store, id)
+	view := &site.Service{Store: store, Identity: id, Location: time.FixedZone("site", 8*3600), OptionSnapshot: map[string]string{}, Modules: modules}
 	assets, err := web.Load()
 	if err != nil {
 		t.Fatal(err)
@@ -52,6 +56,7 @@ func fixture(t *testing.T) (*account.Service, *identity.BrowserSession, *mailbox
 		t.Fatal(err)
 	}
 	s := account.New(store, id, view, mail)
+	s.Modules = modules
 	b, err := id.Login(t.Context(), "user@example.invalid", "original-password", true, "")
 	if err != nil {
 		t.Fatal(err)
@@ -98,12 +103,33 @@ func TestRegistrationNamespaceQuotaAndAtomicInitialState(t *testing.T) {
 	if _, err = register(t, s, in); !errors.Is(err, account.ErrIPQuota) {
 		t.Fatal("IP quota not enforced", err)
 	}
-	s.Site.OptionSnapshot["plugins_enabled"] = `[{"name":"invitation-codes","version":"1.0"}]`
+	// The eligibility decision reads the authoritative rows inside the
+	// registration transaction; the option snapshot no longer decides.
+	if _, err = s.Store.DB.Exec("UPDATE "+s.Store.Table("options")+" SET option_value=? WHERE option_name='go_module_installations'", `[{"name":"invitation-codes","version":"1.0"}]`); err != nil {
+		t.Fatal(err)
+	}
+	if err = s.Modules.Enable(t.Context(), adminSession(t, s), "invitation-codes"); err != nil {
+		t.Fatal(err)
+	}
+	// With the consumer connected an enabled module consults the request's
+	// code; only the unconnected restricting modules refuse outright.
+	if _, err = register(t, s, in); invitation.ErrEmpty == nil || !strings.Contains(invitation.ErrEmpty.Error(), "empty") {
+		t.Fatal("consumer registration contract changed", invitation.ErrEmpty)
+	}
+	// A restricting module without a connected consumer refuses as before.
+	if _, err := s.Store.DB.Exec("UPDATE "+s.Store.Table("options")+" SET option_value=? WHERE option_name='go_module_installations'", `[{"name":"disable-registration","version":"1.0"}]`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Store.DB.Exec("UPDATE "+s.Store.Table("options")+" SET option_value=? WHERE option_name='plugins_enabled'", `[{"name":"invitation-codes","version":"3.1.2"},{"name":"disable-registration","version":"1.0"}]`); err != nil {
+		t.Fatal(err)
+	}
 	in.IP = "203.0.113.2"
 	if _, err = register(t, s, in); !errors.Is(err, account.ErrModuleUnavailable) {
-		t.Fatal("enabled eligibility module bypassed", err)
+		t.Fatal("unconnected restricting module bypassed", err)
 	}
-	s.Site.OptionSnapshot["plugins_enabled"] = `["invitation-codes"]`
+	if _, err = s.Store.DB.Exec("UPDATE "+s.Store.Table("options")+" SET option_value=? WHERE option_name='plugins_enabled'", `["invitation-codes"]`); err != nil {
+		t.Fatal(err)
+	}
 	if _, err = register(t, s, in); err != nil {
 		t.Fatal("ignored legacy string entry changed policy", err)
 	}
@@ -255,6 +281,17 @@ func register(t *testing.T, s *account.Service, in account.Registration) (*ident
 	}
 	in.Guest = b.Token
 	return s.Register(t.Context(), in)
+}
+
+// adminSession logs the seeded permission-2 fixture account in for module
+// operations.
+func adminSession(t *testing.T, s *account.Service) *identity.BrowserSession {
+	t.Helper()
+	b, err := s.Identity.Login(t.Context(), "admin@example.invalid", "original-password", false, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }
 
 func TestVerificationResendCooldownAndSingleConsumption(t *testing.T) {
@@ -537,5 +574,137 @@ func TestRenameVersusAccountDelete(t *testing.T) {
 	s.Store.DB.QueryRow("SELECT COUNT(*) FROM "+s.Store.Table("go_uuid_bindings")+" WHERE pid=?", pid).Scan(&bindings)
 	if users != 0 || playerRows != 0 || bindings != 0 {
 		t.Fatalf("final state users=%d players=%d bindings=%d", users, playerRows, bindings)
+	}
+}
+
+func enableInvitationModule(t *testing.T, s *account.Service) {
+	t.Helper()
+	if _, err := s.Store.DB.Exec("UPDATE "+s.Store.Table("options")+" SET option_value=? WHERE option_name='go_module_installations'", `[{"name":"invitation-codes","version":"3.1.2"}]`); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Modules.Enable(t.Context(), adminSession(t, s), "invitation-codes"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func seedInvitationCode(t *testing.T, s *account.Service, code string) {
+	t.Helper()
+	if _, err := s.Store.DB.Exec("INSERT INTO "+s.Store.Table("invitation_codes")+" (code,generated_at) VALUES (?,NOW(6))", code); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func invitationState(t *testing.T, s *account.Service, code string) (usedBy int64, users int) {
+	t.Helper()
+	if err := s.Store.DB.QueryRow("SELECT used_by FROM "+s.Store.Table("invitation_codes")+" WHERE code=?", code).Scan(&usedBy); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Store.DB.QueryRow("SELECT COUNT(*) FROM " + s.Store.Table("users")).Scan(&users); err != nil {
+		t.Fatal(err)
+	}
+	return usedBy, users
+}
+
+func TestRegistrationConsumesOneSeededRow(t *testing.T) {
+	s, _, _ := fixture(t)
+	enableInvitationModule(t, s)
+	code := strings.Repeat("a", 32)
+	seedInvitationCode(t, s, code)
+	s.Site.OptionSnapshot["regs_per_ip"] = "500"
+	if _, err := register(t, s, account.Registration{Email: "invited@example.invalid", PlayerName: "InvitedPlayer", Password: "new-password", IP: "203.0.113.40", Locale: "en", InvitationCode: code}); err != nil {
+		t.Fatal(err)
+	}
+	usedBy, users := invitationState(t, s, code)
+	var invited int64
+	if err := s.Store.DB.QueryRow("SELECT uid FROM " + s.Store.Table("users") + " WHERE email='invited@example.invalid'").Scan(&invited); err != nil {
+		t.Fatal(err)
+	}
+	if usedBy != invited {
+		t.Fatalf("consumed uid=%d, want %d", usedBy, invited)
+	}
+	if users != 3 {
+		t.Fatalf("users=%d", users)
+	}
+	// The same code is gone after the membership; a second registration
+	// can no longer pass eligibility.
+	if _, err := register(t, s, account.Registration{Email: "second@example.invalid", PlayerName: "SecondPlayer", Password: "new-password", IP: "203.0.113.41", Locale: "en", InvitationCode: code}); !errors.Is(err, invitation.ErrUnavailable) {
+		t.Fatalf("reused code accepted: %v", err)
+	}
+	// An enabled module with an empty code fails the registration with the
+	// consumer's empty refusal.
+	if _, err := register(t, s, account.Registration{Email: "empty@example.invalid", PlayerName: "EmptyPlayer", Password: "new-password", IP: "203.0.113.42", Locale: "en"}); !errors.Is(err, invitation.ErrEmpty) {
+		t.Fatalf("empty code accepted: %v", err)
+	}
+}
+
+func TestRegistrationSameCodeConcurrencyKeepsOneAccount(t *testing.T) {
+	s, _, _ := fixture(t)
+	enableInvitationModule(t, s)
+	code := strings.Repeat("b", 32)
+	seedInvitationCode(t, s, code)
+	s.Site.OptionSnapshot["regs_per_ip"] = "500"
+	runTogether(t, 100, func(i int) error {
+		_, err := register(t, s, account.Registration{Email: "same-code-" + strconv.Itoa(i) + "@example.invalid", PlayerName: "Concurrent" + strconv.Itoa(i), Password: "new-password", IP: "203.0.113.50", Locale: "en", InvitationCode: code})
+		return err
+	}, invitation.ErrUnavailable)
+	var successes, qualifications int
+	if err := s.Store.DB.QueryRow("SELECT COUNT(*) FROM "+s.Store.Table("invitation_codes")+" WHERE code=? AND used_by <> 0", code).Scan(&successes); err != nil {
+		t.Fatal(err)
+	}
+	if successes != 1 {
+		t.Fatalf("consumed rows=%d", successes)
+	}
+	if err := s.Store.DB.QueryRow("SELECT COUNT(*) FROM " + s.Store.Table("users") + " WHERE ip='203.0.113.50'").Scan(&qualifications); err != nil {
+		t.Fatal(err)
+	}
+	if qualifications != 1 {
+		t.Fatalf("accounts created=%d", qualifications)
+	}
+}
+
+func TestRegistrationRollbackKeepsInvitationAvailable(t *testing.T) {
+	s, _, _ := fixture(t)
+	enableInvitationModule(t, s)
+	s.Site.OptionSnapshot["require_verification"] = "true"
+	code := strings.Repeat("c", 32)
+	seedInvitationCode(t, s, code)
+	s.Site.OptionSnapshot["regs_per_ip"] = "500"
+	if _, err := s.Store.DB.Exec("CREATE TRIGGER reject_challenge BEFORE INSERT ON " + s.Store.Table("go_mail_challenges") + " FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic challenge fault'"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := register(t, s, account.Registration{Email: "rolled@example.invalid", PlayerName: "RollbackPlayer", Password: "new-password", IP: "203.0.113.60", Locale: "en", InvitationCode: code}); err == nil {
+		t.Fatal("injected challenge failure ignored")
+	}
+	usedBy, _ := invitationState(t, s, code)
+	if usedBy != 0 {
+		t.Fatalf("failed registration consumed the code: uid=%d", usedBy)
+	}
+	if _, err := s.Store.DB.Exec("DROP TRIGGER reject_challenge"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := register(t, s, account.Registration{Email: "rolled@example.invalid", PlayerName: "RollbackPlayer", Password: "new-password", IP: "203.0.113.60", Locale: "en", InvitationCode: code}); err != nil {
+		t.Fatalf("relaunch after rollback failed: %v", err)
+	}
+	var relaunched int64
+	if err := s.Store.DB.QueryRow("SELECT uid FROM " + s.Store.Table("users") + " WHERE email='rolled@example.invalid'").Scan(&relaunched); err != nil {
+		t.Fatal(err)
+	}
+	usedBy, _ = invitationState(t, s, code)
+	if usedBy != relaunched {
+		t.Fatalf("relaunch consumed uid=%d, want %d", usedBy, relaunched)
+	}
+}
+
+func TestDisabledRegistrationModuleIgnoresCodes(t *testing.T) {
+	s, _, _ := fixture(t)
+	code := strings.Repeat("z", 32)
+	seedInvitationCode(t, s, code)
+	s.Site.OptionSnapshot["regs_per_ip"] = "500"
+	if _, err := register(t, s, account.Registration{Email: "direct@example.invalid", PlayerName: "DirectPlayer", Password: "new-password", IP: "203.0.113.70", Locale: "en", InvitationCode: code}); err != nil {
+		t.Fatal(err)
+	}
+	usedBy, _ := invitationState(t, s, code)
+	if usedBy != 0 {
+		t.Fatalf("disabled module consumed: uid=%d", usedBy)
 	}
 }

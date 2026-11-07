@@ -15,6 +15,7 @@ import (
 	"blessing-skin-go/internal/config"
 	"blessing-skin-go/internal/database"
 	"blessing-skin-go/internal/identity"
+	"blessing-skin-go/internal/modules"
 )
 
 type Service struct {
@@ -23,6 +24,11 @@ type Service struct {
 	Identity                                 *identity.Service
 	OptionSnapshot                           map[string]string
 	Location                                 *time.Location
+	// Modules is the wiring channel to the display layer. It never merges
+	// its rows into Options: page and menu assembly read the manager directly
+	// so a transaction-level Options call cannot acquire a second pooled
+	// connection while holding row locks.
+	Modules *modules.Manager
 }
 
 // LoadOptionSnapshot accepts an authoritative JSON export, never executable options.php.
@@ -60,7 +66,6 @@ func (s *Service) Options(ctx context.Context) (map[string]any, error) {
 		}
 		return values, nil
 	}
-
 	rows, err := s.Store.DB.QueryContext(ctx, "SELECT option_name,option_value FROM "+s.Store.Table("options"))
 	if err != nil {
 		return nil, err

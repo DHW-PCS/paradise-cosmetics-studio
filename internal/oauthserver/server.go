@@ -34,6 +34,7 @@ type Server struct {
 	cfg      Config
 	provider oauth2.Provider
 	storage  *storage
+	policy   *ScopePolicy
 }
 
 type session struct {
@@ -65,9 +66,11 @@ func New(c Config) (*Server, error) {
 		return nil, err
 	}
 	strategy := compose.NewOAuth2JWTStrategy(&jwt.DefaultStrategy{Config: cfg, Issuer: issuer}, compose.NewOAuth2HMACStrategy(cfg), cfg)
-	st := &storage{store: c.Store, identity: c.Identity, scopes: append(append([]string(nil), c.Scopes...), "*"), strategy: strategy}
+	snapshot := Snapshot{Names: append(append([]string(nil), c.Scopes...), "*")}
+	policy := NewScopePolicy(snapshot)
+	st := &storage{store: c.Store, identity: c.Identity, policy: policy, strategy: strategy}
 	p := compose.Compose(cfg, st, strategy, compose.OAuth2AuthorizeExplicitFactory, compose.OAuth2RefreshTokenGrantFactory, compose.OAuth2ResourceOwnerPasswordCredentialsFactory, compose.OAuth2ClientCredentialsGrantFactory, compose.OAuth2PKCEFactory, compose.OAuth2TokenIntrospectionFactory, compose.OAuth2TokenRevocationFactory)
-	return &Server{c, p, st}, nil
+	return &Server{c, p, st, policy}, nil
 }
 
 // Authorize is called only after the application obtains authenticated consent.
@@ -80,7 +83,11 @@ func (s *Server) Authorize(ctx context.Context, r *http.Request, browser *identi
 		r.Form.Set("scope", "User.Read")
 	}
 	var code string
-	err := s.storage.run(ctx, func(ctx context.Context) error {
+	lease, leaseErr := s.policy.AcquireRead(ctx)
+	if leaseErr != nil {
+		return "", leaseErr
+	}
+	err := s.storage.runLeased(ctx, s.cfg.Store.DB, lease, func(ctx context.Context) error {
 		request, err := s.provider.NewAuthorizeRequest(ctx, r)
 		if err != nil {
 			return err
@@ -122,7 +129,13 @@ func (s *Server) Token(w http.ResponseWriter, r *http.Request) {
 		if proof != nil {
 			db = s.cfg.Identity.LoginStore.DB
 		}
-		return s.storage.runOn(r.Context(), db, func(ctx context.Context) error {
+		// The flow pins one scope snapshot between the SQL transaction and
+		// its commit; password hashing already happened outside this window.
+		lease, leaseErr := s.policy.AcquireRead(r.Context())
+		if leaseErr != nil {
+			return leaseErr
+		}
+		return s.storage.runLeased(r.Context(), db, lease, func(ctx context.Context) error {
 			root := ctx.Value(transactionKey{}).(*transaction)
 			root.proof = proof
 			root.code = r.PostForm.Get("code")
@@ -177,10 +190,17 @@ type Principal struct {
 
 func (s *Server) Validate(ctx context.Context, token string, scopes ...string) (*Principal, error) {
 	var p *Principal
-	err := s.storage.run(ctx, func(ctx context.Context) error {
-		_, request, err := s.provider.IntrospectToken(ctx, token, oauth2.AccessToken, newSession(0, 0))
+	lease, err := s.policy.AcquireRead(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = s.storage.runLeased(ctx, s.cfg.Store.DB, lease, func(ctx context.Context) error {
+		use, request, err := s.provider.IntrospectToken(ctx, token, oauth2.AccessToken, newSession(0, 0))
 		if err != nil {
 			return err
+		}
+		if use != oauth2.AccessToken {
+			return ErrToken
 		}
 		for _, scope := range scopes {
 			if !request.GetGrantedScopes().Has(scope) && !request.GetGrantedScopes().Has("*") {

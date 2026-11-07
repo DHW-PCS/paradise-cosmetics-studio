@@ -55,11 +55,24 @@ func menuItems(definitions []menuDefinition, base, current string, t func(string
 	}
 	return items
 }
-func sidebar(base, current string, admin bool, t func(string) string) []MenuGroup {
+
+// moduleItem inserts the enabled module page entries into the sidebar after
+// the fourth core admin entry, matching the original addMenuItem('admin', 4).
+// Titles follow the frozen plugin namespaces instead of core menu keys.
+type moduleItem struct {
+	title, path, icon string
+}
+
+func withModuleItems(coreItems, moduleItems []MenuItem) []MenuItem {
+	out := append([]MenuItem(nil), coreItems[:4]...)
+	out = append(out, moduleItems...)
+	return append(out, coreItems[4:]...)
+}
+func sidebar(base, current string, admin bool, t func(string) string, moduleItems []MenuItem) []MenuGroup {
 	explore := []menuDefinition{{"general.skinlib", "skinlib", "fa-archive", nil}}
 	if strings.HasPrefix(current, "admin") {
 		back := append([]menuDefinition{{"general.user-center", "user", "fa-user", nil}}, explore...)
-		return []MenuGroup{{t("general.admin-panel"), menuItems(adminMenu, base, current, t)}, {t("general.back"), menuItems(back, base, current, t)}}
+		return []MenuGroup{{t("general.admin-panel"), withModuleItems(menuItems(adminMenu, base, current, t), moduleItems)}, {t("general.back"), menuItems(back, base, current, t)}}
 	}
 	groups := []MenuGroup{{t("general.user-center"), menuItems(userMenu, base, current, t)}, {t("general.explore"), menuItems(explore, base, current, t)}}
 	if admin {

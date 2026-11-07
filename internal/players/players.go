@@ -51,6 +51,11 @@ type Service struct {
 	Site     *site.Service
 	Textures *textures.Service
 	Now      func() time.Time
+	// ModuleLock, when set, installs the module-state shared current read
+	// inside GameUpload/GameReset transactions before the user locks. The
+	// HTTP composition root wires it to the module manager; a nil hook
+	// disables the gate (direct service tests).
+	ModuleLock func(ctx context.Context, tx *sql.Tx) error
 }
 
 // WithTextures wires the shared texture service used by the game upload intent.
@@ -190,20 +195,20 @@ func (s *Service) Authorize(ctx context.Context, b *identity.BrowserSession, pid
 	return s.permitted(intent, b.User, owner, permission)
 }
 
-// Add creates a player for the current browser session and charges the frozen
+// AddActor creates a player for the actor and charges the frozen
 // score_per_player fee. UUID allocation stays lazy (frozen behaviour).
-func (s *Service) Add(ctx context.Context, b *identity.BrowserSession, name string) (Player, error) {
+func (s *Service) AddActor(ctx context.Context, actor identity.Actor, name string) (Player, error) {
 	var out Player
 	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
 		if err := database.LockNamespaces(ctx, tx, s.Store, "player-name", "uuid"); err != nil {
 			return err
 		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, _, err := s.recheckActor(ctx, tx, actor, playerWriteScope)
 		if err != nil {
 			return err
 		}
 		var addErr error
-		out, addErr = s.AddTx(ctx, tx, actor.UID, name, false)
+		out, addErr = s.AddTx(ctx, tx, current.UID, name, false)
 		return addErr
 	})
 	return out, err
@@ -258,24 +263,35 @@ func (s *Service) AddTx(ctx context.Context, tx *sql.Tx, uid int64, name string,
 	return Player{PID: pid, Name: name, UID: uid, LastModified: now.Format("2006-01-02 15:04:05")}, nil
 }
 
-// List returns the players of the current browser session's account.
-func (s *Service) List(ctx context.Context, b *identity.BrowserSession) ([]Player, error) {
-	rows, err := s.Store.DB.QueryContext(ctx, "SELECT pid,uid,name,tid_skin,tid_cape,last_modified FROM "+s.Store.Table("players")+" WHERE uid=?", b.User.UID)
+// ListActor returns the players of the actor's account. The read is
+// rechecked in the same transaction (Player.Read or Player.ReadWrite).
+func (s *Service) ListActor(ctx context.Context, actor identity.Actor) ([]Player, error) {
+	out := []Player{}
+	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
+		current, _, err := s.recheckActor(ctx, tx, actor, playerReadScope)
+		if err != nil {
+			return err
+		}
+		rows, err := tx.QueryContext(ctx, "SELECT pid,uid,name,tid_skin,tid_cape,last_modified FROM "+s.Store.Table("players")+" WHERE uid=?", current.UID)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var player Player
+			var modified time.Time
+			if err = rows.Scan(&player.PID, &player.UID, &player.Name, &player.TIDSkin, &player.TIDCape, &modified); err != nil {
+				return err
+			}
+			player.LastModified = modified.In(s.Site.Location).Format("2006-01-02 15:04:05")
+			out = append(out, player)
+		}
+		return rows.Err()
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	out := []Player{}
-	for rows.Next() {
-		var player Player
-		var modified time.Time
-		if err = rows.Scan(&player.PID, &player.UID, &player.Name, &player.TIDSkin, &player.TIDCape, &modified); err != nil {
-			return nil, err
-		}
-		player.LastModified = modified.In(s.Site.Location).Format("2006-01-02 15:04:05")
-		out = append(out, player)
-	}
-	return out, rows.Err()
+	return out, nil
 }
 
 // Count returns the number of players of an account for the player page.
@@ -287,7 +303,7 @@ func (s *Service) Count(ctx context.Context, uid int64) (int64, error) {
 
 // Rename renames a player and keeps UUID/binding consistent in the same
 // transaction (frozen v4 rename keeps the UUID, v3 follows the name).
-func (s *Service) Rename(ctx context.Context, b *identity.BrowserSession, pid int64, name string, intent Intent) (Player, string, error) {
+func (s *Service) RenameActor(ctx context.Context, actor identity.Actor, pid int64, name string, intent Intent) (Player, string, error) {
 	options, err := s.Site.Options(ctx)
 	if err != nil {
 		return Player{}, "", err
@@ -302,11 +318,7 @@ func (s *Service) Rename(ctx context.Context, b *identity.BrowserSession, pid in
 		if err != nil {
 			return err
 		}
-		locked, err := s.lockUsers(ctx, tx, b.User.UID, owner)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, locked, err := s.recheckActor(ctx, tx, actor, scopeForIntent(intent, true), owner)
 		if err != nil {
 			return err
 		}
@@ -318,7 +330,7 @@ func (s *Service) Rename(ctx context.Context, b *identity.BrowserSession, pid in
 			return ErrConflict
 		}
 		oldName = player.Name
-		if err = s.permitted(intent, actor, owner, locked[owner].Permission); err != nil {
+		if err = s.permitted(intent, current, owner, locked[owner].Permission); err != nil {
 			return err
 		}
 		if err = s.validateName(options, name); err != nil {
@@ -355,7 +367,7 @@ func (s *Service) Rename(ctx context.Context, b *identity.BrowserSession, pid in
 
 // Transfer changes the owner of a player (admin only) and bumps the binding
 // version when the owner actually changes.
-func (s *Service) Transfer(ctx context.Context, b *identity.BrowserSession, pid, target int64) (TransferResult, error) {
+func (s *Service) TransferActor(ctx context.Context, actor identity.Actor, pid, target int64) (TransferResult, error) {
 	options, err := s.Site.Options(ctx)
 	if err != nil {
 		return TransferResult{}, err
@@ -376,14 +388,7 @@ func (s *Service) Transfer(ctx context.Context, b *identity.BrowserSession, pid,
 			}
 			return err
 		}
-		locked, err := s.lockUsers(ctx, tx, b.User.UID, owner, target)
-		if err != nil {
-			if errors.Is(err, ErrNotFound) {
-				return ErrTargetMissing
-			}
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, locked, err := s.recheckActor(ctx, tx, actor, playersAdminWriteScope, owner, target)
 		if err != nil {
 			return err
 		}
@@ -394,7 +399,7 @@ func (s *Service) Transfer(ctx context.Context, b *identity.BrowserSession, pid,
 		if player.UID != owner {
 			return ErrConflict
 		}
-		if err = s.permitted(Admin, actor, owner, locked[owner].Permission); err != nil {
+		if err = s.permitted(Admin, current, owner, locked[owner].Permission); err != nil {
 			return err
 		}
 		if owner == target {
@@ -437,7 +442,7 @@ type TransferResult struct {
 // Delete removes a player. Owner deletion refunds score_per_player when
 // return_score is enabled (including free registration players); admin deletes
 // never refund.
-func (s *Service) Delete(ctx context.Context, b *identity.BrowserSession, pid int64, intent Intent) (string, error) {
+func (s *Service) DeleteActor(ctx context.Context, actor identity.Actor, pid int64, intent Intent) (string, error) {
 	options, err := s.Site.Options(ctx)
 	if err != nil {
 		return "", err
@@ -451,11 +456,7 @@ func (s *Service) Delete(ctx context.Context, b *identity.BrowserSession, pid in
 		if err != nil {
 			return err
 		}
-		locked, err := s.lockUsers(ctx, tx, b.User.UID, owner)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, locked, err := s.recheckActor(ctx, tx, actor, scopeForIntent(intent, true), owner)
 		if err != nil {
 			return err
 		}
@@ -466,7 +467,7 @@ func (s *Service) Delete(ctx context.Context, b *identity.BrowserSession, pid in
 		if player.UID != owner {
 			return ErrConflict
 		}
-		if err = s.permitted(intent, actor, owner, locked[owner].Permission); err != nil {
+		if err = s.permitted(intent, current, owner, locked[owner].Permission); err != nil {
 			return err
 		}
 		deleted = player.Name

@@ -42,6 +42,9 @@ type BrowserSession struct {
 	User     *User
 	Expires  time.Time
 	Version  int64
+
+	// API-cookie validation carries a separate proof, never a web Token.
+	apiProof *apiCookieProof
 }
 
 type Service struct {
@@ -118,6 +121,24 @@ const (
 	EmailOnly
 )
 
+// PasswordIntent selects the banned policy for a Yggdrasil password proof.
+// It is chosen by the calling domain, never by an HTTP request.
+type PasswordIntent int
+
+const (
+	// PasswordIntentAuthenticate rejects banned accounts both at proof
+	// creation and at transaction recheck.
+	PasswordIntentAuthenticate PasswordIntent = iota
+	// PasswordIntentSignout allows banned accounts through proof creation
+	// and transaction recheck; require_verification still applies in the
+	// calling domain.
+	PasswordIntentSignout
+)
+
+// ErrNoVersion reports that the account has no go_auth_versions row. A
+// credential recheck must not create the row; issuance may initialize it.
+var ErrNoVersion = errors.New("identity: account has no auth version")
+
 // PasswordProof is created only by WithPassword. Its fields cannot be supplied
 // by an HTTP caller; issuance must recheck its account snapshot in a transaction.
 type PasswordProof struct {
@@ -125,10 +146,18 @@ type PasswordProof struct {
 	version        int64
 	identification string
 	lookup         Lookup
+	intent         PasswordIntent
+	versionExists  bool
 }
 
-func (p *PasswordProof) UID() int64     { return p.user.UID }
-func (p *PasswordProof) Version() int64 { return p.version }
+func (p *PasswordProof) UID() int64             { return p.user.UID }
+func (p *PasswordProof) Version() int64         { return p.version }
+func (p *PasswordProof) Intent() PasswordIntent { return p.intent }
+
+// VersionExists reports whether the account had a go_auth_versions row when
+// the proof was created. A false value forbids treating the defaulted
+// version as an existing credential in recheck.
+func (p *PasswordProof) VersionExists() bool { return p.versionExists }
 
 func (s *Service) WithPassword(ctx context.Context, identification, raw string, lookup Lookup, accept func(*PasswordProof) error) error {
 	return s.withPassword(ctx, raw, func() (*account, error) { return s.lookupAccount(ctx, identification, lookup) }, identification, lookup, accept)
@@ -142,7 +171,20 @@ func (s *Service) WithUserPassword(ctx context.Context, uid int64, raw string, a
 	}, "", EmailOnly, accept)
 }
 
+// WithYggdrasilPassword creates a Yggdrasil password proof under the given
+// intent: authenticate rejects banned accounts at this stage, signout
+// allows them. Admission, candidate lookup and password computation are
+// shared with the browser login; the calling domain must still recheck the
+// proof in its own transaction. It performs no token issuance.
+func (s *Service) WithYggdrasilPassword(ctx context.Context, identification, raw string, intent PasswordIntent, accept func(*PasswordProof) error) error {
+	return s.withPasswordIntent(ctx, raw, func() (*account, error) { return s.lookupAccount(ctx, identification, EmailOrPlayer) }, identification, EmailOrPlayer, intent, accept)
+}
+
 func (s *Service) withPassword(ctx context.Context, raw string, load func() (*account, error), identification string, lookup Lookup, accept func(*PasswordProof) error) error {
+	return s.withPasswordIntent(ctx, raw, load, identification, lookup, PasswordIntentAuthenticate, accept)
+}
+
+func (s *Service) withPasswordIntent(ctx context.Context, raw string, load func() (*account, error), identification string, lookup Lookup, intent PasswordIntent, accept func(*PasswordProof) error) error {
 	release, err := s.Admission.Acquire(ctx)
 	if err != nil {
 		return err
@@ -155,13 +197,16 @@ func (s *Service) withPassword(ctx context.Context, raw string, load func() (*ac
 	if err != nil {
 		return err
 	}
-	if candidate.Permission < 0 {
+	if intent == PasswordIntentAuthenticate && candidate.Permission < 0 {
 		return ErrBanned
 	}
 
 	var version int64 = 1
+	versionExists := true
 	err = s.LoginStore.DB.QueryRowContext(ctx, "SELECT version FROM "+s.Store.Table("go_auth_versions")+" WHERE user_uid=?", candidate.UID).Scan(&version)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
+		versionExists = false
+	} else if err != nil {
 		return err
 	}
 	valid, err := s.Passwords.Verify(raw, candidate.Password)
@@ -174,7 +219,7 @@ func (s *Service) withPassword(ctx context.Context, raw string, load func() (*ac
 	if identification == "" {
 		identification = candidate.Email
 	}
-	return accept(&PasswordProof{candidate, version, identification, lookup})
+	return accept(&PasswordProof{user: candidate, version: version, identification: identification, lookup: lookup, intent: intent, versionExists: versionExists})
 }
 
 // RegisterSession joins the registration owner's transaction after the users
@@ -232,6 +277,52 @@ func (s *Service) RecheckPassword(ctx context.Context, tx *sql.Tx, proof *Passwo
 		return nil, err
 	}
 	version, err := s.VersionTx(ctx, tx, u.UID)
+	if err != nil {
+		return nil, err
+	}
+	if version != proof.version {
+		return nil, ErrStale
+	}
+	return &u.User, nil
+}
+
+// RecheckGamePasswordTx rechecks a WithYggdrasilPassword proof inside the
+// caller's transaction. It locks the users row, verifies the password hash,
+// the identification (account email or player name) and the auth version
+// without ever creating a version row. Authenticate intent rejects banned
+// accounts; signout intent allows them. A missing version row reports
+// ErrNoVersion so signout can succeed without creating state.
+func (s *Service) RecheckGamePasswordTx(ctx context.Context, tx *sql.Tx, proof *PasswordProof) (*User, error) {
+	u, err := s.accountForUpdate(ctx, tx, proof.user.UID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrStale
+	}
+	if err != nil {
+		return nil, err
+	}
+	if u.Password != proof.user.Password {
+		return nil, ErrStale
+	}
+	if proof.intent == PasswordIntentAuthenticate && u.Permission < 0 {
+		return nil, ErrStale
+	}
+	var uid int64
+	if proof.lookup == EmailOnly || users.EmailLooksLikeEmail(proof.identification) {
+		err = tx.QueryRowContext(ctx, "SELECT uid FROM "+s.Store.Table("users")+" WHERE uid=? AND email=? FOR UPDATE", u.UID, proof.identification).Scan(&uid)
+	} else {
+		err = tx.QueryRowContext(ctx, "SELECT uid FROM "+s.Store.Table("players")+" WHERE uid=? AND name=? LIMIT 1 FOR UPDATE", u.UID, proof.identification).Scan(&uid)
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrStale
+	}
+	if err != nil {
+		return nil, err
+	}
+	var version int64
+	err = tx.QueryRowContext(ctx, "SELECT version FROM "+s.Store.Table("go_auth_versions")+" WHERE user_uid=? FOR UPDATE", u.UID).Scan(&version)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNoVersion
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -145,8 +145,37 @@ func TestSetTexturesValidatesBothSlotsBeforeWriting(t *testing.T) {
 	}
 	// Textures outside the closet are rejected.
 	otherTID := uploadAsUser(t, env, loginIdentity(t, env.id, "admin@example.invalid"), "OtherSkin", true, pngFixture(t, 64, 64, 63))
-	if _, err := env.service.SetTextures(context.Background(), b, pid, &otherTID, nil); !errors.Is(err, ErrNotFound) {
+	if _, err := env.service.SetTextures(context.Background(), b, pid, &otherTID, nil); !errors.Is(err, ErrNotInCloset) {
 		t.Fatalf("non-closet texture error = %v", err)
+	}
+}
+
+func TestSetTexturesMissingTexture(t *testing.T) {
+	service, id, store := fixture(t, nil)
+	b := login(t, id, "user@example.invalid")
+	pid := insertPlayer(t, store, 1, "MissingTexture")
+	tid := int64(9999)
+	_, err := service.SetTextures(context.Background(), b, pid, &tid, nil)
+	if !errors.Is(err, ErrNotFound) || errors.Is(err, ErrNotInCloset) {
+		t.Fatalf("missing texture error = %v, want only ErrNotFound", err)
+	}
+}
+
+func TestSetTexturesTextureNotInCloset(t *testing.T) {
+	service, id, store := fixture(t, nil)
+	b := login(t, id, "user@example.invalid")
+	pid := insertPlayer(t, store, 1, "NotInCloset")
+	result, err := store.DB.Exec("INSERT INTO " + store.Table("textures") + " (name,type,hash,size,uploader,public,likes,upload_at) VALUES ('OutsideCloset','steve','outside-closet',1,2,1,0,'2026-01-01 00:00:00')")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tid, err := result.LastInsertId()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = service.SetTextures(context.Background(), b, pid, &tid, nil)
+	if !errors.Is(err, ErrNotInCloset) || errors.Is(err, ErrNotFound) {
+		t.Fatalf("non-closet texture error = %v, want only ErrNotInCloset", err)
 	}
 }
 

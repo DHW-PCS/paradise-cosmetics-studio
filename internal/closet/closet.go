@@ -18,13 +18,14 @@ import (
 )
 
 var (
-	ErrNotFound     = errors.New("closet: object not found")
-	ErrNoPermission = errors.New("closet: no permission")
-	ErrLackScore    = errors.New("closet: not enough score")
-	ErrRepeated     = errors.New("closet: already in closet")
-	ErrInvalidName  = errors.New("closet: invalid name")
-	ErrConflict     = errors.New("closet: concurrent change; retry")
-	ErrPrivate      = errors.New("closet: private texture")
+	ErrNotFound       = errors.New("closet: object not found")
+	ErrTargetNotFound = errors.New("closet: target user not found")
+	ErrNoPermission   = errors.New("closet: no permission")
+	ErrLackScore      = errors.New("closet: not enough score")
+	ErrRepeated       = errors.New("closet: already in closet")
+	ErrInvalidName    = errors.New("closet: invalid name")
+	ErrConflict       = errors.New("closet: concurrent change; retry")
+	ErrPrivate        = errors.New("closet: private texture")
 )
 
 // DuplicateTexture reports a public same-hash conflict when publishing.
@@ -107,55 +108,14 @@ func lockUsers(ctx context.Context, tx *sql.Tx, store *database.Store, uids ...i
 
 func (s *Service) options(ctx context.Context) (map[string]any, error) { return s.Site.Options(ctx) }
 
-// List returns the frozen closet paginator with the texture + pivot shape.
+// List is the browser wrapper for ListActor; it shares the same business
+// transaction kernel and never forges a browser session for an OAuth actor.
 func (s *Service) List(ctx context.Context, b *identity.BrowserSession, category, query string, page, perPage int, path string) (*Page, error) {
-	if page < 1 {
-		page = 1
-	}
-	if perPage < 1 {
-		perPage = 6
-	}
-	where := " WHERE uc.user_uid=?"
-	args := []any{b.User.UID}
-	if category == "cape" {
-		where += " AND t.type='cape'"
-	} else {
-		where += " AND t.type IN ('steve','alex')"
-	}
-	if query != "" {
-		where += " AND uc.item_name LIKE ?"
-		args = append(args, "%"+query+"%")
-	}
-	from := " FROM " + s.Store.Table("user_closet") + " uc JOIN " + s.Store.Table("textures") + " t ON t.tid=uc.texture_tid"
-	var total int
-	if err := s.Store.DB.QueryRowContext(ctx, "SELECT COUNT(*)"+from+where, args...).Scan(&total); err != nil {
-		return nil, err
-	}
-	rows, err := s.Store.DB.QueryContext(ctx, "SELECT t.tid,t.name,t.type,t.hash,t.size,t.uploader,t.public,t.upload_at,t.likes,uc.user_uid,uc.texture_tid,uc.item_name"+from+where+" ORDER BY uc.texture_tid DESC LIMIT ? OFFSET ?",
-		append(args, perPage, (page-1)*perPage)...)
+	actor, err := s.Identity.NewBrowserActor(b)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	items := []Item{}
-	for rows.Next() {
-		var item Item
-		var uploadAt time.Time
-		var itemName sql.NullString
-		if err = rows.Scan(&item.TID, &item.Name, &item.Type, &item.Hash, &item.Size, &item.Uploader, &item.Public, &uploadAt, &item.Likes, &item.Pivot.UserUID, &item.Pivot.TextureTID, &itemName); err != nil {
-			return nil, err
-		}
-		item.UploadAt = uploadAt.In(s.Site.Location).Format("2006-01-02 15:04:05")
-		if itemName.Valid {
-			name := itemName.String
-			item.Pivot.ItemName = &name
-		}
-		items = append(items, item)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return searchstring.NewPaginator(items, page, perPage, total, path), nil
+	return s.ListActor(ctx, actor, category, query, page, perPage, path)
 }
 
 // IDs returns the frozen all-ids array.
@@ -249,249 +209,52 @@ func (s *Service) permittedAdmin(actor *identity.User, target *lockedUser) bool 
 	return actor.UID == target.UID || target.Permission < actor.Permission
 }
 
-// Add implements the frozen normal closet add with fee, likes and uploader reward.
+// Add is the browser wrapper for AddActor, sharing the same business
+// transaction kernel (fees, likes, and uploader reward are not duplicated).
 func (s *Service) Add(ctx context.Context, b *identity.BrowserSession, tid int64, name string) error {
-	if name == "" {
-		return ErrInvalidName
-	}
-	options, err := s.options(ctx)
+	actor, err := s.Identity.NewBrowserActor(b)
 	if err != nil {
 		return err
 	}
-	return s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		uploader, _, _, _, _, err := s.textureUploader(ctx, tx, tid)
-		if err != nil {
-			return err
-		}
-		locked, err := lockUsers(ctx, tx, s.Store, b.User.UID, uploader)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
-		if err != nil {
-			return err
-		}
-		// Current read after the user locks: stale snapshots must not admit a
-		// private texture or a duplicate closet entry.
-		var public bool
-		if uploader, _, _, public, _, err = s.textureUploaderLocked(ctx, tx, tid); err != nil {
-			return err
-		}
-		if !locked[uploader].Found {
-			uploader = 0
-		}
-		if !public && uploader != actor.UID && actor.Permission < 1 {
-			return ErrPrivate
-		}
-		repeated, err := s.pivotExistsLocked(ctx, tx, actor.UID, tid)
-		if err != nil {
-			return err
-		}
-		if repeated {
-			return ErrRepeated
-		}
-		cost := site.Number(options["score_per_closet_item"])
-		var score int64
-		if err = tx.QueryRowContext(ctx, "SELECT score FROM "+s.Store.Table("users")+" WHERE uid=? FOR UPDATE", actor.UID).Scan(&score); err != nil {
-			return err
-		}
-		if score < cost {
-			return ErrLackScore
-		}
-		result, err := tx.ExecContext(ctx, "INSERT INTO "+s.Store.Table("user_closet")+" (user_uid,texture_tid,item_name) VALUES (?,?,?)", actor.UID, tid, name)
-		if err != nil {
-			return err
-		}
-		if affected, err := result.RowsAffected(); err != nil || affected == 0 {
-			return ErrRepeated
-		}
-		if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("textures")+" SET likes=likes+1 WHERE tid=?", tid); err != nil {
-			return err
-		}
-		if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", cost, actor.UID); err != nil {
-			return err
-		}
-		award := site.Number(options["score_award_per_like"])
-		if uploader != 0 && uploader != actor.UID {
-			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score+? WHERE uid=?", award, uploader); err != nil {
-				return err
-			}
-			if award != 0 {
-				if err = s.recordReward(ctx, tx, actor.UID, tid, uploader, award); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	})
+	return s.AddActor(ctx, actor, tid, name)
 }
 
-// Rename changes only the closet item name, never the texture name.
+// Rename is the browser wrapper for RenameActor.
 func (s *Service) Rename(ctx context.Context, b *identity.BrowserSession, tid int64, name string) error {
-	if name == "" {
-		return ErrInvalidName
-	}
-	return s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		if _, err := s.Identity.CheckBrowserTx(ctx, tx, b); err != nil {
-			return err
-		}
-		result, err := tx.ExecContext(ctx, "UPDATE "+s.Store.Table("user_closet")+" SET item_name=? WHERE user_uid=? AND texture_tid=?", name, b.User.UID, tid)
-		if err != nil {
-			return err
-		}
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if affected == 0 {
-			exists, err := s.pivotExists(ctx, tx, b.User.UID, tid)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				return ErrNotFound
-			}
-		}
-		return nil
-	})
-}
-
-// Remove detaches the item, refunds the closet fee, updates likes, revokes the
-// recorded Go reward once and clears the owner's player slots.
-func (s *Service) Remove(ctx context.Context, b *identity.BrowserSession, tid int64) error {
-	options, err := s.options(ctx)
+	actor, err := s.Identity.NewBrowserActor(b)
 	if err != nil {
 		return err
 	}
-	return s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		uploader, _, _, _, kind, err := s.textureUploader(ctx, tx, tid)
-		if err != nil {
-			return err
-		}
-		locked, err := lockUsers(ctx, tx, s.Store, b.User.UID, uploader)
-		if err != nil {
-			return err
-		}
-		if _, err = s.Identity.CheckBrowserTx(ctx, tx, b); err != nil {
-			return err
-		}
-		if _, _, _, _, _, err = s.textureUploaderLocked(ctx, tx, tid); err != nil {
-			return err
-		}
-		if !locked[uploader].Found {
-			uploader = 0
-		}
-		exists, err := s.pivotExistsLocked(ctx, tx, b.User.UID, tid)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return ErrNotFound
-		}
-		deleted, err := tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("user_closet")+" WHERE user_uid=? AND texture_tid=?", b.User.UID, tid)
-		if err != nil {
-			return err
-		}
-		affected, err := deleted.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if affected == 0 {
-			return ErrNotFound
-		}
-		if site.Truth(options["return_score"]) {
-			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score+? WHERE uid=?", site.Number(options["score_per_closet_item"]), b.User.UID); err != nil {
-				return err
-			}
-		}
-		if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("textures")+" SET likes=likes-1 WHERE tid=?", tid); err != nil {
-			return err
-		}
-		_ = kind
-		rewardUploader, amount, active, err := s.activeReward(ctx, tx, b.User.UID, tid)
-		if err != nil {
-			return err
-		}
-		if active {
-			if rewardUploader != 0 {
-				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", amount, rewardUploader); err != nil {
-					return err
-				}
-			}
-			if err = s.consumeReward(ctx, tx, b.User.UID, tid); err != nil {
-				return err
-			}
-		}
-		_, err = s.Players.ClearTexturesTx(ctx, tx, b.User.UID, []int64{tid})
+	return s.RenameActor(ctx, actor, tid, name)
+}
+
+// Remove is the browser wrapper for RemoveActor, sharing the same business
+// transaction kernel (refund, likes, reward revocation, and slot clearing
+// are not duplicated).
+func (s *Service) Remove(ctx context.Context, b *identity.BrowserSession, tid int64) error {
+	actor, err := s.Identity.NewBrowserActor(b)
+	if err != nil {
 		return err
-	})
+	}
+	return s.RemoveActor(ctx, actor, tid)
 }
 
-// AdminAdd attaches idempotently without fees, likes or reward changes.
+// AdminAdd is the browser wrapper for AdminAddActor.
 func (s *Service) AdminAdd(ctx context.Context, b *identity.BrowserSession, target, tid int64) (map[string]any, error) {
-	var result map[string]any
-	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		targets, err := lockUsers(ctx, tx, s.Store, b.User.UID, target)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
-		if err != nil {
-			return err
-		}
-		user := targets[target]
-		if !s.permittedAdmin(actor, &user) {
-			return ErrNoPermission
-		}
-		name, err := s.textureName(ctx, tx, tid)
-		if err != nil {
-			return err
-		}
-		exists, err := s.pivotExists(ctx, tx, target, tid)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			if _, err = tx.ExecContext(ctx, "INSERT INTO "+s.Store.Table("user_closet")+" (user_uid,texture_tid,item_name) VALUES (?,?,?)", target, tid, name); err != nil {
-				return err
-			}
-		}
-		result = map[string]any{"user": target, "texture": tid}
-		return nil
-	})
-	return result, err
+	actor, err := s.Identity.NewBrowserActor(b)
+	if err != nil {
+		return nil, err
+	}
+	return s.AdminAddActor(ctx, actor, target, tid)
 }
 
-// AdminRemove detaches idempotently, clears the target's slots and consumes any
-// recorded Go reward without moving balances or likes.
+// AdminRemove is the browser wrapper for AdminRemoveActor.
 func (s *Service) AdminRemove(ctx context.Context, b *identity.BrowserSession, target, tid int64) (map[string]any, error) {
-	var result map[string]any
-	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		targets, err := lockUsers(ctx, tx, s.Store, b.User.UID, target)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
-		if err != nil {
-			return err
-		}
-		user := targets[target]
-		if !s.permittedAdmin(actor, &user) {
-			return ErrNoPermission
-		}
-		if _, err = tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("user_closet")+" WHERE user_uid=? AND texture_tid=?", target, tid); err != nil {
-			return err
-		}
-		if err = s.consumeReward(ctx, tx, target, tid); err != nil {
-			return err
-		}
-		if _, err = s.Players.ClearTexturesTx(ctx, tx, target, []int64{tid}); err != nil {
-			return err
-		}
-		result = map[string]any{"user": target, "texture": tid}
-		return nil
-	})
-	return result, err
+	actor, err := s.Identity.NewBrowserActor(b)
+	if err != nil {
+		return nil, err
+	}
+	return s.AdminRemoveActor(ctx, actor, target, tid)
 }
 
 func (s *Service) textureName(ctx context.Context, tx *sql.Tx, tid int64) (string, error) {

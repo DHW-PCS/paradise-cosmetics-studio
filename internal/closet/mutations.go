@@ -279,145 +279,262 @@ func affectedCloseters(ctx context.Context, tx *sql.Tx, store *database.Store, t
 	return out, rows.Err()
 }
 
-// DeleteTexture is the single deletion service used by users, admins and
-// report review. It keeps the file until the collector observes zero refs.
+// textureDeletePlan records non-authorizing discovery in the caller's
+// transaction. Resource current reads reject participant changes.
+type textureDeletePlan struct {
+	uploader       int64
+	uploaderExists bool
+	hash           string
+	closeters      []int64
+	owners         []int64
+}
+
+func (s *Service) discoverTextureDeleteTx(ctx context.Context, tx *sql.Tx, tid int64) (*textureDeletePlan, error) {
+	uploader, _, hash, _, _, err := s.textureRow(ctx, tx, tid, false)
+	if err != nil {
+		return nil, err
+	}
+	closeters, err := existingCloseters(ctx, tx, s.Store, tid)
+	if err != nil {
+		return nil, err
+	}
+	owners, err := playerOwners(ctx, tx, s.Store, tid)
+	if err != nil {
+		return nil, err
+	}
+	return &textureDeletePlan{uploader: uploader, hash: hash, closeters: closeters, owners: owners}, nil
+}
+
+// TextureDeleteParticipantsTx discovers the hash and existing user participants
+// for a borrowed deletion transaction. It does not authorize or lock. The
+// caller must lock the hash before PrepareTx, merge these UIDs with its own
+// participants for the ascending users pre-lock, then recheck its Actor before
+// LockTextureDeleteResourcesTx. All calls use the same transaction/snapshot; current
+// business reads reject changed participants without acquiring late user locks.
+// Already-deleted users remain tolerated by the frozen deletion listeners.
+func (s *Service) TextureDeleteParticipantsTx(ctx context.Context, tx *sql.Tx, tid int64) (hash string, uids []int64, err error) {
+	plan, err := s.discoverTextureDeleteTx(ctx, tx, tid)
+	if err != nil {
+		return "", nil, err
+	}
+	ids := append([]int64{plan.uploader}, plan.closeters...)
+	ids = append(ids, plan.owners...)
+	seen := make(map[int64]bool, len(ids))
+	for _, uid := range ids {
+		if seen[uid] {
+			continue
+		}
+		seen[uid] = true
+		exists, err := s.userExists(ctx, tx, uid)
+		if err != nil {
+			return "", nil, err
+		}
+		if exists {
+			uids = append(uids, uid)
+		}
+	}
+	return plan.hash, uids, nil
+}
+
+// DeleteTexture is the single deletion service used by users and admins.
+// It keeps the file until the collector observes zero refs.
 func (s *Service) DeleteTexture(ctx context.Context, b *identity.BrowserSession, tid int64) error {
 	options, err := s.options(ctx)
 	if err != nil {
 		return err
 	}
 	return s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		return s.deleteTextureInTx(ctx, tx, b, tid, options)
+		return s.deleteTextureBrowserTx(ctx, tx, b, tid, options)
 	})
 }
 
-// DeleteTextureTx runs the same deletion inside the caller's transaction; M3-07
-// report review uses it so accounting stays single-sourced.
+// DeleteTextureTx runs browser deletion inside the caller's transaction.
 func (s *Service) DeleteTextureTx(ctx context.Context, tx *sql.Tx, b *identity.BrowserSession, tid int64) error {
 	options, err := s.options(ctx)
 	if err != nil {
 		return err
 	}
-	return s.deleteTextureInTx(ctx, tx, b, tid, options)
+	return s.deleteTextureBrowserTx(ctx, tx, b, tid, options)
 }
 
-func (s *Service) deleteTextureInTx(ctx context.Context, tx *sql.Tx, b *identity.BrowserSession, tid int64, options map[string]any) error {
-	{
-		uploader, size, hash, _, public, err := s.textureRow(ctx, tx, tid, false)
-		if err != nil {
-			return err
+func (s *Service) deleteTextureBrowserTx(ctx context.Context, tx *sql.Tx, b *identity.BrowserSession, tid int64, options map[string]any) error {
+	plan, err := s.discoverTextureDeleteTx(ctx, tx, tid)
+	if err != nil {
+		return err
+	}
+	if _, err = s.Textures.LockHash(ctx, tx, plan.hash); err != nil {
+		return err
+	}
+	ids := append([]int64{b.User.UID, plan.uploader}, plan.closeters...)
+	ids = append(ids, plan.owners...)
+	locked, err := lockUsers(ctx, tx, s.Store, ids...)
+	if err != nil {
+		return err
+	}
+	plan.uploaderExists = locked[plan.uploader].Found
+	current, err := s.actorLock(ctx, tx, b)
+	if err != nil {
+		return err
+	}
+	return s.deleteTextureInTx(ctx, tx, current, tid, plan, options)
+}
+
+// DeleteTextureActorTx borrows the caller's transaction after its complete
+// hash/users lock plan and Actor recheck (ReportsManagement.ReadWrite for report
+// review). It neither begins/commits a transaction nor repeats authentication,
+// scope checks or late participant locks. TextureDeleteParticipantsTx must have
+// run in this same transaction before those locks. Only the already-locked
+// actor row is reread for the frozen texture permission/owner check. Report
+// review must call LockTextureDeleteResourcesTx before locking its report row.
+func (s *Service) DeleteTextureActorTx(ctx context.Context, tx *sql.Tx, actor identity.Actor, tid int64) error {
+	if actor == nil {
+		return identity.ErrSession
+	}
+	options, err := s.options(ctx)
+	if err != nil {
+		return err
+	}
+	plan, err := s.discoverTextureDeleteTx(ctx, tx, tid)
+	if err != nil {
+		return err
+	}
+	plan.uploaderExists, err = s.userExists(ctx, tx, plan.uploader)
+	if err != nil {
+		return err
+	}
+	current := &identity.User{UID: actor.UID()}
+	if err = tx.QueryRowContext(ctx, "SELECT permission FROM "+s.Store.Table("users")+" WHERE uid=? FOR UPDATE", current.UID).Scan(&current.Permission); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrConflict
 		}
-		if _, err = s.Textures.LockHash(ctx, tx, hash); err != nil {
-			return err
+		return err
+	}
+	return s.deleteTextureInTx(ctx, tx, current, tid, plan, options)
+}
+
+// LockTextureDeleteResourcesTx locks and rechecks texture, closet, reward and
+// player resources without business writes. The caller has already locked the
+// hash/users and rechecked its Actor. It must call this before locking a report
+// row; subsequent deletion reuses the same resource-locking kernel. ErrNotFound
+// and ErrConflict describe missing/changed texture participants, not report
+// status: report review defers those errors until after its current status read
+// so a non-PENDING review keeps its existing no-op result.
+func (s *Service) LockTextureDeleteResourcesTx(ctx context.Context, tx *sql.Tx, tid int64) error {
+	plan, err := s.discoverTextureDeleteTx(ctx, tx, tid)
+	if err != nil {
+		return err
+	}
+	_, _, err = s.lockTextureDeleteResourcesTx(ctx, tx, tid, plan)
+	return err
+}
+
+func (s *Service) lockTextureDeleteResourcesTx(ctx context.Context, tx *sql.Tx, tid int64, plan *textureDeletePlan) (size int64, public bool, err error) {
+	uploader, size, hash, _, public, err := s.textureRow(ctx, tx, tid, true)
+	if err != nil {
+		return 0, false, err
+	}
+	if uploader != plan.uploader || hash != plan.hash {
+		return 0, false, ErrConflict
+	}
+	rows, err := tx.QueryContext(ctx, "SELECT DISTINCT user_uid FROM "+s.Store.Table("user_closet")+" WHERE texture_tid=? ORDER BY user_uid FOR UPDATE", tid)
+	if err != nil {
+		return 0, false, err
+	}
+	var users []int64
+	for rows.Next() {
+		var uid int64
+		if err = rows.Scan(&uid); err != nil {
+			rows.Close()
+			return 0, false, err
 		}
-		closeters, err := existingCloseters(ctx, tx, s.Store, tid)
-		if err != nil {
-			return err
+		users = append(users, uid)
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return 0, false, err
+	}
+	if !sameIDs(users, plan.closeters) {
+		return 0, false, ErrConflict
+	}
+	for _, uid := range plan.closeters {
+		if _, _, _, err = s.activeReward(ctx, tx, uid, tid); err != nil {
+			return 0, false, err
 		}
-		owners, err := playerOwners(ctx, tx, s.Store, tid)
-		if err != nil {
-			return err
-		}
-		ids := append([]int64{b.User.UID, uploader}, closeters...)
-		ids = append(ids, owners...)
-		locked, err := lockUsers(ctx, tx, s.Store, ids...)
-		if err != nil {
-			return err
-		}
-		if !locked[uploader].Found {
-			uploader = 0
-		}
-		actor, err := s.actorLock(ctx, tx, b)
-		if err != nil {
-			return err
-		}
-		uploader, size, hash, _, public, err = s.textureRow(ctx, tx, tid, true)
-		if err != nil {
-			return err
-		}
-		if err = s.permitTexture(actor, uploader); err != nil {
-			return err
-		}
-		// Uploader storage refund / take-back.
-		if uploader != 0 {
-			refund := int64(0)
-			if site.Truth(options["return_score"]) {
-				rate := site.Number(options["score_per_storage"])
-				if !public {
-					rate = site.Number(options["private_score_per_storage"])
-				}
-				refund += size * rate
+	}
+	currentOwners, err := playerOwnersLocked(ctx, tx, s.Store, tid)
+	if err != nil {
+		return 0, false, err
+	}
+	if !sameIDs(currentOwners, plan.owners) {
+		return 0, false, ErrConflict
+	}
+	return size, public, nil
+}
+
+func (s *Service) deleteTextureInTx(ctx context.Context, tx *sql.Tx, actor *identity.User, tid int64, plan *textureDeletePlan, options map[string]any) error {
+	size, public, err := s.lockTextureDeleteResourcesTx(ctx, tx, tid, plan)
+	if err != nil {
+		return err
+	}
+	if err = s.permitTexture(actor, plan.uploader); err != nil {
+		return err
+	}
+	uploader := plan.uploader
+	if !plan.uploaderExists {
+		uploader = 0
+	}
+	// Uploader storage refund / take-back.
+	if uploader != 0 {
+		refund := int64(0)
+		if site.Truth(options["return_score"]) {
+			rate := site.Number(options["score_per_storage"])
+			if !public {
+				rate = site.Number(options["private_score_per_storage"])
 			}
-			if public && site.Truth(options["take_back_scores_after_deletion"]) {
-				refund -= site.Number(options["score_award_per_texture"])
+			refund += size * rate
+		}
+		if public && site.Truth(options["take_back_scores_after_deletion"]) {
+			refund -= site.Number(options["score_award_per_texture"])
+		}
+		if refund != 0 {
+			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score+? WHERE uid=?", refund, uploader); err != nil {
+				return err
 			}
-			if refund != 0 {
-				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score+? WHERE uid=?", refund, uploader); err != nil {
+		}
+	}
+	// Clear every closet association; other users get the closet fee back.
+	refundCloset := int64(0)
+	if site.Truth(options["return_score"]) {
+		refundCloset = site.Number(options["score_per_closet_item"])
+	}
+	others := 0
+	for _, uid := range plan.closeters {
+		if uid != uploader {
+			others++
+			if refundCloset != 0 {
+				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score+? WHERE uid=?", refundCloset, uid); err != nil {
 					return err
 				}
 			}
 		}
-		// Clear every closet association; other users get the closet fee back.
-		refundCloset := int64(0)
-		if site.Truth(options["return_score"]) {
-			refundCloset = site.Number(options["score_per_closet_item"])
-		}
-		rows, err := tx.QueryContext(ctx, "SELECT DISTINCT user_uid FROM "+s.Store.Table("user_closet")+" WHERE texture_tid=? ORDER BY user_uid FOR UPDATE", tid)
-		if err != nil {
+		if err = s.consumeReward(ctx, tx, uid, tid); err != nil {
 			return err
 		}
-		var users []int64
-		for rows.Next() {
-			var uid int64
-			if err = rows.Scan(&uid); err != nil {
-				rows.Close()
-				return err
-			}
-			users = append(users, uid)
-		}
-		rows.Close()
-		if err = rows.Err(); err != nil {
-			return err
-		}
-		if !sameIDs(users, closeters) {
-			return ErrConflict
-		}
-		currentOwners, err := playerOwnersLocked(ctx, tx, s.Store, tid)
-		if err != nil {
-			return err
-		}
-		if !sameIDs(currentOwners, owners) {
-			return ErrConflict
-		}
-		others := 0
-		for _, uid := range users {
-			if uid != uploader {
-				others++
-				if refundCloset != 0 {
-					if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score+? WHERE uid=?", refundCloset, uid); err != nil {
-						return err
-					}
-				}
-			}
-			if err = s.consumeReward(ctx, tx, uid, tid); err != nil {
-				return err
-			}
-		}
-		if _, err = tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("user_closet")+" WHERE texture_tid=?", tid); err != nil {
-			return err
-		}
-		// Clear all player references, including the uploader's own players.
-		for _, uid := range owners {
-			if _, err = s.Players.ClearTexturesTx(ctx, tx, uid, []int64{tid}); err != nil {
-				return err
-			}
-		}
-		if _, err = tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("textures")+" WHERE tid=?", tid); err != nil {
-			return err
-		}
-		_ = others
-		return s.Textures.EnqueueCollect(ctx, tx, "texture.collect:"+strconv.FormatInt(tid, 10), hash)
 	}
+	if _, err = tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("user_closet")+" WHERE texture_tid=?", tid); err != nil {
+		return err
+	}
+	// Clear all player references, including the uploader's own players.
+	for _, uid := range plan.owners {
+		if _, err = s.Players.ClearTexturesTx(ctx, tx, uid, []int64{tid}); err != nil {
+			return err
+		}
+	}
+	if _, err = tx.ExecContext(ctx, "DELETE FROM "+s.Store.Table("textures")+" WHERE tid=?", tid); err != nil {
+		return err
+	}
+	_ = others
+	return s.Textures.EnqueueCollect(ctx, tx, "texture.collect:"+strconv.FormatInt(tid, 10), plan.hash)
 }
 
 func playerOwners(ctx context.Context, tx *sql.Tx, store *database.Store, tid int64) ([]int64, error) {

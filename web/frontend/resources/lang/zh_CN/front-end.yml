@@ -271,3 +271,7 @@ vendor:
     search: 搜索
     prev: 上一页
     next: 下一页
+
+yggdrasil-api:
+  copied: 已复制
+  key-generated: 成功生成了一个新的 4096 bit OpenSSL RSA 私钥

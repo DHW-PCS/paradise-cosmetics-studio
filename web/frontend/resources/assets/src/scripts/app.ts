@@ -8,6 +8,8 @@ import './notification'
 import './emailVerification'
 import './logout'
 import './darkMode'
+import './yggdrasilDnd'
+import './yggdrasilConfig'
 
 window.addEventListener('load', () => {
   $('[data-toggle="tooltip"]').tooltip()

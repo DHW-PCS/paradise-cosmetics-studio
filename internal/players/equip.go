@@ -7,31 +7,27 @@ import (
 	"os"
 
 	"blessing-skin-go/internal/database"
+	"blessing-skin-go/internal/gameauth"
 	"blessing-skin-go/internal/identity"
 	"blessing-skin-go/internal/site"
 	"blessing-skin-go/internal/textures"
 )
 
 // Authorizer rechecks a synthetic game credential inside the business
-// transaction. M3 supplies controlled test doubles; M4 installs the real
-// verifier. A nil authorizer is rejected, never treated as a bypass.
-type Authorizer interface {
-	Recheck(ctx context.Context, tx *sql.Tx, creds GameAuth, pid int64) error
-}
-
-// GameAuth is the verified credential context handed to M3 business code.
-type GameAuth struct {
-	UID        int64
-	Version    int64
-	Permission int
-	Banned     bool
-	Profile    string
-}
+// transaction. The canonical definitions live in internal/gameauth so
+// the Yggdrasil verifier can implement them without an import cycle;
+// these aliases preserve the M3 names.
+type Authorizer = gameauth.Authorizer
+type CredentialAuthorizer = gameauth.CredentialAuthorizer
+type ProfileAuthorizer = gameauth.ProfileAuthorizer
+type GameAuth = gameauth.GameAuth
 
 var (
 	ErrStaleCredential = errors.New("players: credential no longer owns this profile")
 	ErrTypeMismatch    = errors.New("players: texture type does not match the slot")
 	ErrNotAuthorized   = errors.New("players: game credential rejected")
+	// ErrNotInCloset reports an existing texture absent from the current user's closet.
+	ErrNotInCloset = errors.New("players: texture is not in the user's closet")
 )
 
 type textureInfo struct {
@@ -70,18 +66,14 @@ func (s *Service) inCloset(ctx context.Context, q queryer, uid, tid int64) (bool
 
 // SetTextures validates both slots and their closet membership before writing
 // either one, so a failing second slot leaves the first untouched.
-func (s *Service) SetTextures(ctx context.Context, b *identity.BrowserSession, pid int64, skin, cape *int64) (Player, error) {
+func (s *Service) SetTexturesActor(ctx context.Context, actor identity.Actor, pid int64, skin, cape *int64) (Player, error) {
 	var out Player
 	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
 		owner, err := s.playerOwner(ctx, tx, pid)
 		if err != nil {
 			return err
 		}
-		locked, err := s.lockUsers(ctx, tx, b.User.UID, owner)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, locked, err := s.recheckActor(ctx, tx, actor, playerWriteScope, owner)
 		if err != nil {
 			return err
 		}
@@ -92,7 +84,7 @@ func (s *Service) SetTextures(ctx context.Context, b *identity.BrowserSession, p
 		if player.UID != owner {
 			return ErrConflict
 		}
-		if err = s.permitted(Normal, actor, owner, locked[owner].Permission); err != nil {
+		if err = s.permitted(Normal, current, owner, locked[owner].Permission); err != nil {
 			return err
 		}
 		for _, slot := range []struct {
@@ -109,12 +101,12 @@ func (s *Service) SetTextures(ctx context.Context, b *identity.BrowserSession, p
 			if !slotMatches(info.Kind, slot.name) {
 				return ErrTypeMismatch
 			}
-			member, err := s.inCloset(ctx, tx, actor.UID, *slot.tid)
+			member, err := s.inCloset(ctx, tx, current.UID, *slot.tid)
 			if err != nil {
 				return err
 			}
 			if !member {
-				return ErrNotFound
+				return ErrNotInCloset
 			}
 		}
 		skinValue, capeValue := player.TIDSkin, player.TIDCape
@@ -138,18 +130,14 @@ func (s *Service) SetTextures(ctx context.Context, b *identity.BrowserSession, p
 
 // ClearTextures clears the requested slots (the frozen request accepts either
 // a type array or the presence of skin/cape parameters).
-func (s *Service) ClearTextures(ctx context.Context, b *identity.BrowserSession, pid int64, slotSkin, slotCape bool) (Player, error) {
+func (s *Service) ClearTexturesActor(ctx context.Context, actor identity.Actor, pid int64, slotSkin, slotCape bool) (Player, error) {
 	var out Player
 	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
 		owner, err := s.playerOwner(ctx, tx, pid)
 		if err != nil {
 			return err
 		}
-		locked, err := s.lockUsers(ctx, tx, b.User.UID, owner)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, locked, err := s.recheckActor(ctx, tx, actor, playerWriteScope, owner)
 		if err != nil {
 			return err
 		}
@@ -160,7 +148,7 @@ func (s *Service) ClearTextures(ctx context.Context, b *identity.BrowserSession,
 		if player.UID != owner {
 			return ErrConflict
 		}
-		if err = s.permitted(Normal, actor, owner, locked[owner].Permission); err != nil {
+		if err = s.permitted(Normal, current, owner, locked[owner].Permission); err != nil {
 			return err
 		}
 		if !slotSkin && !slotCape {
@@ -188,7 +176,7 @@ func (s *Service) ClearTextures(ctx context.Context, b *identity.BrowserSession,
 
 // AdminSetTexture keeps the frozen direct-TID admin ability with permission and
 // existence checks; tid 0 clears the slot.
-func (s *Service) AdminSetTexture(ctx context.Context, b *identity.BrowserSession, pid, tid int64, slot string) error {
+func (s *Service) AdminSetTextureActor(ctx context.Context, actor identity.Actor, pid, tid int64, slot string) error {
 	if slot != "skin" && slot != "cape" {
 		return ErrTypeMismatch
 	}
@@ -197,11 +185,7 @@ func (s *Service) AdminSetTexture(ctx context.Context, b *identity.BrowserSessio
 		if err != nil {
 			return err
 		}
-		locked, err := s.lockUsers(ctx, tx, b.User.UID, owner)
-		if err != nil {
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
+		current, locked, err := s.recheckActor(ctx, tx, actor, playersAdminWriteScope, owner)
 		if err != nil {
 			return err
 		}
@@ -212,7 +196,7 @@ func (s *Service) AdminSetTexture(ctx context.Context, b *identity.BrowserSessio
 		if player.UID != owner {
 			return ErrConflict
 		}
-		if err = s.permitted(Admin, actor, owner, locked[owner].Permission); err != nil {
+		if err = s.permitted(Admin, current, owner, locked[owner].Permission); err != nil {
 			return err
 		}
 		if tid != 0 {
@@ -293,13 +277,27 @@ func (s *Service) GameUpload(ctx context.Context, creds GameAuth, authorizer Aut
 	}
 	var result GameUploadResult
 	err = s.Store.Transaction(ctx, func(tx *sql.Tx) error {
+		// Lock order (integration-design section 3): player-name/uuid
+		// namespaces -> hash coordination -> module-state shared lock (held
+		// by the caller/HTTP layer) -> users -> version/token (credential
+		// stage) -> existing texture/closet current reads -> player/binding
+		// (profile stage) -> final balance check -> publish/write -> commit.
+		// Nothing is published to the texture store before the profile
+		// stage succeeds.
 		if err = database.LockNamespaces(ctx, tx, s.Store, "player-name", "uuid"); err != nil {
 			return err
 		}
 		if _, err = s.Textures.LockHash(ctx, tx, hash); err != nil {
 			return err
 		}
-		pid, owner, err := s.resolveProfile(ctx, tx, creds.Profile)
+		// Module-state shared lock (wired by the HTTP composition root)
+		// sits before the user locks, matching the writer order.
+		if s.ModuleLock != nil {
+			if err := s.ModuleLock(ctx, tx); err != nil {
+				return err
+			}
+		}
+		pid, owner, err := s.resolveGameProfile(ctx, tx, creds)
 		if err != nil {
 			return err
 		}
@@ -307,18 +305,19 @@ func (s *Service) GameUpload(ctx context.Context, creds GameAuth, authorizer Aut
 		if err != nil {
 			return err
 		}
-		if err = s.lockProfileRow(ctx, tx, pid, owner); err != nil {
-			return err
-		}
-		if err = authorizer.Recheck(ctx, tx, creds, pid); err != nil {
-			return err
-		}
-		if creds.Banned || creds.UID != owner {
-			return ErrStaleCredential
+		twoStage := false
+		if credential, ok := authorizer.(CredentialAuthorizer); ok {
+			if err = credential.RecheckCredentialTx(ctx, tx, creds); err != nil {
+				return err
+			}
+			twoStage = true
 		}
 		user := locked[creds.UID]
 		privateRate := site.Number(options["private_score_per_storage"])
 		closetCost := site.Number(options["score_per_closet_item"])
+		// Texture/closet plan: current reads only. Writes are deferred
+		// until after the profile stage, so a failed target recheck
+		// leaves no texture, closet, score, or file change behind.
 		rows, err := tx.QueryContext(ctx, "SELECT tid,uploader,type,hash,size,public FROM "+s.Store.Table("textures")+" WHERE hash=? AND uploader=? ORDER BY tid LIMIT 1 FOR UPDATE", hash, creds.UID)
 		if err != nil {
 			return err
@@ -336,6 +335,9 @@ func (s *Service) GameUpload(ctx context.Context, creds GameAuth, authorizer Aut
 		if err = rows.Err(); err != nil {
 			return err
 		}
+		planCost := int64(0)
+		needCloset := false
+		isNew := false
 		if found {
 			if existing.Kind != kind {
 				return ErrTypeMismatch
@@ -345,23 +347,46 @@ func (s *Service) GameUpload(ctx context.Context, creds GameAuth, authorizer Aut
 				return err
 			}
 			if !member {
-				if user.Score < closetCost {
-					return ErrLackScore
+				needCloset = true
+				planCost = closetCost
+			}
+		} else {
+			isNew = true
+			size := (bytes + 1023) / 1024
+			planCost = privateRate*size + closetCost
+		}
+		if err = s.lockProfileRow(ctx, tx, pid, owner); err != nil {
+			return err
+		}
+		if twoStage {
+			if profile, ok := authorizer.(ProfileAuthorizer); ok {
+				if err = profile.RecheckProfileTx(ctx, tx, creds, pid); err != nil {
+					return err
 				}
+			} else if err = authorizer.Recheck(ctx, tx, creds, pid); err != nil {
+				return err
+			}
+		} else if err = authorizer.Recheck(ctx, tx, creds, pid); err != nil {
+			return err
+		}
+		if creds.Banned || creds.UID != owner {
+			return ErrStaleCredential
+		}
+		if user.Score < planCost {
+			return ErrLackScore
+		}
+		if found {
+			if needCloset {
 				if _, err = tx.ExecContext(ctx, "INSERT INTO "+s.Store.Table("user_closet")+" (user_uid,texture_tid,item_name) VALUES (?,?,?)", creds.UID, existing.TID, name); err != nil {
 					return err
 				}
-				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", closetCost, creds.UID); err != nil {
+				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", planCost, creds.UID); err != nil {
 					return err
 				}
 			}
 			result = GameUploadResult{TID: existing.TID, Closet: true}
-		} else {
+		} else if isNew {
 			size := (bytes + 1023) / 1024
-			cost := privateRate*size + closetCost
-			if user.Score < cost {
-				return ErrLackScore
-			}
 			now := s.now()
 			insert, err := tx.ExecContext(ctx, "INSERT INTO "+s.Store.Table("textures")+" (name,type,hash,size,uploader,public,likes,upload_at) VALUES (?,?,?,?,?,0,1,?)", name, kind, hash, size, creds.UID, now)
 			if err != nil {
@@ -374,7 +399,7 @@ func (s *Service) GameUpload(ctx context.Context, creds GameAuth, authorizer Aut
 			if _, err = tx.ExecContext(ctx, "INSERT INTO "+s.Store.Table("user_closet")+" (user_uid,texture_tid,item_name) VALUES (?,?,?)", creds.UID, tid, name); err != nil {
 				return err
 			}
-			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", cost, creds.UID); err != nil {
+			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", planCost, creds.UID); err != nil {
 				return err
 			}
 			if err = s.Textures.PublishLocked(hash, stagingPath); err != nil {
@@ -403,17 +428,40 @@ func (s *Service) GameReset(ctx context.Context, creds GameAuth, authorizer Auth
 		return ErrTypeMismatch
 	}
 	return s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		pid, owner, err := s.resolveProfile(ctx, tx, creds.Profile)
+		// Lock order: module-state shared lock -> users ->
+		// version/token (credential stage) -> player/binding (profile
+		// stage). No hash lock is taken for a reset.
+		if s.ModuleLock != nil {
+			if err := s.ModuleLock(ctx, tx); err != nil {
+				return err
+			}
+		}
+		pid, owner, err := s.resolveGameProfile(ctx, tx, creds)
 		if err != nil {
 			return err
 		}
 		if _, err = s.lockUsers(ctx, tx, creds.UID, owner); err != nil {
 			return err
 		}
+		twoStage := false
+		if credential, ok := authorizer.(CredentialAuthorizer); ok {
+			if err = credential.RecheckCredentialTx(ctx, tx, creds); err != nil {
+				return err
+			}
+			twoStage = true
+		}
 		if err = s.lockProfileRow(ctx, tx, pid, owner); err != nil {
 			return err
 		}
-		if err = authorizer.Recheck(ctx, tx, creds, pid); err != nil {
+		if twoStage {
+			if profile, ok := authorizer.(ProfileAuthorizer); ok {
+				if err = profile.RecheckProfileTx(ctx, tx, creds, pid); err != nil {
+					return err
+				}
+			} else if err = authorizer.Recheck(ctx, tx, creds, pid); err != nil {
+				return err
+			}
+		} else if err = authorizer.Recheck(ctx, tx, creds, pid); err != nil {
 			return err
 		}
 		if creds.Banned || creds.UID != owner {
@@ -427,15 +475,63 @@ func (s *Service) GameReset(ctx context.Context, creds GameAuth, authorizer Auth
 
 // resolveProfile performs the unlocked name lookup used only to discover the
 // participant set; the locking read happens after the shared users locks.
+// A ProfileUUID target resolves through the current UUID binding; a plain
+// Profile resolves by player name, falling back to a UUID-form value so a
+// protocol adapter may pass the request UUID directly as Profile.
 func (s *Service) resolveProfile(ctx context.Context, tx *sql.Tx, profile string) (int64, int64, error) {
-	var pid, owner int64
-	if err := tx.QueryRowContext(ctx, "SELECT pid,uid FROM "+s.Store.Table("players")+" WHERE name=?", profile).Scan(&pid, &owner); err != nil {
+	return s.resolveGameProfile(ctx, tx, GameAuth{Profile: profile})
+}
+
+func (s *Service) resolveGameProfile(ctx context.Context, tx *sql.Tx, creds GameAuth) (int64, int64, error) {
+	if hex, ok := uuidHexForm(creds.ProfileUUID); ok {
+		var pid, owner int64
+		err := tx.QueryRowContext(ctx, "SELECT p.pid,p.uid FROM "+s.Store.Table("go_uuid_bindings")+" b JOIN "+s.Store.Table("players")+" p ON p.pid=b.pid WHERE b.uuid=?", hex).Scan(&pid, &owner)
 		if errors.Is(err, sql.ErrNoRows) {
+			return 0, 0, ErrNotFound
+		}
+		if err != nil {
+			return 0, 0, err
+		}
+		return pid, owner, nil
+	}
+	var pid, owner int64
+	if err := tx.QueryRowContext(ctx, "SELECT pid,uid FROM "+s.Store.Table("players")+" WHERE name=?", creds.Profile).Scan(&pid, &owner); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			if hex, formOK := uuidHexForm(creds.Profile); formOK {
+				return s.resolveGameProfile(ctx, tx, GameAuth{ProfileUUID: hex})
+			}
 			return 0, 0, ErrNotFound
 		}
 		return 0, 0, err
 	}
 	return pid, owner, nil
+}
+
+// uuidHexForm normalizes a dashed or hex UUID to its 32-char lowercase hex
+// binding form, reporting whether the value has UUID form at all.
+func uuidHexForm(value string) (string, bool) {
+	if value == "" {
+		return "", false
+	}
+	clean := make([]byte, 0, 32)
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+		if c == '-' {
+			continue
+		}
+		if c >= 'A' && c <= 'Z' {
+			c += 'a' - 'A'
+		}
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') {
+			clean = append(clean, c)
+			continue
+		}
+		return "", false
+	}
+	if len(clean) != 32 {
+		return "", false
+	}
+	return string(clean), true
 }
 
 // lockProfileRow re-reads and locks the profile after users, preserving the

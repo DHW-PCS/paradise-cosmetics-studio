@@ -19,7 +19,7 @@ import (
 type storage struct {
 	store    *database.Store
 	identity *identity.Service
-	scopes   []string
+	policy   *ScopePolicy
 	strategy engine.CoreStrategy
 }
 type transactionKey struct{}
@@ -113,7 +113,14 @@ func (s *storage) GetClient(ctx context.Context, id string) (oauth2.Client, erro
 	} else if !personal {
 		grants = append(grants, "authorization_code", "refresh_token")
 	}
-	return &oauth2.DefaultClient{ID: id, ClientSecret: oauth2.NewPlainTextClientSecret(secret.String), RedirectURIs: strings.Split(redirect, ","), GrantTypes: grants, ResponseTypes: []string{"code"}, Scopes: s.scopes, Public: !secret.Valid || secret.String == ""}, nil
+	snapshot, ok := currentSnapshot(ctx)
+	if !ok {
+		// Every issuance flow pins one snapshot; composing without one would
+		// mix scope facts across an online update.
+		return nil, errors.New("oauth server: scope snapshot missing in the flow context")
+	}
+	clientScopes := append(append([]string(nil), snapshot.Names...), "*")
+	return &oauth2.DefaultClient{ID: id, ClientSecret: oauth2.NewPlainTextClientSecret(secret.String), RedirectURIs: strings.Split(redirect, ","), GrantTypes: grants, ResponseTypes: []string{"code"}, Scopes: clientScopes, Public: !secret.Valid || secret.String == ""}, nil
 }
 
 var errUnsupported = errors.New("oauth server: unsupported client operation")

@@ -19,19 +19,27 @@ import (
 
 	"blessing-skin-go/internal/account"
 	"blessing-skin-go/internal/admission"
+	"blessing-skin-go/internal/apilimits"
 	"blessing-skin-go/internal/config"
 	"blessing-skin-go/internal/database"
 	"blessing-skin-go/internal/httpapp"
 	"blessing-skin-go/internal/identity"
+	"blessing-skin-go/internal/invitation"
 	"blessing-skin-go/internal/legacy/password"
 	"blessing-skin-go/internal/maintenance"
+	"blessing-skin-go/internal/modules"
 	"blessing-skin-go/internal/oauthserver"
 	"blessing-skin-go/internal/outbox"
 	"blessing-skin-go/internal/processlock"
 	"blessing-skin-go/internal/site"
 	"blessing-skin-go/internal/textures"
+	"blessing-skin-go/internal/yggdrasil"
 	"blessing-skin-go/web"
 )
+
+// buildVersion is the Go build version reported to protocol clients
+// (metadata implementationVersion) and the version command.
+var buildVersion = "m2-dev"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -45,7 +53,7 @@ func run(args []string) error {
 	}
 	command := args[0]
 	if command == "version" {
-		fmt.Printf("blessing-skin-go m2-dev (%s)\n", runtime.Version())
+		fmt.Printf("blessing-skin-go %s (%s)\n", buildVersion, runtime.Version())
 		return nil
 	}
 	if command != "serve" && command != "worker" && command != "migrate" && command != "auth-reset" && command != "outbox-retry" {
@@ -101,6 +109,12 @@ func run(args []string) error {
 		if err = oauthserver.Migrate(ctx, store); err != nil {
 			return errors.New("OAuth migration failed")
 		}
+		if err = oauthserver.MigrateConsents(ctx, store); err != nil {
+			return errors.New("OAuth consent migration failed")
+		}
+		if err = oauthserver.MigrateAPIDigest(ctx, store); err != nil {
+			return errors.New("API digest migration failed")
+		}
 		if err = outbox.Migrate(ctx, store); err != nil {
 			return errors.New("outbox migration failed")
 		}
@@ -115,6 +129,18 @@ func run(args []string) error {
 		}
 		if err = database.MigrateCloset(ctx, store); err != nil {
 			return errors.New("closet migration failed")
+		}
+		if err = invitation.Migrate(ctx, store); err != nil {
+			return errors.New("invitation migration failed")
+		}
+		if err = apilimits.New(store).Migrate(ctx); err != nil {
+			return errors.New("API limiter migration failed")
+		}
+		if err = yggdrasil.Migrate(ctx, store); err != nil {
+			return errors.New("Yggdrasil migration failed")
+		}
+		if err = initializeModules(ctx, store, c); err != nil {
+			return err
 		}
 		slog.Info("Go additive migrations complete")
 		return nil
@@ -170,7 +196,20 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	handler, err := httpapp.New(c, id, &site.Service{Store: store, Identity: id, OptionSnapshot: overrides, Location: c.Location}, oauth)
+	moduleManager := modules.New(store, id)
+	invitationService := invitation.New(store, id.Now)
+	if err = moduleManager.RegisterConsumer("invitation-codes", invitationService.ReserveTx); err != nil {
+		return err
+	}
+	if err = moduleManager.RegisterCheck("invitation-codes", invitationService.CheckReady); err != nil {
+		return err
+	}
+	yggService := yggdrasil.New(store, id, overrides, c.AppKey, c.YggVerboseLog, time.Now)
+	if err = moduleManager.RegisterCheck("yggdrasil-api", yggService.CheckReady); err != nil {
+		return err
+	}
+	view := &site.Service{Store: store, Identity: id, OptionSnapshot: overrides, Location: c.Location, Modules: moduleManager}
+	handler, err := httpapp.New(c, id, view, oauth, yggService, buildVersion)
 	if err != nil {
 		return err
 	}
@@ -193,6 +232,26 @@ func run(args []string) error {
 		return nil
 	}
 }
+
+// initializeModules runs the module-state takeover inside the explicit offline
+// migrate command: existing rows stay, missing rows are seeded from the
+// declared original facts, and an undecidable install ledger fails the run.
+func initializeModules(ctx context.Context, store *database.Store, c config.Config) error {
+	snapshot, err := site.LoadOptionSnapshot(c.OptionsFile)
+	if err != nil {
+		return err
+	}
+	manifest, err := modules.LoadManifest(c.ModulesManifestFile)
+	if err != nil {
+		return err
+	}
+	if err = modules.Initialize(ctx, store, snapshot, manifest); err != nil {
+		slog.Error("module state initialization failed", "reason", err.Error())
+		return errors.New("module state initialization failed; inspect options rows and declared manifest")
+	}
+	return nil
+}
+
 func readKey(path string) (*rsa.PrivateKey, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {

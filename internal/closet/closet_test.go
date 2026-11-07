@@ -308,47 +308,51 @@ func TestPrivacyTransitionCleansOtherUsers(t *testing.T) {
 }
 
 func TestDeleteTextureSideEffectsAndFileCollection(t *testing.T) {
-	env := fixture(t, nil)
-	owner := login(t, env.id, "user@example.invalid")
-	admin := login(t, env.id, "admin@example.invalid")
-	if _, err := env.store.DB.Exec("UPDATE " + env.store.Table("users") + " SET score=1000 WHERE uid IN (1,2)"); err != nil {
-		t.Fatal(err)
-	}
-	tid := uploadTexture(t, env, owner, "DeleteSkin", "steve", true, 11)
-	if err := env.service.Add(context.Background(), admin, tid, "Pick"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := env.store.DB.Exec("INSERT INTO "+env.store.Table("players")+" (uid,name,tid_skin,last_modified) VALUES (1,'OwnerPlayer',?,'2026-01-01 00:00:00'),(2,'AdminPlayer',?,'2026-01-01 00:00:00')", tid, tid); err != nil {
-		t.Fatal(err)
-	}
-	var hash string
-	var size int64
-	env.store.DB.QueryRow("SELECT hash,size FROM "+env.store.Table("textures")+" WHERE tid=?", tid).Scan(&hash, &size)
-	ownerScore := scoreOf(t, env.store, 1)
-	adminScore := scoreOf(t, env.store, 2)
-	if err := env.service.DeleteTexture(context.Background(), admin, tid); err != nil {
-		t.Fatal(err)
-	}
-	if scoreOf(t, env.store, 1) != ownerScore+size*10-2 {
-		t.Fatalf("uploader delete refund = %d, want %d", scoreOf(t, env.store, 1), ownerScore+size*10-2)
-	}
-	if scoreOf(t, env.store, 2) != adminScore+7 {
-		t.Fatalf("other user closet refund = %d", scoreOf(t, env.store, 2)-adminScore)
-	}
-	var pivots, playersLeft, texturesLeft int64
-	env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("user_closet")+" WHERE texture_tid=?", tid).Scan(&pivots)
-	env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("players")+" WHERE tid_skin=?", tid).Scan(&playersLeft)
-	env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("textures")+" WHERE tid=?", tid).Scan(&texturesLeft)
-	if pivots != 0 || playersLeft != 0 || texturesLeft != 0 {
-		t.Fatalf("delete cleanup pivots=%d players=%d textures=%d", pivots, playersLeft, texturesLeft)
-	}
-	// The file is still present until the collector observes zero references.
-	if _, err := os.Stat(filepath.Join(env.dir, hash)); err != nil {
-		t.Fatalf("file removed before collector: %v", err)
-	}
-	var payload string
-	if err := env.store.DB.QueryRow("SELECT payload FROM " + env.store.Table("go_outbox") + " WHERE topic='texture.collect' ORDER BY id DESC LIMIT 1").Scan(&payload); err != nil {
-		t.Fatalf("collect task missing: %v", err)
+	for _, entry := range []string{"browser", "actor"} {
+		t.Run(entry, func(t *testing.T) {
+			env := fixture(t, nil)
+			owner := login(t, env.id, "user@example.invalid")
+			admin := login(t, env.id, "admin@example.invalid")
+			if _, err := env.store.DB.Exec("UPDATE " + env.store.Table("users") + " SET score=1000 WHERE uid IN (1,2)"); err != nil {
+				t.Fatal(err)
+			}
+			tid := uploadTexture(t, env, owner, "DeleteSkin", "steve", true, 11)
+			if err := env.service.Add(context.Background(), admin, tid, "Pick"); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := env.store.DB.Exec("INSERT INTO "+env.store.Table("players")+" (uid,name,tid_skin,last_modified) VALUES (1,'OwnerPlayer',?,'2026-01-01 00:00:00'),(2,'AdminPlayer',?,'2026-01-01 00:00:00')", tid, tid); err != nil {
+				t.Fatal(err)
+			}
+			var hash string
+			var size int64
+			env.store.DB.QueryRow("SELECT hash,size FROM "+env.store.Table("textures")+" WHERE tid=?", tid).Scan(&hash, &size)
+			ownerScore := scoreOf(t, env.store, 1)
+			adminScore := scoreOf(t, env.store, 2)
+			if err := deleteTextureEntryForTest(t, env, admin, tid, entry); err != nil {
+				t.Fatal(err)
+			}
+			if scoreOf(t, env.store, 1) != ownerScore+size*10-2 {
+				t.Fatalf("uploader delete refund = %d, want %d", scoreOf(t, env.store, 1), ownerScore+size*10-2)
+			}
+			if scoreOf(t, env.store, 2) != adminScore+7 {
+				t.Fatalf("other user closet refund = %d", scoreOf(t, env.store, 2)-adminScore)
+			}
+			var pivots, playersLeft, texturesLeft int64
+			env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("user_closet")+" WHERE texture_tid=?", tid).Scan(&pivots)
+			env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("players")+" WHERE tid_skin=?", tid).Scan(&playersLeft)
+			env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("textures")+" WHERE tid=?", tid).Scan(&texturesLeft)
+			if pivots != 0 || playersLeft != 0 || texturesLeft != 0 {
+				t.Fatalf("delete cleanup pivots=%d players=%d textures=%d", pivots, playersLeft, texturesLeft)
+			}
+			// The file is still present until the collector observes zero references.
+			if _, err := os.Stat(filepath.Join(env.dir, hash)); err != nil {
+				t.Fatalf("file removed before collector: %v", err)
+			}
+			var payload string
+			if err := env.store.DB.QueryRow("SELECT payload FROM " + env.store.Table("go_outbox") + " WHERE topic='texture.collect' ORDER BY id DESC LIMIT 1").Scan(&payload); err != nil {
+				t.Fatalf("collect task missing: %v", err)
+			}
+		})
 	}
 }
 
@@ -491,33 +495,37 @@ func TestUploaderDeletedStillAllowsClosetAndDelete(t *testing.T) {
 }
 
 func TestDeleteRollbackOnRefundFailure(t *testing.T) {
-	env := fixture(t, nil)
-	owner := login(t, env.id, "user@example.invalid")
-	admin := login(t, env.id, "admin@example.invalid")
-	if _, err := env.store.DB.Exec("UPDATE " + env.store.Table("users") + " SET score=1000 WHERE uid IN (1,2)"); err != nil {
-		t.Fatal(err)
+	for _, entry := range []string{"browser", "actor"} {
+		t.Run(entry, func(t *testing.T) {
+			env := fixture(t, nil)
+			owner := login(t, env.id, "user@example.invalid")
+			admin := login(t, env.id, "admin@example.invalid")
+			if _, err := env.store.DB.Exec("UPDATE " + env.store.Table("users") + " SET score=1000 WHERE uid IN (1,2)"); err != nil {
+				t.Fatal(err)
+			}
+			tid := uploadTexture(t, env, owner, "DeleteRollback", "steve", true, 72)
+			if err := env.service.Add(context.Background(), admin, tid, "Pick"); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := env.store.DB.Exec("CREATE TRIGGER reject_delete_refund BEFORE UPDATE ON " + env.store.Table("users") + " FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic closet refund fault'"); err != nil {
+				t.Fatal(err)
+			}
+			if err := deleteTextureEntryForTest(t, env, admin, tid, entry); err == nil {
+				t.Fatal("refund failure ignored")
+			}
+			var textures, pivots int64
+			if err := env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("textures")+" WHERE tid=?", tid).Scan(&textures); err != nil {
+				t.Fatalf("texture count: %v", err)
+			}
+			if err := env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("user_closet")+" WHERE texture_tid=?", tid).Scan(&pivots); err != nil {
+				t.Fatalf("pivot count: %v", err)
+			}
+			if textures != 1 || pivots != 2 {
+				t.Fatalf("failed delete left textures=%d pivots=%d", textures, pivots)
+			}
+			_ = admin
+		})
 	}
-	tid := uploadTexture(t, env, owner, "DeleteRollback", "steve", true, 72)
-	if err := env.service.Add(context.Background(), admin, tid, "Pick"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := env.store.DB.Exec("CREATE TRIGGER reject_delete_refund BEFORE UPDATE ON " + env.store.Table("users") + " FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic closet refund fault'"); err != nil {
-		t.Fatal(err)
-	}
-	if err := env.service.DeleteTexture(context.Background(), admin, tid); err == nil {
-		t.Fatal("refund failure ignored")
-	}
-	var textures, pivots int64
-	if err := env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("textures")+" WHERE tid=?", tid).Scan(&textures); err != nil {
-		t.Fatalf("texture count: %v", err)
-	}
-	if err := env.store.DB.QueryRow("SELECT COUNT(*) FROM "+env.store.Table("user_closet")+" WHERE texture_tid=?", tid).Scan(&pivots); err != nil {
-		t.Fatalf("pivot count: %v", err)
-	}
-	if textures != 1 || pivots != 2 {
-		t.Fatalf("failed delete left textures=%d pivots=%d", textures, pivots)
-	}
-	_ = admin
 }
 
 func TestClosetPageSizeHasNoArbitraryCeiling(t *testing.T) {

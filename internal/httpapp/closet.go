@@ -270,6 +270,10 @@ func (a *App) adminClosetAdd(w http.ResponseWriter, r *http.Request, b *identity
 			jsonResponse(w, http.StatusForbidden, map[string]any{"code": 1, "message": a.message(r, b, "admin.users.operations.no-permission")})
 			return
 		}
+		if errors.Is(err, closet.ErrTargetNotFound) {
+			a.notFound(w, r)
+			return
+		}
 		a.textureMutationError(w, r, b, err)
 		return
 	}
@@ -295,6 +299,10 @@ func (a *App) adminClosetRemove(w http.ResponseWriter, r *http.Request, b *ident
 	if err != nil {
 		if errors.Is(err, closet.ErrNoPermission) {
 			jsonResponse(w, http.StatusForbidden, map[string]any{"code": 1, "message": a.message(r, b, "admin.users.operations.no-permission")})
+			return
+		}
+		if errors.Is(err, closet.ErrTargetNotFound) {
+			a.notFound(w, r)
 			return
 		}
 		a.textureMutationError(w, r, b, err)

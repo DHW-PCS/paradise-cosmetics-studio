@@ -279,3 +279,7 @@ vendor:
     search: Search
     prev: Prev
     next: Next
+
+yggdrasil-api:
+  copied: Copied
+  key-generated: An 4096 bit OpenSSL RSA private key is generated.

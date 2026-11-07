@@ -8,6 +8,13 @@ export default {
 "owner": (player: string | number) => `/admin/players/${encodeURIComponent(String(player))}/owner`,
 "texture": (player: string | number) => `/admin/players/${encodeURIComponent(String(player))}/textures`
 },
+"plugins": {
+"config": {
+"yggdrasil-api": {
+"generate": () => "/admin/plugins/config/yggdrasil-api/generate" as const
+}
+}
+},
 "users": {
 "delete": (user: string | number) => `/admin/users/${encodeURIComponent(String(user))}`,
 "email": (user: string | number) => `/admin/users/${encodeURIComponent(String(user))}/email`,
@@ -17,7 +24,8 @@ export default {
 "permission": (user: string | number) => `/admin/users/${encodeURIComponent(String(user))}/permission`,
 "score": (user: string | number) => `/admin/users/${encodeURIComponent(String(user))}/score`,
 "verification": (user: string | number) => `/admin/users/${encodeURIComponent(String(user))}/verification`
-}
+},
+"yggdrasil-log": () => "/admin/yggdrasil-log" as const
 },
 "auth": {
 "forgot": () => "/auth/forgot" as const,

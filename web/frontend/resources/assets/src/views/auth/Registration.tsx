@@ -10,15 +10,23 @@ import Alert from '@/components/Alert'
 import Captcha from '@/components/Captcha'
 import EmailSuggestion from '@/components/EmailSuggestion'
 
+// The invitation-codes field rides only the register request, unlike the
+// original Svelte bootstrap that mutated every fetch payload globally.
+interface InvitationField {
+  label: string
+}
+
 const Registration: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [nickName, setNickName] = useState('')
   const [playerName, setPlayerName] = useState('')
+  const [invitationCode, setInvitationCode] = useState('')
   const [isPending, setIsPending] = useState(false)
   const [warningMessage, setWarningMessage] = useState('')
   const requirePlayer = useBlessingExtra<boolean>('player')
+  const invitation = useBlessingExtra<InvitationField | null>('invitation', null)
   const confirmationRef = useRef<HTMLInputElement | null>(null)
   const captchaRef = useRef<Captcha | null>(null)
 
@@ -60,6 +68,7 @@ const Registration: React.FC = () => {
       Object.assign(
         { email, password, captcha: await captchaRef.current!.execute() },
         requirePlayer ? { player_name: playerName } : { nickname: nickName },
+        invitation ? { invitationCode } : {},
       ),
     )
     if (code === 0) {
@@ -154,6 +163,23 @@ const Registration: React.FC = () => {
           </div>
         </div>
       )}
+      {invitation ? (
+        <div className="input-group mb-3">
+          <input
+            type="text"
+            required
+            className="form-control"
+            placeholder={invitation.label}
+            value={invitationCode}
+            onChange={(event) => setInvitationCode(event.target.value)}
+          />
+          <div className="input-group-append">
+            <div className="input-group-text">
+              <i className="fas fa-receipt"></i>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <Captcha ref={captchaRef} />
 
       <Alert type="warning">{warningMessage}</Alert>

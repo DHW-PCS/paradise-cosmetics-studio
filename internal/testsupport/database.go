@@ -11,10 +11,14 @@ import (
 	"time"
 
 	"blessing-skin-go/internal/admission"
+	"blessing-skin-go/internal/apilimits"
 	"blessing-skin-go/internal/database"
 	"blessing-skin-go/internal/identity"
+	"blessing-skin-go/internal/invitation"
 	"blessing-skin-go/internal/legacy/password"
+	"blessing-skin-go/internal/modules"
 	"blessing-skin-go/internal/outbox"
+	"blessing-skin-go/internal/yggdrasil"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -80,6 +84,15 @@ func Database(t *testing.T, prefix string) (*database.Store, *identity.Service) 
 	if err = outbox.Migrate(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}
+	if err = invitation.Migrate(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err = apilimits.New(store).Migrate(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if err = yggdrasil.Migrate(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
 	if err = database.MigratePlayers(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}
@@ -106,6 +119,31 @@ func Database(t *testing.T, prefix string) (*database.Store, *identity.Service) 
 	if _, err = store.DB.Exec("INSERT INTO " + store.Table("oauth_clients") + " (id,user_id,name,secret,redirect,password_client) VALUES (1,1,'synthetic','client-secret','https://client.example.invalid/callback',0),(2,1,'other','other-secret','https://other.example.invalid/callback',0),(3,NULL,'password','password-secret','https://client.example.invalid/callback',1)"); err != nil {
 		t.Fatal(err)
 	}
+	// Module state rows are the takeover result of the declared synthetic
+	// options: nothing enabled and no module registered. Tests that examine
+	// other states update these rows explicitly.
+	if _, err = store.DB.Exec("INSERT INTO " + store.Table("options") + " (option_name,option_value) VALUES ('plugins_enabled',''),('go_module_installations','[]')"); err != nil {
+		t.Fatal(err)
+	}
 	gate, _ := admission.New(admission.Config{Concurrency: 2, Queue: 2, Wait: time.Second})
 	return store, &identity.Service{Store: store, LoginStore: store, Passwords: hasher, Admission: gate, SessionLifetime: 2 * time.Hour, RememberLifetime: 400 * 24 * time.Hour, Now: time.Now}
+}
+
+// Modules builds the module manager over one synthetic database, wired the
+// same way as the production composition root: the invitation codes consumer
+// and its enable precondition are in place.
+func Modules(store *database.Store, id *identity.Service) *modules.Manager {
+	manager := modules.New(store, id)
+	service := invitation.New(store, id.Now)
+	if err := manager.RegisterConsumer("invitation-codes", service.ReserveTx); err != nil {
+		panic("synthetic consumer registration failed: " + err.Error())
+	}
+	if err := manager.RegisterCheck("invitation-codes", service.CheckReady); err != nil {
+		panic("synthetic check registration failed: " + err.Error())
+	}
+	yggService := yggdrasil.New(store, id, nil, []byte("synthetic-yggdrasil-hs256-key-32b"), false, id.Now)
+	if err := manager.RegisterCheck("yggdrasil-api", yggService.CheckReady); err != nil {
+		panic("synthetic yggdrasil check registration failed: " + err.Error())
+	}
+	return manager
 }

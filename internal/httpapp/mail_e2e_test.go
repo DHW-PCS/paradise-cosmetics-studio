@@ -36,6 +36,7 @@ import (
 	"blessing-skin-go/internal/outbox"
 	"blessing-skin-go/internal/site"
 	"blessing-skin-go/internal/testsupport"
+	"blessing-skin-go/internal/yggdrasil"
 	"blessing-skin-go/web"
 )
 
@@ -226,7 +227,8 @@ func mailFixture(t *testing.T, options map[string]string) (http.Handler, *identi
 		RememberLifetime: 400 * 24 * time.Hour, TexturesDir: t.TempDir(),
 		Mail: smtpCfg, AppKey: []byte("0123456789abcdef0123456789abcdef"),
 	}
-	view := &site.Service{Store: store, Identity: id, Location: time.UTC, OptionSnapshot: options}
+	modules := testsupport.Modules(store, id)
+	view := &site.Service{Store: store, Identity: id, Location: time.UTC, OptionSnapshot: options, Modules: modules}
 	assets, err := web.Load()
 	if err != nil {
 		t.Fatal(err)
@@ -240,7 +242,8 @@ func mailFixture(t *testing.T, options map[string]string) (http.Handler, *identi
 		t.Fatal(err)
 	}
 	accounts := account.New(store, id, view, mailService)
-	handler, err := newWithAccounts(cfg, id, view, oauth, accounts, mailService)
+	accounts.Modules = modules
+	handler, err := newWithAccounts(cfg, id, view, oauth, accounts, mailService, yggdrasil.New(store, id, nil, []byte("synthetic-yggdrasil-hs256-key-32b"), false, id.Now), "m4-05-test")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,0 +1,8 @@
+{
+  "source": ".local/refactoring/evidence/2026-10-30-m3-06-renderer/fixtures",
+  "files": {
+    "alex-64x64.png": "74a2851618e1ce6311304bcabb428e19f9de2d58146ab1b6498085f09aef4fb8",
+    "cape-64x32.png": "a18561d2e6eb788a22b073fc9cd06620da6403f93b445e644cd8f7bbae6494b8",
+    "steve-64x64.png": "74a2851618e1ce6311304bcabb428e19f9de2d58146ab1b6498085f09aef4fb8"
+  }
+}

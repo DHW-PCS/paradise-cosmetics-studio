@@ -85,3 +85,61 @@ func TestOfflineCommandsProtectInstalledSite(t *testing.T) {
 		t.Fatal("CLI changed business data")
 	}
 }
+
+// The module state takeover runs inside the offline migrate command: without
+// the declared manifest it refuses to invent install facts, and a present
+// manifest seeds only the missing rows without rewriting runtime state.
+func TestMigrateInitializesModuleStateRows(t *testing.T) {
+	store, _ := testsupport.Database(t, "modules-cli-")
+	cfg, err := mysql.ParseDSN(os.Getenv("M2_TEST_DSN"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var name string
+	if err = store.DB.QueryRow("SELECT DATABASE()").Scan(&name); err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	envFile := filepath.Join(directory, "site.env")
+	text := "APP_KEY=synthetic-only-secret-with-thirty-two-bytes\nAPP_ROOT=" + directory + "\nAPP_LOCK_FILE=" + filepath.Join(directory, "storage/go-instance.lock") + "\nDB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=" + func() string {
+		_, port, err := net.SplitHostPort(cfg.Addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return port
+	}() + "\nDB_DATABASE=" + name + "\nDB_USERNAME=" + cfg.User + "\nDB_PASSWORD=" + cfg.Passwd + "\nDB_PREFIX=modules-cli-\n"
+	if err = os.WriteFile(envFile, []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.DB.Exec("DELETE FROM " + store.Table("options") + " WHERE option_name IN ('plugins_enabled','go_module_installations')"); err != nil {
+		t.Fatal(err)
+	}
+	if err = run([]string{"migrate", "-env", envFile}); err == nil {
+		t.Fatal("migrate invented module install facts without the manifest")
+	}
+	manifest := filepath.Join(directory, "modules.json")
+	if err = os.WriteFile(manifest, []byte(`{"installed":[{"name":"legacy-api","version":"1.1.3"},{"name":"yggdrasil-api","version":"5.2.1"}]}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	text += "MODULES_MANIFEST_FILE=" + manifest + "\n"
+	if err = os.WriteFile(envFile, []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err = run([]string{"migrate", "-env", envFile}); err != nil {
+		t.Fatal(err)
+	}
+	var enabled, installed string
+	if err = store.DB.QueryRow("SELECT option_value FROM " + store.Table("options") + " WHERE option_name='plugins_enabled'").Scan(&enabled); err != nil || enabled != "" {
+		t.Fatalf("frozen enable default not seeded: %q %v", enabled, err)
+	}
+	if err = store.DB.QueryRow("SELECT option_value FROM " + store.Table("options") + " WHERE option_name='go_module_installations'").Scan(&installed); err != nil || installed != `[{"name":"legacy-api","version":"1.1.3"},{"name":"yggdrasil-api","version":"5.2.1"}]` {
+		t.Fatalf("manifest ledger not seeded: %q %v", installed, err)
+	}
+	// A repeated takeover must not rewrite the rows.
+	if err = run([]string{"migrate", "-env", envFile}); err != nil {
+		t.Fatal(err)
+	}
+	if err = store.DB.QueryRow("SELECT option_value FROM " + store.Table("options") + " WHERE option_name='go_module_installations'").Scan(&installed); err != nil || installed != `[{"name":"legacy-api","version":"1.1.3"},{"name":"yggdrasil-api","version":"5.2.1"}]` {
+		t.Fatalf("repeat takeover rewrote the rows: %q", installed)
+	}
+}

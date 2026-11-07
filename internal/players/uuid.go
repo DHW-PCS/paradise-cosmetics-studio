@@ -113,6 +113,50 @@ func (s *Service) BindingTx(ctx context.Context, tx *sql.Tx, pid int64) (*Bindin
 	return s.bindingTx(ctx, tx, pid)
 }
 
+// LockBindingTx is the locking current read for protocol adapters: it takes
+// the binding row FOR UPDATE inside the caller's transaction so a later
+// rename or transfer cannot interleave between discovery and use. A missing
+// binding is a typed absence (nil, nil).
+func (s *Service) LockBindingTx(ctx context.Context, tx *sql.Tx, pid int64) (*Binding, error) {
+	b := &Binding{PID: pid}
+	err := tx.QueryRowContext(ctx, "SELECT uuid_row_id,uuid,version FROM "+s.Store.Table("go_uuid_bindings")+" WHERE pid=? FOR UPDATE", pid).Scan(&b.UUIDRowID, &b.UUID, &b.Version)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+// PlayersOfUIDTx returns the current player rows of one user in ascending
+// PID order, locking each players row FOR UPDATE inside the caller's
+// transaction.
+func (s *Service) PlayersOfUIDTx(ctx context.Context, tx *sql.Tx, uid int64) ([]Player, error) {
+	rows, err := tx.QueryContext(ctx, "SELECT pid,name,uid,tid_skin,tid_cape,last_modified FROM "+s.Store.Table("players")+" WHERE uid=? ORDER BY pid FOR UPDATE", uid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Player
+	for rows.Next() {
+		var pl Player
+		var last string
+		if err = rows.Scan(&pl.PID, &pl.Name, &pl.UID, &pl.TIDSkin, &pl.TIDCape, &last); err != nil {
+			return nil, err
+		}
+		pl.LastModified = last
+		out = append(out, pl)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	if out == nil {
+		out = []Player{}
+	}
+	return out, nil
+}
+
 // Binding reads the current binding without locking.
 func (s *Service) Binding(ctx context.Context, pid int64) (*Binding, error) {
 	return s.bindingTx(ctx, s.Store.DB, pid)

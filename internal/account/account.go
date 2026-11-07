@@ -4,10 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"math/big"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -15,22 +13,24 @@ import (
 	"blessing-skin-go/internal/database"
 	"blessing-skin-go/internal/identity"
 	"blessing-skin-go/internal/legacy/password"
+	"blessing-skin-go/internal/modules"
 	"blessing-skin-go/internal/outbox"
 	"blessing-skin-go/internal/players"
 	"blessing-skin-go/internal/site"
 )
 
 var (
-	ErrEmailUsed            = errors.New("account: email already exists")
-	ErrPlayerUsed           = errors.New("account: player name already exists")
-	ErrIPQuota              = errors.New("account: registration IP quota reached")
-	ErrForbidden            = errors.New("account: operation forbidden")
-	ErrNotFound             = errors.New("account: object not found")
-	ErrTooSoon              = errors.New("account: operation not due")
-	ErrModuleUnavailable    = errors.New("account: registration module unavailable")
-	ErrInvalidChallenge     = errors.New("account: invalid challenge")
-	ErrAlreadyVerified      = errors.New("account: already verified")
-	ErrVerificationDisabled = errors.New("account: verification disabled")
+	ErrEmailUsed                   = errors.New("account: email already exists")
+	ErrPlayerUsed                  = errors.New("account: player name already exists")
+	ErrIPQuota                     = errors.New("account: registration IP quota reached")
+	ErrForbidden                   = errors.New("account: operation forbidden")
+	ErrNotFound                    = errors.New("account: object not found")
+	ErrTooSoon                     = errors.New("account: operation not due")
+	ErrModuleUnavailable           = errors.New("account: registration module unavailable")
+	ErrVerificationMailUnavailable = errors.New("account: verification mail unavailable")
+	ErrInvalidChallenge            = errors.New("account: invalid challenge")
+	ErrAlreadyVerified             = errors.New("account: already verified")
+	ErrVerificationDisabled        = errors.New("account: verification disabled")
 )
 
 type Service struct {
@@ -39,6 +39,7 @@ type Service struct {
 	Site     *site.Service
 	Outbox   *outbox.Store
 	Mail     *Mail
+	Modules  *modules.Manager
 	Now      func() time.Time
 	// Award is replaceable for fixed-input checks; production uses crypto/rand.
 	Award func(min, max int64) int64
@@ -65,7 +66,9 @@ func (s *Service) hash(ctx context.Context, raw string) (string, error) {
 
 // Registration names and IP are HTTP-validated; eligibility still belongs to
 // this transaction and cannot be disabled by supplying an HTTP flag.
-type Registration struct{ Email, Nickname, PlayerName, Password, IP, Locale, Guest string }
+// InvitationCode travels the request's registration input; it is only
+// consumed when an enabled restricting module declares its own consumer.
+type Registration struct{ Email, Nickname, PlayerName, Password, IP, Locale, Guest, InvitationCode string }
 
 func (s *Service) Register(ctx context.Context, in Registration) (*identity.BrowserSession, error) {
 	if err := password.ValidateRegistration(in.Password); err != nil {
@@ -75,30 +78,6 @@ func (s *Service) Register(ctx context.Context, in Registration) (*identity.Brow
 	if err != nil {
 		return nil, err
 	}
-	if raw, _ := options["plugins_enabled"].(string); raw != "" {
-		var plugins []struct {
-			Name string `json:"name"`
-		}
-		// PluginManager ignores string entries. Preserve that shape while refusing
-		// an enabled eligibility module until its transaction consumer is installed.
-		var entries []json.RawMessage
-		if err = json.Unmarshal([]byte(raw), &entries); err != nil {
-			return nil, ErrModuleUnavailable
-		}
-		for _, entry := range entries {
-			var p struct {
-				Name string `json:"name"`
-			}
-			if json.Unmarshal(entry, &p) == nil {
-				plugins = append(plugins, p)
-			}
-		}
-		for _, p := range plugins {
-			if p.Name == "invitation-codes" || p.Name == "disable-registration" || p.Name == "restricted-email-domains" {
-				return nil, ErrModuleUnavailable
-			}
-		}
-	}
 	hash, err := s.hash(ctx, in.Password)
 	if err != nil {
 		return nil, err
@@ -107,6 +86,36 @@ func (s *Service) Register(ctx context.Context, in Registration) (*identity.Brow
 	err = s.Store.Transaction(ctx, func(tx *sql.Tx) error {
 		if err := database.LockNamespaces(ctx, tx, s.Store, "email", "mail", "player-name", "registration", "uuid"); err != nil {
 			return err
+		}
+		// The registration coordination already holds its namespace: the
+		// module state is read inside the same transaction with the shared
+		// current read instead of any pre-transaction options snapshot.
+		state, err := s.Modules.LockStateTx(ctx, tx)
+		if err != nil {
+			return err
+		}
+		// Every enabled restricting module must be connected before any
+		// consumer runs, so an unconnected module refuses the whole
+		// registration regardless of the request input.
+		contracts := make([]modules.Consumer, 0, 1)
+		for _, name := range state.EnabledEligibilities() {
+			consumer, connected := s.Modules.ConsumerOf(name)
+			if !connected {
+				return ErrModuleUnavailable
+			}
+			contracts = append(contracts, consumer)
+		}
+		// The connected consumers then consult this transaction's input; a
+		// refused code fails the whole registration without touching other
+		// eligibility state. Every returned handle is consumed in this
+		// commit, so a future second consumer cannot silently lose one.
+		var reservations []modules.Reservation
+		for _, consumer := range contracts {
+			held, err := consumer(ctx, tx, in.InvitationCode)
+			if err != nil {
+				return err
+			}
+			reservations = append(reservations, held)
 		}
 		if err := s.emailAvailable(ctx, tx, in.Email, 0); err != nil {
 			return err
@@ -147,9 +156,19 @@ func (s *Service) Register(ctx context.Context, in Registration) (*identity.Brow
 		}
 		if site.Truth(options["require_verification"]) {
 			if s.Mail == nil {
-				return ErrModuleUnavailable
+				// A required verification with the mail transport missing is a
+				// deployment configuration failure, not a business refusal;
+				// HTTP keeps serving it as a 503 server error.
+				return ErrVerificationMailUnavailable
 			}
 			if err = s.issueChallenge(ctx, tx, result.User, result.Version, "verify", in.Locale); err != nil {
+				return err
+			}
+		}
+		for _, reservation := range reservations {
+			// Each consume handle is verified inside the same commit; the
+			// original admin list reads the recorded UID and time afterwards.
+			if err = reservation.ConsumeTx(ctx, tx, uid); err != nil {
 				return err
 			}
 		}
@@ -352,102 +371,14 @@ func (s *Service) Avatar(ctx context.Context, b *identity.BrowserSession, tid in
 var ErrAvatarType = errors.New("account: cape cannot be an avatar")
 var ErrPrivateTexture = errors.New("account: private texture")
 
-// AdminChange rechecks actor and target under ascending UID locks before
-// rechecking the browser credential. It owns every account revocation entry.
+// AdminChange is the browser wrapper for AdminChangeActor; it shares
+// the same business transaction kernel and never forges an OAuth actor.
 func (s *Service) AdminChange(ctx context.Context, b *identity.BrowserSession, target int64, action, value string) error {
-	var hash string
-	var err error
-	if action == "password" {
-		if err = password.ValidateAdminReset(value); err != nil {
-			return err
-		}
-		hash, err = s.hash(ctx, value)
-		if err != nil {
-			return err
-		}
-	}
-	return s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		switch action {
-		case "email":
-			if err := database.LockNamespaces(ctx, tx, s.Store, "email"); err != nil {
-				return err
-			}
-		case "delete":
-			if err := database.LockNamespaces(ctx, tx, s.Store, "email", "mail", "player-name", "registration", "uuid"); err != nil {
-				return err
-			}
-		}
-		ids := []int64{b.User.UID}
-		if target != b.User.UID {
-			ids = append(ids, target)
-		}
-		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-		var permission int
-		for _, uid := range ids {
-			var p int
-			if err := tx.QueryRowContext(ctx, "SELECT permission FROM "+s.Store.Table("users")+" WHERE uid=? FOR UPDATE", uid).Scan(&p); errors.Is(err, sql.ErrNoRows) {
-				return ErrNotFound
-			} else if err != nil {
-				return err
-			}
-			if uid == target {
-				permission = p
-			}
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
-		if err != nil {
-			return err
-		}
-		if actor.Permission < 1 || (target != actor.UID && permission >= actor.Permission) {
-			return ErrForbidden
-		}
-		switch action {
-		case "password":
-			if err = s.Identity.RevokeUID(ctx, tx, target); err != nil {
-				return err
-			}
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET password=? WHERE uid=?", hash, target)
-		case "permission":
-			p, parseErr := strconv.ParseInt(value, 10, 64)
-			if parseErr != nil || (p != -1 && p != 0 && p != 1) {
-				return ErrForbidden
-			}
-			if target == actor.UID || (p == 1 && actor.Permission < 2) {
-				return ErrForbidden
-			}
-			if p == -1 {
-				if err = s.Identity.RevokeUID(ctx, tx, target); err != nil {
-					return err
-				}
-				// Keep the profile Last-Modified visible to clients when the
-				// owner is banned (M3 design: ban updates player timestamps).
-				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("players")+" SET last_modified=? WHERE uid=?", s.Now().In(s.Site.Location), target); err != nil {
-					return err
-				}
-			}
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET permission=? WHERE uid=?", p, target)
-		case "delete":
-			err = s.deleteUser(ctx, tx, target)
-		case "email":
-			if err = s.emailAvailable(ctx, tx, value, target); err != nil {
-				return err
-			}
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET email=? WHERE uid=?", value, target)
-		case "score":
-			score, parseErr := strconv.ParseInt(value, 10, 64)
-			if parseErr != nil {
-				return parseErr
-			}
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=? WHERE uid=?", score, target)
-		case "nickname":
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET nickname=? WHERE uid=?", value, target)
-		case "verification":
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET verified=NOT verified WHERE uid=?", target)
-		default:
-			return ErrForbidden
-		}
+	actor, err := s.Identity.NewBrowserActor(b)
+	if err != nil {
 		return err
-	})
+	}
+	return s.AdminChangeActor(ctx, actor, target, action, value)
 }
 
 // SetLocale persists the language link preference for the current browser

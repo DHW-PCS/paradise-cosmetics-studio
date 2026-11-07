@@ -122,7 +122,10 @@ func (a *App) adminReportReview(w http.ResponseWriter, r *http.Request, b *ident
 	case errors.Is(err, reports.ErrNotFound):
 		a.notFound(w, r)
 		return
-	case errors.Is(err, reports.ErrNoPermission):
+	case errors.Is(err, reports.ErrNoPermission), errors.Is(err, reports.ErrBanOutranking):
+		// ErrNoPermission covers the permission-below-one gate; ErrBanOutranking
+		// is the frozen ban-outranking business rejection. Both answer the
+		// same frozen 200 + code 1 body on the browser route.
 		a.business(w, r, b, 1, "admin.users.operations.no-permission")
 		return
 	case err != nil:

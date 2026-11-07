@@ -75,3 +75,40 @@ func TestTexturesDirectoryAndDriver(t *testing.T) {
 		t.Fatalf("custom textures dir = %q err=%v", c.TexturesDir, err)
 	}
 }
+
+func TestYggdrasilSwitches(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "site.env")
+	if err := os.WriteFile(file, []byte("APP_KEY=synthetic-key-of-thirty-two-bytes-only\nDB_DATABASE=synthetic\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(file, func(string) (string, bool) { return "", false })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.YggdrasilPublicKeysEnabled || c.YggVerboseLog {
+		t.Fatal("Yggdrasil switches must default false")
+	}
+	lookup := func(key, value string) func(string) (string, bool) {
+		return func(k string) (string, bool) {
+			if k == key {
+				return value, true
+			}
+			return "", false
+		}
+	}
+	c, err = Load(file, lookup("YGGDRASIL_PUBLICKEYS_ENABLED", "true"))
+	if err != nil || !c.YggdrasilPublicKeysEnabled {
+		t.Fatalf("publickeys true: %v %v", c.YggdrasilPublicKeysEnabled, err)
+	}
+	if _, err = Load(file, lookup("YGG_VERBOSE_LOG", "1")); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{"yes", "on", "2", "junk"} {
+		if _, err = Load(file, lookup("YGGDRASIL_PUBLICKEYS_ENABLED", bad)); err == nil {
+			t.Fatalf("publickeys %q must fail startup", bad)
+		}
+		if _, err = Load(file, lookup("YGG_VERBOSE_LOG", bad)); err == nil {
+			t.Fatalf("verbose %q must fail startup", bad)
+		}
+	}
+}

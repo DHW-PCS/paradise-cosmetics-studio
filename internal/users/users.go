@@ -68,7 +68,22 @@ func schema(location *time.Location, now func() time.Time) searchstring.Schema {
 const perPage = 10
 
 // List applies the frozen full search DSL to users with 10 per page.
+// It shares the listTx kernel with ListActor; the browser HTTP layer
+// gates admin access for this entry, as before.
 func (s *Service) List(ctx context.Context, page int, query, path string) (*Page, error) {
+	var result *Page
+	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
+		var err error
+		result, err = s.listTx(ctx, tx, page, query, path)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *Service) listTx(ctx context.Context, tx *sql.Tx, page int, query, path string) (*Page, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -83,7 +98,7 @@ func (s *Service) List(ctx context.Context, page int, query, path string) (*Page
 		args = resolved.Args
 	}
 	var total int
-	if err := s.Store.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("users")+where, args...).Scan(&total); err != nil {
+	if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("users")+where, args...).Scan(&total); err != nil {
 		return nil, err
 	}
 	order := ""
@@ -101,7 +116,7 @@ func (s *Service) List(ctx context.Context, page int, query, path string) (*Page
 			}
 		}
 	}
-	rows, err := s.Store.DB.QueryContext(ctx, "SELECT uid,email,nickname,avatar,score,permission,ip,is_dark_mode,last_sign_at,register_at,verified,locale FROM "+s.Store.Table("users")+where+order+" LIMIT ? OFFSET ?", append(args, perPage, (page-1)*perPage)...)
+	rows, err := tx.QueryContext(ctx, "SELECT uid,email,nickname,avatar,score,permission,ip,is_dark_mode,last_sign_at,register_at,verified,locale FROM "+s.Store.Table("users")+where+order+" LIMIT ? OFFSET ?", append(args, perPage, (page-1)*perPage)...)
 	if err != nil {
 		return nil, err
 	}

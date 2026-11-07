@@ -48,6 +48,9 @@ func (a *App) playerSetTexture(w http.ResponseWriter, r *http.Request, b *identi
 	player, err := a.players.SetTextures(r.Context(), b, pid, skin, cape)
 	switch {
 	case errors.Is(err, players.ErrNotFound):
+		a.business(w, r, b, 1, "skinlib.non-existent")
+		return
+	case errors.Is(err, players.ErrNotInCloset):
 		a.business(w, r, b, 1, "user.closet.remove.non-existent")
 		return
 	case errors.Is(err, players.ErrTypeMismatch):

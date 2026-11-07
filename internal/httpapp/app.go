@@ -20,11 +20,14 @@ import (
 
 	"blessing-skin-go/internal/account"
 	"blessing-skin-go/internal/admission"
+	"blessing-skin-go/internal/apilimits"
 	"blessing-skin-go/internal/captcha"
 	"blessing-skin-go/internal/closet"
 	"blessing-skin-go/internal/config"
 	"blessing-skin-go/internal/identity"
 	"blessing-skin-go/internal/images"
+	"blessing-skin-go/internal/invitation"
+	"blessing-skin-go/internal/modules"
 	"blessing-skin-go/internal/notifications"
 	"blessing-skin-go/internal/oauthserver"
 	"blessing-skin-go/internal/players"
@@ -34,6 +37,7 @@ import (
 	"blessing-skin-go/internal/site"
 	"blessing-skin-go/internal/textures"
 	"blessing-skin-go/internal/users"
+	"blessing-skin-go/internal/yggdrasil"
 	"blessing-skin-go/web"
 )
 
@@ -41,6 +45,7 @@ const sessionCookie = "bs_go_session"
 const rememberCookie = "bs_go_remember"
 
 type App struct {
+	apiLimits     *apilimits.Service
 	accounts      *account.Service
 	players       *players.Service
 	textures      *textures.Service
@@ -48,6 +53,9 @@ type App struct {
 	reports       *reports.Service
 	notifications *notifications.Service
 	usersAdmin    *users.Service
+	modules       *modules.Manager
+	invitation    *invitation.Service
+	oauth         *oauthserver.Server
 	clock         func() time.Time
 	images        *images.Service
 	captcha       *captcha.Service
@@ -56,13 +64,15 @@ type App struct {
 	site          *site.Service
 	assets        *web.Assets
 	basePath      string
+	ygg           *yggdrasil.Service
+	buildVersion  string
 }
 
 // newMailTransport is swappable so an end-to-end test can point the server at a
 // loopback SMTP simulator; production keeps account.DefaultTransport.
 var newMailTransport account.NewTransportFunc = account.DefaultTransport
 
-func New(c config.Config, id *identity.Service, service *site.Service, oauth *oauthserver.Server) (http.Handler, error) {
+func New(c config.Config, id *identity.Service, service *site.Service, oauth *oauthserver.Server, ygg *yggdrasil.Service, buildVersion string) (http.Handler, error) {
 	assets, err := web.Load()
 	if err != nil {
 		return nil, err
@@ -82,12 +92,14 @@ func New(c config.Config, id *identity.Service, service *site.Service, oauth *oa
 	if texturesDir == "" {
 		texturesDir = "storage/textures"
 	}
-	return newWithAccounts(c, id, service, oauth, account.New(id.Store, id, service, mail), mail)
+	accounts := account.New(id.Store, id, service, mail)
+	accounts.Modules = service.Modules
+	return newWithAccounts(c, id, service, oauth, accounts, mail, ygg, buildVersion)
 }
 
 // newWithAccounts lets acceptance tests supply the account service (and thus a
 // loopback mail transport) without duplicating the route table.
-func newWithAccounts(c config.Config, id *identity.Service, service *site.Service, oauth *oauthserver.Server, accounts *account.Service, mail *account.Mail) (http.Handler, error) {
+func newWithAccounts(c config.Config, id *identity.Service, service *site.Service, oauth *oauthserver.Server, accounts *account.Service, mail *account.Mail, ygg *yggdrasil.Service, buildVersion string) (http.Handler, error) {
 	assets, err := web.Load()
 	if err != nil {
 		return nil, err
@@ -96,7 +108,13 @@ func newWithAccounts(c config.Config, id *identity.Service, service *site.Servic
 	textureService := textures.New(id.Store, id, service, c.TexturesDir, id.Now)
 	playerService := players.New(id.Store, id, service, id.Now).WithTextures(textureService)
 	closetService := closet.New(id.Store, id, service, textureService, playerService, id.Now)
-	a := &App{cfg: c, identity: id, site: service, assets: assets, basePath: u.Path, accounts: accounts, players: playerService, textures: textureService, closet: closetService, reports: reports.New(id.Store, id, service, textureService, closetService, id.Now), notifications: notifications.New(id.Store, id.Now), usersAdmin: users.New(id.Store, service, id.Now), clock: id.Now, images: images.New(id.Store, service, textureService, id.Now), captcha: &captcha.Service{Store: id.Store, Identity: id, Client: http.DefaultClient}}
+	a := &App{cfg: c, identity: id, site: service, assets: assets, basePath: u.Path, accounts: accounts, players: playerService, textures: textureService, closet: closetService, apiLimits: apilimits.New(id.Store), reports: reports.New(id.Store, id, service, textureService, closetService, id.Now), notifications: notifications.New(id.Store, id.Now), usersAdmin: users.New(id.Store, service, id.Now), modules: service.Modules, invitation: invitation.New(id.Store, id.Now), oauth: oauth, clock: id.Now, images: images.New(id.Store, service, textureService, id.Now), captcha: &captcha.Service{Store: id.Store, Identity: id, Client: http.DefaultClient}, ygg: ygg, buildVersion: buildVersion}
+	if a.modules != nil && ygg != nil {
+		ygg.ModuleLock = a.yggModuleLockFunc()
+	}
+	if a.modules != nil {
+		playerService.ModuleLock = a.yggModuleLockFunc()
+	}
 	mux := http.NewServeMux()
 	register := func(method, path string, fn func(http.ResponseWriter, *http.Request)) {
 		mux.HandleFunc(method+" "+u.Path+path, fn)
@@ -106,6 +124,8 @@ func newWithAccounts(c config.Config, id *identity.Service, service *site.Servic
 	register("POST", route("auth.login"), a.browser(false, false, a.login))
 	register("GET", "/auth/register", a.browser(false, false, a.registerPage))
 	register("POST", "/auth/register", a.browser(false, false, a.registerAccount))
+	register("GET", "/auth/login/{driver}", a.browser(false, false, a.oauthLogin))
+	register("GET", "/auth/login/{driver}/callback", a.browser(false, false, a.oauthLogin))
 	register("GET", "/auth/forgot", a.browser(false, false, a.forgotPage))
 	register("POST", "/auth/forgot", a.browser(false, false, a.forgotPassword))
 	register("GET", "/auth/reset/{uid}", a.browser(false, false, a.resetPage))
@@ -175,9 +195,41 @@ func newWithAccounts(c config.Config, id *identity.Service, service *site.Servic
 		register("PUT", "/admin/users/{user}/"+action, a.browser(true, true, a.adminAccount(action)))
 	}
 	register("DELETE", "/admin/users/{user}", a.browser(true, true, a.adminAccount("delete")))
-	register("POST", route("passport.token"), oauth.Token)
+	register("GET", "/admin/plugins/data", a.browser(true, true, a.pluginsData))
+	register("GET", "/admin/plugins/manage", a.browser(true, true, a.adminPluginsPage))
+	register("POST", "/admin/plugins/manage", a.browser(true, true, a.pluginsManage))
+	register("GET", "/admin/invitation-codes", a.browser(true, true, a.adminInvitationPage))
+	register("POST", "/admin/invitation-codes/generate", a.browser(true, true, a.invitationGenerate))
+	for _, method := range []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"} {
+		register(method, "/admin/plugins/config/{name}", a.browser(true, true, a.pluginConfig))
+	}
+	register("GET", "/admin/plugins/readme/{name}", a.browser(true, true, a.pluginReadme))
+	register("POST", route("passport.token"), a.apiToken(oauth.Token))
+	register("GET", "/admin/oauth/scopes", a.browser(true, true, a.oauthScopesList))
+	register("POST", "/admin/oauth/scopes", a.browser(true, true, a.oauthScopesCreate))
+	register("PUT", "/admin/oauth/scopes/{id}", a.browser(true, true, a.oauthScopesUpdate))
+	register("DELETE", "/admin/oauth/scopes/{id}", a.browser(true, true, a.oauthScopesDelete))
+	register("GET", "/oauth/authorize", a.browser(true, false, a.oauthAuthorizeShow))
+	register("POST", "/oauth/authorize", a.browser(true, false, a.oauthAuthorizeApprove))
+	register("DELETE", "/oauth/authorize", a.browser(true, false, a.oauthAuthorizeDeny))
+	register("POST", "/oauth/authorize/deny", a.browser(true, false, a.oauthAuthorizeDeny))
+	register("POST", "/oauth/token/refresh", a.browser(true, false, a.oauthTokenRefresh))
+	register("GET", "/user/oauth/manage", a.browser(true, false, a.oauthManagePage))
+	register("GET", "/user/oauth/authorizations", a.browser(true, false, a.oauthAuthorizations))
+	register("GET", "/oauth/clients", a.browser(true, false, a.oauthClientsList))
+	register("POST", "/oauth/clients", a.browser(true, false, a.oauthClientCreate))
+	register("PUT", "/oauth/clients/{client_id}", a.browser(true, false, a.oauthClientUpdate))
+	register("DELETE", "/oauth/clients/{client_id}", a.browser(true, false, a.oauthClientDelete))
+	register("GET", "/oauth/scopes", a.browser(true, false, a.oauthPassportScopesList))
+	register("GET", "/oauth/personal-access-tokens", a.browser(true, false, a.oauthPersonalTokensList))
+	register("POST", "/oauth/personal-access-tokens", a.browser(true, false, a.oauthPersonalTokenCreate))
+	register("DELETE", "/oauth/personal-access-tokens/{token_id}", a.browser(true, false, a.oauthPersonalTokenDelete))
+	register("GET", "/oauth/tokens", a.browser(true, false, a.oauthTokensList))
+	register("DELETE", "/oauth/tokens/{token_id}", a.browser(true, false, a.oauthTokenDelete))
 	register("GET", "/textures/{hash}", a.browser(false, false, a.hashTexture))
 	register("GET", "/csl/textures/{hash}", a.browser(false, false, a.hashTexture))
+	register("GET", "/skin/{player}", a.legacySkin)
+	register("GET", "/cape/{player}", a.legacyCape)
 	register("GET", "/raw/{texture}", a.browser(false, false, a.rawTexture))
 	register("GET", "/avatar/player/{name}", a.browser(false, false, a.playerAvatar))
 	register("GET", "/avatar/user/{user}", a.browser(false, false, a.userAvatar))
@@ -188,6 +240,63 @@ func newWithAccounts(c config.Config, id *identity.Service, service *site.Servic
 	register("GET", "/app/", http.StripPrefix(u.Path, http.FileServerFS(assets.Static)).ServeHTTP)
 	register("GET", "/sw.js", a.serviceWorker)
 	register("GET", "/health", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	// Yggdrasil protocol routes (M4-05): every route is served through
+	// the module dispatcher; a disabled module answers 404.
+	for _, method := range []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"} {
+		register(method, "/api/yggdrasil", a.yggHello)
+	}
+	register("POST", "/api/yggdrasil/authserver/authenticate", a.yggAuthenticate)
+	register("POST", "/api/yggdrasil/authserver/refresh", a.yggRefresh)
+	register("POST", "/api/yggdrasil/authserver/validate", a.yggValidate)
+	register("POST", "/api/yggdrasil/authserver/invalidate", a.yggInvalidate)
+	register("POST", "/api/yggdrasil/authserver/signout", a.yggSignout)
+	register("POST", "/api/yggdrasil/sessionserver/session/minecraft/join", a.yggJoin)
+	register("GET", "/api/yggdrasil/sessionserver/session/minecraft/hasJoined", a.yggHasJoined)
+	register("GET", "/api/yggdrasil/sessionserver/session/minecraft/profile/{uuid}", a.yggProfile)
+	register("POST", "/api/yggdrasil/api/profiles/minecraft", a.yggSearchMultiple)
+	register("GET", "/api/yggdrasil/api/users/profiles/minecraft/{username}", a.yggSearchSingle)
+	register("PUT", "/api/yggdrasil/api/user/profile/{uuid}/{type}", a.yggUpload)
+	register("DELETE", "/api/yggdrasil/api/user/profile/{uuid}/{type}", a.yggReset)
+	register("GET", "/api/yggdrasil/minecraftservices/publickeys", a.yggPublicKeys)
+	register("GET", "/admin/yggdrasil-log", a.browser(true, true, a.yggLogPage))
+	register("POST", "/admin/plugins/config/yggdrasil-api/generate", a.browser(true, true, a.yggGenerate))
+	// Yggdrasil core API (M4-03 slice C2): frozen /api prefix.
+	for _, method := range []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"} {
+		register(method, "/api", a.apiRoot)
+		register(method, "/api/{$}", a.apiRoot)
+	}
+	register("GET", "/api/user", a.api(a.apiUser))
+	register("GET", "/api/user/notifications", a.api(a.apiNotificationsUnread))
+	register("POST", "/api/user/notifications/{id}", a.api(a.apiNotificationRead))
+	register("GET", "/api/players", a.api(a.apiPlayersList))
+	register("POST", "/api/players", a.api(a.apiPlayersAdd))
+	register("DELETE", "/api/players/{player}", a.api(a.apiPlayersDelete))
+	register("PUT", "/api/players/{player}/name", a.api(a.apiPlayersRename))
+	register("PUT", "/api/players/{player}/textures", a.api(a.apiPlayersSetTextures))
+	register("DELETE", "/api/players/{player}/textures", a.api(a.apiPlayersClearTextures))
+	register("GET", "/api/closet", a.api(a.apiClosetList))
+	register("POST", "/api/closet", a.api(a.apiClosetAdd))
+	register("PUT", "/api/closet/{tid}", a.api(a.apiClosetRename))
+	register("DELETE", "/api/closet/{tid}", a.api(a.apiClosetRemove))
+	register("GET", "/api/admin/users", a.api(a.apiAdminUsersList))
+	register("PUT", "/api/admin/users/{user}/email", a.api(a.apiAdminUserAction("email")))
+	register("PUT", "/api/admin/users/{user}/verification", a.api(a.apiAdminUserAction("verification")))
+	register("PUT", "/api/admin/users/{user}/nickname", a.api(a.apiAdminUserAction("nickname")))
+	register("PUT", "/api/admin/users/{user}/password", a.api(a.apiAdminUserAction("password")))
+	register("PUT", "/api/admin/users/{user}/score", a.api(a.apiAdminUserAction("score")))
+	register("PUT", "/api/admin/users/{user}/permission", a.api(a.apiAdminUserAction("permission")))
+	register("DELETE", "/api/admin/users/{user}", a.api(a.apiAdminUserAction("delete")))
+	register("GET", "/api/admin/players", a.api(a.apiAdminPlayersList))
+	register("PUT", "/api/admin/players/{player}/name", a.api(a.apiAdminPlayerRename))
+	register("PUT", "/api/admin/players/{player}/owner", a.api(a.apiAdminPlayerOwner))
+	register("PUT", "/api/admin/players/{player}/textures", a.api(a.apiAdminPlayerTextures))
+	register("DELETE", "/api/admin/players/{player}", a.api(a.apiAdminPlayersDelete))
+	register("GET", "/api/admin/closet/{user}", a.api(a.apiAdminClosetList))
+	register("POST", "/api/admin/closet/{user}", a.api(a.apiAdminClosetAdd))
+	register("DELETE", "/api/admin/closet/{user}", a.api(a.apiAdminClosetRemove))
+	register("GET", "/api/admin/reports", a.api(a.apiAdminReportsManage))
+	register("PUT", "/api/admin/reports/{report}", a.api(a.apiAdminReportsReview))
+	register("POST", "/api/admin/notifications", a.api(a.apiAdminNotificationSend))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if u.Path != "" && !strings.HasPrefix(r.URL.Path, u.Path+"/") {
 			a.notFound(w, r)
@@ -206,12 +315,12 @@ func newWithAccounts(c config.Config, id *identity.Service, service *site.Servic
 			}
 		}
 		if strings.HasPrefix(requestPath, "/api/yggdrasil") {
-			jsonResponse(w, 501, map[string]string{"error": "UnsupportedOperationException", "errorMessage": a.message(r, nil, "errors.http.msg-500")})
+			a.yggNotFound(w)
 			return
 		}
 		a.notFound(w, r)
 	})
-	return mux, nil
+	return a.apiLocationHeader(mux), nil
 }
 
 func route(name string) string {
@@ -564,7 +673,7 @@ type ViewModel struct {
 	PlayerNoticeTitle, PlayerNotice                                                                                                                    string
 	SkinlibPage, SkinlibShowPage, SkinlibUploadPage, HasUser, ClosetPage                                                                               bool
 	ClosetUnverified                                                                                                                                   bool
-	ReportsPage, AdminDashboardPage                                                                                                                    bool
+	ReportsPage, AdminDashboardPage, InvitationCodesPage                                                                                               bool
 	AdminSumUsers, AdminSumPlayers, AdminSumTextures, AdminSumStorage                                                                                  int64
 	AdminUsageUsers, AdminUsagePlayers, AdminUsageTextures, AdminUsageStorage                                                                          string
 	AdminNotifyTitle, AdminNotifyReceiver, AdminNotifyAll, AdminNotifyNormal, AdminNotifyUID, AdminNotifyEmail, AdminNotifySubject, AdminNotifyContent string
@@ -589,6 +698,12 @@ type ViewModel struct {
 	AnnouncementTitle, ScoreTitle, ScoreStorage, ScorePlayer, ScoreCloset, Close                                                                       string
 	Announcement, ScoreIntroduction                                                                                                                    template.HTML
 	MenuGroups                                                                                                                                         []MenuGroup
+	Invitation                                                                                                                                         InvitationView
+	YggdrasilConfigPage, YggdrasilLogPage, ReadmePage                                                                                                  bool
+	YggConfig                                                                                                                                          YggConfigView
+	YggLog                                                                                                                                             YggLogView
+	YggDnd                                                                                                                                             *YggDndView
+	YggReadme                                                                                                                                          YggReadmeView
 	Profile, Reports                                                                                                                                   string
 	AdminPage                                                                                                                                          bool
 	BaseURL, Locale, Language, SiteName, Title, CSRF, UserCenter, AdminPanel, Users, Logout, Nickname                                                  string
@@ -602,6 +717,30 @@ type ViewModel struct {
 }
 
 type LanguageLink struct{ Name, URL string }
+
+// InvitationView carries the frozen InvitationCodes::codes twig contract for
+// the admin two-column page.
+type InvitationView struct {
+	Title, CodeLabel, FreeTitle, FreeEmpty, UsedTitle, UsedEmpty string
+	AmountLabel, AmountPlaceholder, GenerateTitle                string
+	GeneratedAtLabel, UserLabel, UsedAtLabel                     string
+	Error                                                        string
+	Free, Used                                                   []InvitationRow
+}
+
+// InvitationRow mirrors one admin list entry with the displayed time strings.
+type InvitationRow struct {
+	Code, GeneratedAt, UsedBy, UsedAt string
+}
+
+// YggReadmeView mirrors the frozen admin.plugin.readme twig view: the card
+// header is the plugin readme label, the body is GFM-converted HTML and the
+// footer carries the back button.
+type YggReadmeView struct {
+	Title   string
+	Content template.HTML
+	Back    string
+}
 
 type ReportRow struct {
 	TID      int64
@@ -781,7 +920,26 @@ func (a *App) renderPage(w http.ResponseWriter, r *http.Request, b *identity.Bro
 	if view.Dark {
 		view.SidebarColor = strings.ReplaceAll(view.SidebarColor, "light", "dark")
 	}
-	view.MenuGroups = sidebar(a.cfg.BaseURL, routeName, view.Admin, t)
+	invitationItems := []MenuItem{}
+	if _, enabled, err := a.invitationEnabled(r.Context(), locale); err == nil && enabled {
+		invitationItems = append(invitationItems, MenuItem{Title: modules.Message("InvitationCodes::general.code", locale), URL: a.cfg.BaseURL + "/admin/invitation-codes", Icon: "fa-inbox", Active: routeName == "admin/invitation-codes"})
+	} else if err != nil {
+		a.serverError(w, r, b)
+		return
+	}
+	// The Yggdrasil log entry follows the verbose switch; hiding the
+	// entry never unregisters the route.
+	if a.cfg.YggVerboseLog {
+		served, err := a.servedModule(r.Context(), yggdrasilModule)
+		if err != nil {
+			a.serverError(w, r, b)
+			return
+		}
+		if served {
+			invitationItems = append(invitationItems, MenuItem{Title: modules.Message("Yggdrasil::log.title", locale), URL: a.cfg.BaseURL + "/admin/yggdrasil-log", Icon: "fa-history", Active: routeName == "admin/yggdrasil-log"})
+		}
+	}
+	view.MenuGroups = sidebar(a.cfg.BaseURL, routeName, view.Admin, t, invitationItems)
 	view.Profile = t("general.profile")
 	view.Reports = t("general.report-manage")
 	view.AdminPage = strings.HasPrefix(routeName, "admin")

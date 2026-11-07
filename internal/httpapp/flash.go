@@ -41,6 +41,8 @@ const (
 	// The go_web_flashes.form column is VARCHAR(8); values must stay within it.
 	notificationForm     = "notice"
 	notificationSentForm = "noticeok"
+	// The invitation generate form keeps the same palette.
+	invitationForm = "inv-code"
 )
 
 var knownForms = map[string]bool{
@@ -48,6 +50,8 @@ var knownForms = map[string]bool{
 	verifyForm:           true,
 	notificationForm:     true,
 	notificationSentForm: true,
+	invitationForm:       true,
+	yggConfigForm:        true,
 }
 
 func (a *App) putFormError(ctx context.Context, b *identity.BrowserSession, form, message string) error {

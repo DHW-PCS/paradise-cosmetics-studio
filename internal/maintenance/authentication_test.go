@@ -18,6 +18,12 @@ func TestOfflineResetAndBoundedCleanup(t *testing.T) {
 	if err := oauthserver.Migrate(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}
+	if err := oauthserver.MigrateConsents(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err := oauthserver.MigrateAPIDigest(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
 	if err := outbox.Migrate(t.Context(), store); err != nil {
 		t.Fatal(err)
 	}

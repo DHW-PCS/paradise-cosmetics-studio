@@ -1,6 +1,7 @@
 package httpapp
 
 import (
+	"bytes"
 	"errors"
 	"html/template"
 	"net/http"
@@ -8,8 +9,11 @@ import (
 	"strings"
 
 	"blessing-skin-go/internal/identity"
+	"blessing-skin-go/internal/invitation"
+	"blessing-skin-go/internal/modules"
 	"blessing-skin-go/internal/reports"
 	"blessing-skin-go/internal/site"
+	"blessing-skin-go/internal/yggdrasil"
 	"golang.org/x/net/html"
 )
 
@@ -62,6 +66,167 @@ func (a *App) populateView(r *http.Request, b *identity.BrowserSession, routeNam
 	view.ClosetPage = routeName == "user/closet"
 	view.AdminDashboardPage = routeName == "admin"
 	view.ReportsPage = routeName == "user/reports"
+	view.InvitationCodesPage = routeName == "admin/invitation-codes"
+	view.YggdrasilConfigPage = routeName == "admin/yggdrasil-config"
+	view.YggdrasilLogPage = routeName == "admin/yggdrasil-log"
+	view.ReadmePage = routeName == "admin/yggdrasil-readme"
+	if routeName == "user" {
+		served, err := a.servedModule(r.Context(), yggdrasilModule)
+		if err != nil {
+			return err
+		}
+		if served && site.Truth(options["ygg_show_config_section"]) {
+			locale := a.locale(r, b)
+			text := func(key string) string { return modules.Message(key, locale) }
+			view.YggDnd = &YggDndView{
+				Title: text("Yggdrasil::dnd.title"), URLLabel: text("Yggdrasil::dnd.url"),
+				Tip: text("Yggdrasil::dnd.tip"), Button: text("Yggdrasil::dnd.button"),
+				Guide: text("Yggdrasil::dnd.guide"), APIRoot: a.cfg.BaseURL + "/api/yggdrasil",
+			}
+		}
+	}
+	if view.YggdrasilConfigPage {
+		locale := a.locale(r, b)
+		text := func(key string) string { return modules.Message(key, locale) }
+		cfg := &view.YggConfig
+		cfg.Title = text("Yggdrasil::config.title")
+		view.Title = cfg.Title
+		cfg.CommonTitle = text("Yggdrasil::config.common.title")
+		cfg.KeypairTitle = text("Yggdrasil::config.keypair.title")
+		cfg.APIRootLabel = text("Yggdrasil::config.url.label")
+		cfg.APIRootNotice = text("Yggdrasil::config.url.notice")
+		cfg.APIRoot = a.cfg.BaseURL + "/api/yggdrasil"
+		cfg.UUIDAlgorithmTitle = text("Yggdrasil::config.common.ygg_uuid_algorithm.title")
+		cfg.UUIDV3 = text("Yggdrasil::config.common.ygg_uuid_algorithm.v3")
+		cfg.UUIDV4 = text("Yggdrasil::config.common.ygg_uuid_algorithm.v4")
+		cfg.UUIDHint = text("Yggdrasil::config.common.ygg_uuid_algorithm.hint")
+		cfg.TokenExpire1Title = text("Yggdrasil::config.common.ygg_token_expire_1.title")
+		cfg.TokenExpire2Title = text("Yggdrasil::config.common.ygg_token_expire_2.title")
+		cfg.TokenExpire2Desc = text("Yggdrasil::config.common.ygg_token_expire_2.description")
+		cfg.TokensLimitTitle = text("Yggdrasil::config.common.ygg_tokens_limit.title")
+		cfg.TokensLimitDesc = text("Yggdrasil::config.common.ygg_tokens_limit.description")
+		cfg.RateLimitTitle = text("Yggdrasil::config.common.ygg_rate_limit.title")
+		cfg.RateLimitHint = text("Yggdrasil::config.common.ygg_rate_limit.hint")
+		cfg.SkinDomainTitle = text("Yggdrasil::config.common.ygg_skin_domain.title")
+		cfg.SkinDomainDesc = text("Yggdrasil::config.common.ygg_skin_domain.description")
+		cfg.SearchMaxTitle = text("Yggdrasil::config.common.ygg_search_profile_max.title")
+		cfg.SearchMaxHint = text("Yggdrasil::config.common.ygg_search_profile_max.hint")
+		cfg.ShowConfigTitle = text("Yggdrasil::config.common.ygg_show_config_section.title")
+		cfg.ShowConfigLabel = text("Yggdrasil::config.common.ygg_show_config_section.label")
+		cfg.EnableAliTitle = text("Yggdrasil::config.common.ygg_enable_ali.title")
+		cfg.EnableAliLabel = text("Yggdrasil::config.common.ygg_enable_ali.label")
+		cfg.PrivateKeyTitle = text("Yggdrasil::config.keypair.ygg_private_key.title")
+		cfg.PrivateKeyHint = text("Yggdrasil::config.keypair.ygg_private_key.hint")
+		cfg.GenerateLabel = text("Yggdrasil::config.keypair.ygg_private_key.generate")
+		cfg.SubmitLabel = text("Yggdrasil::config.keypair.ygg_private_key.submit")
+		cfg.KeypairMessage = text("Yggdrasil::config.keypair.ygg_private_key.message")
+		cfg.ValidLabel = text("Yggdrasil::config.keypair.ygg_private_key.valid")
+		cfg.InvalidLabel = text("Yggdrasil::config.keypair.ygg_private_key.invalid")
+		cfg.SubmitLabel = t("general.submit")
+		cfg.Values = map[string]string{}
+		for _, key := range append(append([]string{}, yggConfigFields...), append(yggConfigCheckboxes, "ygg_private_key")...) {
+			cfg.Values[key] = yggOptionString(options, key)
+		}
+		cfg.ShowConfigChecked = yggOptionChecked(options, "ygg_show_config_section")
+		cfg.EnableAliChecked = yggOptionChecked(options, "ygg_enable_ali")
+		_, keyErr := yggdrasil.ParsePrivateKey(cfg.Values["ygg_private_key"])
+		cfg.PrivateKeyValid = keyErr == nil
+		saved, err := a.takeFormError(r.Context(), b, yggConfigForm)
+		if err != nil {
+			return err
+		}
+		cfg.Saved = saved
+	}
+	if view.ReadmePage {
+		view.YggReadme.Title = t("admin.plugins.readme")
+		view.YggReadme.Back = t("general.back")
+		var buffer bytes.Buffer
+		if err := announcementMarkdown.Convert(a.assets.ReadmeYggdrasilAPI, &buffer); err != nil {
+			return err
+		}
+		view.YggReadme.Content = template.HTML(buffer.String())
+		view.Title = "Yggdrasil API"
+	}
+	if view.YggdrasilLogPage {
+		locale := a.locale(r, b)
+		text := func(key string) string { return modules.Message(key, locale) }
+		log := &view.YggLog
+		log.Title = text("Yggdrasil::log.title")
+		view.Title = log.Title
+		log.ActionLabel = text("Yggdrasil::log.header.action")
+		log.ParamsLabel = text("Yggdrasil::log.header.params")
+		log.TimeLabel = text("Yggdrasil::log.header.time")
+		log.NoRecords = text("Yggdrasil::log.no-records")
+		rows, page, hasNext, err := a.yggLogPageData(r)
+		if err != nil {
+			return err
+		}
+		for i := range rows {
+			rows[i].ActionLabel = text("Yggdrasil::log.actions." + rows[i].Action)
+			if rows[i].ActionLabel == "" || rows[i].ActionLabel == "Yggdrasil::log.actions."+rows[i].Action {
+				rows[i].ActionLabel = text("Yggdrasil::log.actions.undefined")
+			}
+		}
+		log.Rows = rows
+		log.Page = page
+		log.HasNext = hasNext
+		log.HasPrev = page > 1
+		if log.HasPrev {
+			log.PrevURL = a.cfg.BaseURL + "/admin/yggdrasil-log?page=" + strconv.Itoa(page-1)
+		}
+		if log.HasNext {
+			log.NextURL = a.cfg.BaseURL + "/admin/yggdrasil-log?page=" + strconv.Itoa(page+1)
+		}
+	}
+	if routeName == "auth/register" {
+		label, enabled, err := a.invitationEnabled(r.Context(), a.locale(r, b))
+		if err != nil {
+			return err
+		}
+		if enabled {
+			view.Extra["invitation"] = map[string]string{"label": label}
+		}
+	}
+	if view.InvitationCodesPage {
+		locale := a.locale(r, b)
+		text := func(key string) string { return modules.Message(key, locale) }
+		view.Invitation.Title = text("InvitationCodes::admin.title")
+		view.Invitation.FreeTitle = text("InvitationCodes::admin.available.title")
+		view.Invitation.FreeEmpty = text("InvitationCodes::admin.available.empty")
+		view.Invitation.UsedTitle = text("InvitationCodes::admin.used.title")
+		view.Invitation.UsedEmpty = text("InvitationCodes::admin.used.empty")
+		view.Invitation.AmountLabel = text("InvitationCodes::admin.available.amount")
+		view.Invitation.AmountPlaceholder = text("InvitationCodes::admin.available.placeholder")
+		view.Invitation.GenerateTitle = text("InvitationCodes::admin.title")
+		// codes.twig renders its block title into <title> and the content h1.
+		view.Title = view.Invitation.Title
+		view.Invitation.CodeLabel = text("InvitationCodes::general.code")
+		view.Invitation.GeneratedAtLabel = text("InvitationCodes::admin.generated_at")
+		view.Invitation.UserLabel = text("InvitationCodes::admin.used.user_id")
+		view.Invitation.UsedAtLabel = text("InvitationCodes::admin.used.used_at")
+		error, err := a.takeFormError(r.Context(), b, invitationForm)
+		if err != nil {
+			return err
+		}
+		view.Invitation.Error = error
+		codes, err := a.invitation.List(r.Context())
+		if err != nil {
+			return err
+		}
+		rows := func(source []invitation.Code) []InvitationRow {
+			out := []InvitationRow{}
+			for _, code := range source {
+				row := InvitationRow{Code: code.Code, GeneratedAt: code.GeneratedAt.In(a.site.Location).Format("2006-01-02 15:04:05"), UsedBy: strconv.FormatInt(code.UsedBy, 10)}
+				if code.UsedAt != nil {
+					row.UsedAt = code.UsedAt.In(a.site.Location).Format("2006-01-02 15:04:05")
+				}
+				out = append(out, row)
+			}
+			return out
+		}
+		view.Invitation.Free = rows(codes.Free)
+		view.Invitation.Used = rows(codes.Used)
+	}
 	if view.AdminDashboardPage {
 		store := a.site.Store
 		if err := store.DB.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM "+store.Table("users")).Scan(&view.AdminSumUsers); err != nil {

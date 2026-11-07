@@ -7,12 +7,12 @@ import (
 	"errors"
 	"time"
 
-	"blessing-skin-go/internal/closet"
 	"blessing-skin-go/internal/database"
 	"blessing-skin-go/internal/identity"
 	"blessing-skin-go/internal/searchstring"
 	"blessing-skin-go/internal/site"
 	"blessing-skin-go/internal/textures"
+	"blessing-skin-go/internal/users"
 )
 
 const (
@@ -22,10 +22,11 @@ const (
 )
 
 var (
-	ErrNotFound     = errors.New("reports: report not found")
-	ErrRepeated     = errors.New("reports: duplicate report")
-	ErrNoPermission = errors.New("reports: no permission")
-	ErrLackScore    = errors.New("reports: not enough score")
+	ErrNotFound      = errors.New("reports: report not found")
+	ErrRepeated      = errors.New("reports: duplicate report")
+	ErrNoPermission  = errors.New("reports: no permission")
+	ErrBanOutranking = errors.New("reports: ban target outranks actor")
+	ErrLackScore     = errors.New("reports: not enough score")
 )
 
 type Service struct {
@@ -33,11 +34,15 @@ type Service struct {
 	Identity *identity.Service
 	Site     *site.Service
 	Textures *textures.Service
-	Closet   *closet.Service
-	Now      func() time.Time
+	// Closet is the texture-deletion Tx capability for ReviewActor.
+	// Its concrete type is *closet.Service in production wiring; the
+	// interface requires the Actor Tx entry at compile time, so a
+	// closet build without DeleteTextureActorTx cannot be wired here.
+	Closet TextureDeleteActorTx
+	Now    func() time.Time
 }
 
-func New(store *database.Store, id *identity.Service, view *site.Service, tex *textures.Service, cl *closet.Service, now func() time.Time) *Service {
+func New(store *database.Store, id *identity.Service, view *site.Service, tex *textures.Service, cl TextureDeleteActorTx, now func() time.Time) *Service {
 	if now == nil {
 		now = time.Now
 	}
@@ -136,13 +141,8 @@ func (s *Service) Track(ctx context.Context, b *identity.BrowserSession, page in
 type ManageItem struct {
 	Report
 	Texture         *textures.Texture `json:"texture"`
-	TextureUploader *UploaderBrief    `json:"texture_uploader"`
-	Informer        *UploaderBrief    `json:"informer"`
-}
-
-type UploaderBrief struct {
-	UID      int64  `json:"uid"`
-	Nickname string `json:"nickname"`
+	TextureUploader *users.User       `json:"texture_uploader"`
+	Informer        *users.User       `json:"informer"`
 }
 
 // ManagePage is the shared Laravel-shaped paginator.
@@ -166,7 +166,22 @@ func reportSchema(location *time.Location, now func() time.Time) searchstring.Sc
 }
 
 // Manage applies the frozen report search DSL with joined texture/informer data.
+// It shares the manageTx kernel with ManageActor; the browser HTTP
+// layer gates admin access for this entry, as before.
 func (s *Service) Manage(ctx context.Context, page int, query, path string) (*ManagePage, error) {
+	var result *ManagePage
+	err := s.Store.Transaction(ctx, func(tx *sql.Tx) error {
+		var err error
+		result, err = s.manageTx(ctx, tx, page, query, path)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *Service) manageTx(ctx context.Context, tx *sql.Tx, page int, query, path string) (*ManagePage, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -196,11 +211,11 @@ func (s *Service) Manage(ctx context.Context, page int, query, path string) (*Ma
 		}
 	}
 	var total int
-	if err := s.Store.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("reports")+where, args...).Scan(&total); err != nil {
+	if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("reports")+where, args...).Scan(&total); err != nil {
 		return nil, err
 	}
 	listArgs := append(append([]any{}, args...), managePerPage, (page-1)*managePerPage)
-	rows, err := s.Store.DB.QueryContext(ctx, "SELECT id,tid,uploader,reporter,reason,status,report_at FROM "+s.Store.Table("reports")+where+order+" LIMIT ? OFFSET ?", listArgs...)
+	rows, err := tx.QueryContext(ctx, "SELECT id,tid,uploader,reporter,reason,status,report_at FROM "+s.Store.Table("reports")+where+order+" LIMIT ? OFFSET ?", listArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -221,15 +236,15 @@ func (s *Service) Manage(ctx context.Context, page int, query, path string) (*Ma
 	items := []ManageItem{}
 	for _, report := range reports {
 		item := ManageItem{Report: report}
-		item.Texture, err = s.Textures.Get(ctx, report.TID)
+		item.Texture, err = s.textureTx(ctx, tx, report.TID)
 		if err != nil && !errors.Is(err, textures.ErrNotFound) {
 			return nil, err
 		}
-		item.TextureUploader, err = s.brief(ctx, report.Uploader)
+		item.TextureUploader, err = s.briefTx(ctx, tx, report.Uploader)
 		if err != nil {
 			return nil, err
 		}
-		item.Informer, err = s.brief(ctx, report.Reporter)
+		item.Informer, err = s.briefTx(ctx, tx, report.Reporter)
 		if err != nil {
 			return nil, err
 		}
@@ -270,122 +285,20 @@ func projectReport(item ManageItem, columns []string) map[string]any {
 	return row
 }
 
-func (s *Service) brief(ctx context.Context, uid int64) (*UploaderBrief, error) {
-	var nickname string
-	err := s.Store.DB.QueryRowContext(ctx, "SELECT nickname FROM "+s.Store.Table("users")+" WHERE uid=?", uid).Scan(&nickname)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &UploaderBrief{UID: uid, Nickname: nickname}, nil
-}
-
 type ReviewResult struct {
 	Status                int64
 	TextureAlreadyDeleted bool
 }
 
-// Review resolves a pending report exactly once: reject, ban or delete.
+// Review is the browser wrapper for ReviewActor; it shares the same
+// business transaction kernel (including the non-PENDING early
+// success) and never forges an OAuth actor.
 func (s *Service) Review(ctx context.Context, b *identity.BrowserSession, id int64, action string) (ReviewResult, error) {
-	if action != "delete" && action != "ban" && action != "reject" {
-		return ReviewResult{}, ErrNoPermission
-	}
-	options, err := s.Site.Options(ctx)
+	actor, err := s.Identity.NewBrowserActor(b)
 	if err != nil {
 		return ReviewResult{}, err
 	}
-	modification := site.Number(options["reporter_score_modification"])
-	reward := site.Number(options["reporter_reward_score"])
-	var result ReviewResult
-	err = s.Store.Transaction(ctx, func(tx *sql.Tx) error {
-		var report Report
-		var at time.Time
-		if err = tx.QueryRowContext(ctx, "SELECT id,tid,uploader,reporter,reason,status,report_at FROM "+s.Store.Table("reports")+" WHERE id=? FOR UPDATE", id).
-			Scan(&report.ID, &report.TID, &report.Uploader, &report.Reporter, &report.Reason, &report.Status, &at); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return ErrNotFound
-			}
-			return err
-		}
-		actor, err := s.Identity.CheckBrowserTx(ctx, tx, b)
-		if err != nil {
-			return err
-		}
-		if actor.Permission < 1 {
-			return ErrNoPermission
-		}
-		if report.Status != Pending {
-			result.Status = report.Status
-			return nil
-		}
-		if action == "reject" {
-			if modification > 0 {
-				if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", modification, report.Reporter); err != nil {
-					return err
-				}
-			}
-			result.Status = Rejected
-			_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("reports")+" SET status=? WHERE id=?", result.Status, id)
-			return err
-		}
-		if action == "ban" {
-			var permission int
-			if err = tx.QueryRowContext(ctx, "SELECT permission FROM "+s.Store.Table("users")+" WHERE uid=? FOR UPDATE", report.Uploader).Scan(&permission); err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return ErrNotFound
-				}
-				return err
-			}
-			if actor.Permission <= permission {
-				return ErrNoPermission
-			}
-			if err = s.Identity.RevokeUID(ctx, tx, report.Uploader); err != nil {
-				return err
-			}
-			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET permission=-1 WHERE uid=?", report.Uploader); err != nil {
-				return err
-			}
-			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("players")+" SET last_modified=? WHERE uid=?", s.Now().In(s.Site.Location), report.Uploader); err != nil {
-				return err
-			}
-		}
-		if action == "delete" {
-			var exists int64
-			if err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+s.Store.Table("textures")+" WHERE tid=?", report.TID).Scan(&exists); err != nil {
-				return err
-			}
-			if exists == 0 {
-				// Texture already deleted by its uploader: return the reporter's
-				// suspended score but never pay the informer reward.
-				if modification < 0 {
-					if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("users")+" SET score=score-? WHERE uid=?", modification, report.Reporter); err != nil {
-						return err
-					}
-				}
-				result.Status = Resolved
-				result.TextureAlreadyDeleted = true
-				_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("reports")+" SET status=? WHERE id=?", result.Status, id)
-				return err
-			}
-			result.Status = Resolved
-			if _, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("reports")+" SET status=? WHERE id=?", result.Status, id); err != nil {
-				return err
-			}
-			if err = s.Closet.DeleteTextureTx(ctx, tx, b, report.TID); err != nil {
-				return err
-			}
-			return applyReviewScore(ctx, tx, s, report.Reporter, modification, reward)
-		}
-		if err = applyReviewScore(ctx, tx, s, report.Reporter, modification, reward); err != nil {
-			return err
-		}
-		result.Status = Resolved
-		_, err = tx.ExecContext(ctx, "UPDATE "+s.Store.Table("reports")+" SET status=? WHERE id=?", result.Status, id)
-		return err
-	})
-	return result, err
+	return s.ReviewActor(ctx, actor, id, action)
 }
 
 // applyReviewScore returns the suspended deposit and pays the resolution award.

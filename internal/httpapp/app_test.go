@@ -22,6 +22,7 @@ import (
 	"blessing-skin-go/internal/oauthserver"
 	"blessing-skin-go/internal/site"
 	"blessing-skin-go/internal/testsupport"
+	"blessing-skin-go/internal/yggdrasil"
 )
 
 func appFixture(t *testing.T) (http.Handler, *identity.Service) {
@@ -44,8 +45,18 @@ func appFixtureWithOptionsAndDir(t *testing.T, options map[string]string) (http.
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err = oauth.Migrate(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if err = oauthserver.MigrateConsents(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
+	if err = oauthserver.MigrateAPIDigest(t.Context(), store); err != nil {
+		t.Fatal(err)
+	}
 	texturesDir := t.TempDir()
-	handler, err := New(config.Config{BaseURL: "http://localhost/skin", Locale: "zh_CN", FallbackLocale: "en", RememberLifetime: 400 * 24 * time.Hour, TexturesDir: texturesDir}, id, &site.Service{Store: store, Identity: id, Location: time.UTC, OptionSnapshot: options}, oauth)
+	view := &site.Service{Store: store, Identity: id, Location: time.UTC, OptionSnapshot: options, Modules: testsupport.Modules(store, id)}
+	handler, err := New(config.Config{BaseURL: "http://localhost/skin", Locale: "zh_CN", FallbackLocale: "en", RememberLifetime: 400 * 24 * time.Hour, TexturesDir: texturesDir}, id, view, oauth, yggdrasil.New(store, id, options, []byte("synthetic-yggdrasil-hs256-key-32b"), false, id.Now), "m4-05-test")
 	if err != nil {
 		t.Fatal(err)
 	}
