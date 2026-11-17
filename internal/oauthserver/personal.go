@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"authelia.com/provider/oauth2"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // PersonalToken is the issuance result. ID is the engine request id

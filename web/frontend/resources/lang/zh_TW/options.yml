@@ -28,7 +28,7 @@ customJsCss:
   title: 自訂 CSS/JavaScript
   message: |
     此處的内容將被追加至每個頁面的 &lt;style&gt; 和 &lt;script&gt; 標簽之中。<br>
-    - 以下是有用的示範：<a href="https://blessing.netlify.com/css-js.html">自訂 CSS & JavaScript 示範</a>
+    - 以下是有用的示範：<a href="https://blessing.netlify.com/css-js.html" title="Upstream Blessing Skin documentation">自訂 CSS & JavaScript 示範</a>
   custom_css: CSS
   custom_js: JavaScript
 rate:

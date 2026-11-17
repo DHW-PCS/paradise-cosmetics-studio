@@ -16,7 +16,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 
-	"blessing-skin-go/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
 )
 
 // Open returns a connection to a new, empty database. The database is dropped
@@ -52,7 +52,7 @@ func Open(t *testing.T) *sql.DB {
 	if _, err := rand.Read(buf); err != nil {
 		t.Fatalf("testdb: random name: %v", err)
 	}
-	name := "bs_go_it_" + hex.EncodeToString(buf)
+	name := "pcs_go_it_" + hex.EncodeToString(buf)
 	if _, err := admin.Exec("CREATE DATABASE `" + name + "` DEFAULT CHARACTER SET utf8mb4"); err != nil {
 		t.Fatalf("testdb: create database: %v", err)
 	}

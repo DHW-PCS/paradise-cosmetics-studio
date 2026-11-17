@@ -8,7 +8,7 @@ import urls from '@/scripts/urls'
 import Loading from '@/components/Loading'
 import Modal from '@/components/Modal'
 
-const baseUrl = blessing.base_url
+const baseUrl = pcs.base_url
 
 interface Props {
   show: boolean

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"blessing-skin-go/internal/identity"
 	"github.com/go-sql-driver/mysql"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // The custom scope endpoints keep the frozen admin permission chain: the

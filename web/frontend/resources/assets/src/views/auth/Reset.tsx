@@ -35,13 +35,13 @@ const Reset: React.FC = () => {
 
     setIsPending(true)
     const { code, message } = await fetch.post<fetch.ResponseBody>(
-      location.href.replace(blessing.base_url, ''),
+      location.href.replace(pcs.base_url, ''),
       { password },
     )
     if (code === 0) {
       toast.success(message)
       setTimeout(() => {
-        window.location.href = blessing.base_url + urls.auth.login()
+        window.location.href = pcs.base_url + urls.auth.login()
       }, 2000)
     } else {
       setWarningMessage(message)

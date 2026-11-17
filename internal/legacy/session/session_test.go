@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/php"
 )
 
 func newTestStore(t *testing.T) *Store {

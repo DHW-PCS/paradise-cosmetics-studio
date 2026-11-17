@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { hot } from 'react-hot-loader/root'
-import useBlessingExtra from '@/scripts/hooks/useBlessingExtra'
+import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
@@ -36,13 +36,13 @@ const Login: React.FC = () => {
   const [isPending, setIsPending] = useState(false)
   const [warningMessage, setWarningMessage] = useState('')
   const ref = useRef<Captcha | null>(null)
-  const recaptcha = useBlessingExtra<string>('recaptcha')
-  const invisibleRecaptcha = useBlessingExtra<boolean>('invisible')
+  const recaptcha = usePCSExtra<string>('recaptcha')
+  const invisibleRecaptcha = usePCSExtra<boolean>('invisible')
 
   useEmitMounted()
 
   useEffect(() => {
-    setHasTooManyFails(blessing.extra.tooManyFails as boolean)
+    setHasTooManyFails(pcs.extra.tooManyFails as boolean)
   }, [])
 
   const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,7 +133,7 @@ const Login: React.FC = () => {
           />
           {t('auth.keep')}
         </label>
-        <a href={`${blessing.base_url}/auth/forgot`}>{t('auth.forgot-link')}</a>
+        <a href={`${pcs.base_url}/auth/forgot`}>{t('auth.forgot-link')}</a>
       </div>
 
       <button

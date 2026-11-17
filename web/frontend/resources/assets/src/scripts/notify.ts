@@ -10,6 +10,6 @@ if (process.env.NODE_ENV === 'test') {
   })
 }
 
-Object.assign(blessing, { notify: { showModal, toast } })
+Object.assign(pcs, { notify: { showModal, toast } })
 
 export { showModal } from './modal'

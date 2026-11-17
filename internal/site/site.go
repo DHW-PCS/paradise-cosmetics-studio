@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/modules"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/modules"
 )
 
 type Service struct {
@@ -48,16 +48,16 @@ func LoadOptionSnapshot(path string) (map[string]string, error) {
 }
 
 func (s *Service) Options(ctx context.Context) (map[string]any, error) {
-	// Defaults from the frozen 6.0.2 config/options.php for this slice.
+	// Business defaults follow 6.0.2 config/options.php; product defaults use this build's identity.
 	values := map[string]any{
 		"cache_expire_time": "31536000", "enable_avatar_cache": false, "enable_preview_cache": false,
 		"ygg_uuid_algorithm": "v3", "register_with_player_name": true, "regs_per_ip": "3",
 		"max_upload_file_size": "1024", "private_score_per_storage": "10", "score_award_per_texture": "0", "score_award_per_like": "0", "texture_name_regexp": "", "allow_downloading_texture": true, "take_back_scores_after_deletion": true, "auto_del_invalid_texture": false, "status_code_for_private": "403", "reporter_score_modification": "0", "content_policy": "", "player_name_rule": "official", "custom_player_name_regexp": "", "player_name_length_min": "3", "player_name_length_max": "16", "plugins_enabled": "",
 		"recaptcha_sitekey": "", "recaptcha_secretkey": "", "recaptcha_invisible": false,
-		"favicon_url": "app/favicon.ico", "meta_keywords": "", "meta_description": "", "meta_extras": "", "custom_css": "", "custom_js": "", "cdn_address": "", "site_description": "Open-source PHP Minecraft Skin Hosting Service", "home_pic_url": "./app/bg.webp", "transparent_navbar": false,
-		"site_name": "Blessing Skin", "site_url": "", "navbar_color": "cyan", "sidebar_color": "dark-maroon",
+		"favicon_url": "app/favicon.ico", "meta_keywords": "", "meta_description": "", "meta_extras": "", "custom_css": "", "custom_js": "", "cdn_address": "", "site_description": "Open-source Minecraft Cosmetics Hosting Service", "home_pic_url": "./app/bg.webp", "transparent_navbar": false,
+		"site_name": "Paradise Cosmetics Studio", "site_url": "", "navbar_color": "cyan", "sidebar_color": "dark-maroon",
 		"copyright_prefer": "0", "copyright_text": `<b>Copyright &copy; {year} <a href="{site_url}">{site_name}</a>.</b> All rights reserved.`,
-		"announcement": "Welcome to Blessing Skin {version}!", "user_initial_score": "1000", "sign_score": "10,100", "return_score": true,
+		"announcement": "Welcome to Paradise Cosmetics Studio {version}!", "user_initial_score": "1000", "sign_score": "10,100", "return_score": true,
 		"score_per_storage": true, "score_per_player": "100", "score_per_closet_item": "0", "sign_after_zero": false, "sign_gap_time": "24", "require_verification": false,
 	}
 	if s.OptionSnapshot != nil {

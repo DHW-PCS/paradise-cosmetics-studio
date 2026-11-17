@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"time"
 
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/php"
-	"blessing-skin-go/internal/legacy/remember"
-	"blessing-skin-go/internal/legacy/session"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/remember"
+	"paradise-cosmetics-studio/internal/legacy/session"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // Options controls verification side effects and external lookups.

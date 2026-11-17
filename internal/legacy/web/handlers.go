@@ -8,11 +8,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"blessing-skin-go/internal/legacy/auth"
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/remember"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/auth"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/remember"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {

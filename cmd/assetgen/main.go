@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"blessing-skin-go/internal/routes"
+	"paradise-cosmetics-studio/internal/routes"
 )
 
 func main() {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // InstallationCheck supplies one module's own enable precondition. Reasons are

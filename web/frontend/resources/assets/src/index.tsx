@@ -6,7 +6,7 @@ import routes from './scripts/route'
 
 Object.assign(window, { React, ReactDOM, $ })
 
-if (blessing.route.startsWith('admin')) {
+if (pcs.route.startsWith('admin')) {
   const entry = document.querySelector<HTMLAnchorElement>('#launch-cli')
   entry?.addEventListener('click', async () => {
     const { launch } = await import('./scripts/cli')
@@ -15,7 +15,7 @@ if (blessing.route.startsWith('admin')) {
 }
 
 const route = routes.find((route) =>
-  new RegExp(`^${route.path}$`, 'i').test(blessing.route),
+  new RegExp(`^${route.path}$`, 'i').test(pcs.route),
 )
 if (route) {
   if (route.module) {

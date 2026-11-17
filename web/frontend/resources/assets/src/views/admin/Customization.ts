@@ -40,7 +40,7 @@ const navbar = document.querySelector<HTMLElement>('.wrapper > nav')
 const picker = document.querySelector<HTMLDivElement>('#navbar-color-picker')
 /* istanbul ignore next */
 if (navbar && picker) {
-  registerNavbarPicker(navbar, picker, blessing.extra.navbar || 'white')
+  registerNavbarPicker(navbar, picker, pcs.extra.navbar || 'white')
 }
 
 export function registerSidebarPicker(
@@ -78,6 +78,6 @@ if (sidebar && darkPicker && lightPicker) {
   registerSidebarPicker(
     sidebar,
     { dark: darkPicker, light: lightPicker },
-    blessing.extra.sidebar || 'dark-primary',
+    pcs.extra.sidebar || 'dark-primary',
   )
 }

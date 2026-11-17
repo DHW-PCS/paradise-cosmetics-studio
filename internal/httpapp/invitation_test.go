@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 func postForm(t *testing.T, h http.Handler, target, body string, cookie *http.Cookie, csrf string) *httptest.ResponseRecorder {

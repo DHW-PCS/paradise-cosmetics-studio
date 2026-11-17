@@ -17,10 +17,10 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 func authToken(t *testing.T, h harness) string {

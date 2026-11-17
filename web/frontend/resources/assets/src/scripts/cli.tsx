@@ -110,7 +110,7 @@ const TerminalWindow: React.FC<{ onClose(): void }> = (props) => {
         <div className="card-header">
           <div className="d-flex justify-content-between">
             <h4 className="card-title d-flex align-items-center">
-              Blessing Skin Shell
+              Paradise Cosmetics Studio Shell
             </h4>
             <button className="btn btn-default" onClick={props.onClose}>
               &times;

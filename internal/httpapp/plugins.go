@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/modules"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/modules"
 )
 
 // The plugin routes live in the frozen admin group: GET /data lists the

@@ -17,13 +17,13 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // yggEnable installs and enables the module and seeds the protocol
@@ -121,7 +121,7 @@ func TestYggdrasilHelloAndModuleGate(t *testing.T) {
 		t.Fatalf("hello status=%d body=%s", w.Code, w.Body.String())
 	} else {
 		body := w.Body.String()
-		for _, text := range []string{`"implementationName":"Yggdrasil API for Blessing Skin"`, `"implementationVersion":"m4-05-test"`, `"feature.non_email_login":true`, "extra.example.invalid", "/auth/register", "localhost"} {
+		for _, text := range []string{`"implementationName":"Yggdrasil API for Paradise Cosmetics Studio"`, `"implementationVersion":"m4-05-test"`, `"feature.non_email_login":true`, "extra.example.invalid", "/auth/register", "localhost"} {
 			if !strings.Contains(body, text) {
 				t.Fatalf("hello missing %q in %s", text, body)
 			}

@@ -29,7 +29,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // Scope requirements fixed by the M4-03 core API contract. The OAuth

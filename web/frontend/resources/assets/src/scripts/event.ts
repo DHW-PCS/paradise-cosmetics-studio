@@ -17,4 +17,4 @@ export function emit(event: string | symbol, payload?: unknown) {
   bus.get(event)?.forEach((listener) => listener(payload))
 }
 
-blessing.event = { on, emit }
+pcs.event = { on, emit }

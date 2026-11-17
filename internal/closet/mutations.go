@@ -6,10 +6,10 @@ import (
 	"errors"
 	"strconv"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/legacy/rules"
-	"blessing-skin-go/internal/site"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/legacy/rules"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 func (s *Service) permitTexture(actor *identity.User, uploader int64) error {

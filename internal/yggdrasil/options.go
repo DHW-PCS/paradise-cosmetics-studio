@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // options is the central read layer for ygg_* options. It never seeds

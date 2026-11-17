@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"blessing-skin-go/internal/gameauth"
+	"paradise-cosmetics-studio/internal/gameauth"
 )
 
 // VerifyBearerToken performs the pre-transaction Bearer check for the

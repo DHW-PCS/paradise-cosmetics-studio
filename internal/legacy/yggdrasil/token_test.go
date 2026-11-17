@@ -1,7 +1,7 @@
 package yggdrasil
 
 import (
-	"blessing-skin-go/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/php"
 	"strings"
 	"testing"
 	"time"

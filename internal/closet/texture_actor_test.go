@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // prepareTextureDeleteForTest follows the caller-owned report review lock plan.

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // TestTokenEntriesLockUserBeforeToken is the deterministic lock-cycle

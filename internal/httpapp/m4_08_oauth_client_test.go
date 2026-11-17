@@ -58,8 +58,8 @@ import (
 
 	"golang.org/x/net/html"
 
-	"blessing-skin-go/internal/maintenance"
-	"blessing-skin-go/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/maintenance"
+	"paradise-cosmetics-studio/internal/oauthserver"
 )
 
 const (

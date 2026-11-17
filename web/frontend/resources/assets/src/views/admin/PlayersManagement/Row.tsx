@@ -38,12 +38,12 @@ const Row: React.FC<Props> = (props) => {
       <td>
         {player.tid_skin > 0 && (
           <a
-            href={`${blessing.base_url}/skinlib/show/${player.tid_skin}`}
+            href={`${pcs.base_url}/skinlib/show/${player.tid_skin}`}
             target="_blank"
             className="mr-1"
           >
             <img
-              src={`${blessing.base_url}/preview/${player.tid_skin}`}
+              src={`${pcs.base_url}/preview/${player.tid_skin}`}
               alt={`${player.name} - ${t('general.skin')}`}
               width="64"
             />
@@ -51,11 +51,11 @@ const Row: React.FC<Props> = (props) => {
         )}
         {player.tid_cape > 0 && (
           <a
-            href={`${blessing.base_url}/skinlib/show/${player.tid_cape}`}
+            href={`${pcs.base_url}/skinlib/show/${player.tid_cape}`}
             target="_blank"
           >
             <img
-              src={`${blessing.base_url}/preview/${player.tid_cape}`}
+              src={`${pcs.base_url}/preview/${player.tid_cape}`}
               alt={`${player.name} - ${t('general.cape')}`}
               width="64"
             />

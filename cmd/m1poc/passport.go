@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/passport"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/passport"
 )
 
 const (

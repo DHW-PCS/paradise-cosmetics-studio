@@ -180,7 +180,7 @@ const PluginsManagement: React.FC = () => {
                     onEnable={(plugin) => handleEnable(plugin, i * 2 + j)}
                     onDisable={(plugin) => handleDisable(plugin, i * 2 + j)}
                     onDelete={handleDelete}
-                    baseUrl={blessing.base_url}
+                    baseUrl={pcs.base_url}
                   />
                 </div>
               ))}

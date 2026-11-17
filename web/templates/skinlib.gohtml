@@ -31,6 +31,6 @@
 {{else}}<div class="content-wrapper"></div>{{end}}
 <footer class="main-footer"><div class="container">{{template "copyright" .}}</div></footer>
 </div>
-<script id="blessing-extra" type="application/json">{{.Extra}}</script>
+<script id="pcs-extra" type="application/json">{{.Extra}}</script>
 {{range .AppJS}}<script src="{{.}}"></script>{{end}}{{.Scripts}}{{if .CustomJS}}<script>{{.CustomJS}}</script>{{end}}{{.ExtraFoot}}
 </body></html>{{end}}

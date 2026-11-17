@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func TestImageContractAndNormalization(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"database/sql"
 	"sort"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // Auth domains identify how the actor was authenticated. Callers must not

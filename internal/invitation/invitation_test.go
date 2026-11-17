@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/invitation"
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/invitation"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 type harness struct {

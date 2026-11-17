@@ -67,8 +67,8 @@ i18n:
 status:
   info: 資訊
   health: 運行狀態
-  bs:
-    name: Blessing Skin
+  pcs:
+    name: Paradise Cosmetics Studio
     version: 版本號
     env: 應用運行環境
     debug: 是否處於除錯狀態？

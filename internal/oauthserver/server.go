@@ -15,9 +15,9 @@ import (
 	"authelia.com/provider/oauth2/compose"
 	engine "authelia.com/provider/oauth2/handler/oauth2"
 	"authelia.com/provider/oauth2/token/jwt"
-	"blessing-skin-go/internal/admission"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/admission"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 type Config struct {

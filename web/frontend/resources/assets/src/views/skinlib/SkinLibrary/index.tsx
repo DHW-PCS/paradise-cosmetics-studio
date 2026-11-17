@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { hot } from 'react-hot-loader/root'
-import useBlessingExtra from '@/scripts/hooks/useBlessingExtra'
+import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
@@ -27,7 +27,7 @@ const SkinLibrary: React.FC = () => {
   const [sort, setSort] = useState('time')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const currentUid = useBlessingExtra<number | null>('currentUid', null)
+  const currentUid = usePCSExtra<number | null>('currentUid', null)
 
   useEmitMounted()
 

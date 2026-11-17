@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 type languageInput struct{ value string }

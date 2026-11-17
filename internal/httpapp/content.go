@@ -1,20 +1,20 @@
 package httpapp
 
 import (
-	"blessing-skin-go/internal/identity"
 	"bytes"
 	"context"
 	"errors"
 	"html/template"
 	"net/http"
+	"paradise-cosmetics-studio/internal/identity"
 	"strconv"
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/site"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	renderer "github.com/yuin/goldmark/renderer/html"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 // The original announcement is administrator-authored GFM with raw HTML.
@@ -55,7 +55,7 @@ func (a *App) errorPage(w http.ResponseWriter, r *http.Request, status int, mess
 		return
 	}
 	r = r.WithContext(context.WithValue(r.Context(), messagesKey{}, messages))
-	view := errorView{Language: site.LocaleTag(locale), SiteName: "Blessing Skin", BaseURL: a.cfg.BaseURL, Title: strconv.Itoa(status) + " " + http.StatusText(status)}
+	view := errorView{Language: site.LocaleTag(locale), SiteName: "Paradise Cosmetics Studio", BaseURL: a.cfg.BaseURL, Title: strconv.Itoa(status) + " " + http.StatusText(status)}
 	if options, err := a.site.Options(r.Context()); err == nil {
 		view.SiteName, _ = site.LocalizedOption(options, "site_name", locale).(string)
 	}

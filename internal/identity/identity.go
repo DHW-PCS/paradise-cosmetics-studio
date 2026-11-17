@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"time"
 
-	"blessing-skin-go/internal/admission"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/admission"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 var (

@@ -28,16 +28,16 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/account"
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/internal/yggdrasil"
-	"blessing-skin-go/web"
+	"paradise-cosmetics-studio/internal/account"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/internal/yggdrasil"
+	"paradise-cosmetics-studio/web"
 )
 
 // smtpCapture is one accepted message plus its transport properties.

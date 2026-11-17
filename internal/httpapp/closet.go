@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"blessing-skin-go/internal/closet"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/textures"
+	"paradise-cosmetics-studio/internal/closet"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 // verifiedTexture keeps the frozen `authorize+verified` group for the texture

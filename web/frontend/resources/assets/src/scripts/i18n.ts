@@ -4,7 +4,7 @@ interface I18nTable {
 
 export function t(key: string, parameters = Object.create(null)): string {
   const segments = key.split('.')
-  let temp = blessing.i18n as I18nTable | undefined
+  let temp = pcs.i18n as I18nTable | undefined
   let result = ''
 
   for (const segment of segments) {
@@ -28,4 +28,4 @@ export function t(key: string, parameters = Object.create(null)): string {
 }
 
 Object.assign(window, { trans: t })
-Object.assign(blessing, { t })
+Object.assign(pcs, { t })

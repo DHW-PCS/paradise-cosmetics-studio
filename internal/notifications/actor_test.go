@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/notifications"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/notifications"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 var (

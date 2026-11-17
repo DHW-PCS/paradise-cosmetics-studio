@@ -5,7 +5,7 @@ import (
 	"errors"
 	"unicode/utf8"
 
-	"blessing-skin-go/internal/pcre"
+	"paradise-cosmetics-studio/internal/pcre"
 )
 
 func match(pattern, value string) (bool, error) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { hot } from 'react-hot-loader/root'
 import Skeleton from 'react-loading-skeleton'
-import useBlessingExtra from '@/scripts/hooks/useBlessingExtra'
+import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import useMount from '@/scripts/hooks/useMount'
 import { t } from '@/scripts/i18n'
@@ -29,13 +29,13 @@ const Show: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [showModalApply, setShowModalApply] = useState(false)
   const [liked, setLiked] = useState(false)
-  const nickname = useBlessingExtra<string>('nickname')
-  const isUploaderExists = useBlessingExtra<boolean>('uploaderExists')
-  const currentUid = useBlessingExtra<number>('currentUid', 0)
-  const isAdmin = useBlessingExtra<boolean>('admin')
-  const badges = useBlessingExtra<Badge[]>('badges', [])
-  const canBeDownloaded = useBlessingExtra<boolean>('download')
-  const reportScore = useBlessingExtra<number>('report')
+  const nickname = usePCSExtra<string>('nickname')
+  const isUploaderExists = usePCSExtra<boolean>('uploaderExists')
+  const currentUid = usePCSExtra<number>('currentUid', 0)
+  const isAdmin = usePCSExtra<boolean>('admin')
+  const badges = usePCSExtra<Badge[]>('badges', [])
+  const canBeDownloaded = usePCSExtra<boolean>('download')
+  const reportScore = usePCSExtra<number>('report')
   const container = useMount('#previewer')
 
   useEmitMounted()
@@ -43,7 +43,7 @@ const Show: React.FC = () => {
   useEffect(() => {
     const fetchInfo = async () => {
       const url = location.href
-        .replace(blessing.base_url, '')
+        .replace(pcs.base_url, '')
         .replace('skinlib/show', 'texture')
 
       const texture = await fetch.get<Texture>(url)
@@ -54,7 +54,7 @@ const Show: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    setLiked(blessing.extra.inCloset as boolean)
+    setLiked(pcs.extra.inCloset as boolean)
   }, [])
 
   const handleEditName = async () => {
@@ -138,7 +138,7 @@ const Show: React.FC = () => {
 
   const handleDownloadClick = () => {
     const a = document.createElement('a')
-    a.href = `${blessing.base_url}/raw/${texture.tid}`
+    a.href = `${pcs.base_url}/raw/${texture.tid}`
     a.download = `${texture.name}.png`
     a.click()
   }
@@ -210,7 +210,7 @@ const Show: React.FC = () => {
           okButtonText: t('user.viewInSkinlib'),
         })
         window.location.href =
-          blessing.base_url + urls.skinlib.show(resp.data.tid)
+          pcs.base_url + urls.skinlib.show(resp.data.tid)
       } catch {
         //
       }
@@ -235,7 +235,7 @@ const Show: React.FC = () => {
     if (code === 0) {
       toast.success(message)
       setTimeout(() => {
-        window.location.href = `${blessing.base_url}/skinlib`
+        window.location.href = `${pcs.base_url}/skinlib`
       }, 2000)
     } else {
       toast.error(message)
@@ -253,11 +253,11 @@ const Show: React.FC = () => {
     )
     search.append('uploader', texture.uploader?.toString())
 
-    return `${blessing.base_url}/skinlib?${search.toString()}`
+    return `${pcs.base_url}/skinlib?${search.toString()}`
   })()
 
   const canEdit = currentUid === texture.uploader || isAdmin
-  const textureUrl = `${blessing.base_url}/textures/${texture.hash}`
+  const textureUrl = `${pcs.base_url}/textures/${texture.hash}`
 
   return (
     <>

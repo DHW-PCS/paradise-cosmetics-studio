@@ -53,7 +53,7 @@ const Forgot: React.FC = () => {
       <Alert type="warning">{warningMessage}</Alert>
 
       <div className="d-flex justify-content-between align-items-center">
-        <a href={`${blessing.base_url}/auth/login`}>
+        <a href={`${pcs.base_url}/auth/login`}>
           {t('auth.forgot.login-link')}
         </a>
         <button className="btn btn-primary" type="submit" disabled={isSending}>

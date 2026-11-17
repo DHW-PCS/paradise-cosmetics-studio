@@ -12,15 +12,15 @@ import (
 	"strconv"
 	"strings"
 
-	"blessing-skin-go/internal/account"
-	"blessing-skin-go/internal/apilimits"
-	"blessing-skin-go/internal/closet"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/notifications"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/reports"
-	"blessing-skin-go/internal/users"
+	"paradise-cosmetics-studio/internal/account"
+	"paradise-cosmetics-studio/internal/apilimits"
+	"paradise-cosmetics-studio/internal/closet"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/notifications"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/reports"
+	"paradise-cosmetics-studio/internal/users"
 )
 
 // domainName keeps the frozen route.getDomain() semantics: API, root and
@@ -160,22 +160,22 @@ func (a *App) apiRoot(w http.ResponseWriter, r *http.Request) {
 	copyright = copyrightChoice(options)
 	siteName, _ := options["site_name"].(string)
 	jsonResponse(w, http.StatusOK, map[string]any{
-		"blessing_skin": "6.0.2",
-		"spec":          0,
-		"copyright":     copyright,
-		"site_name":     siteName,
+		"pcs":       a.buildVersion,
+		"spec":      0,
+		"copyright": copyright,
+		"site_name": siteName,
 	})
 }
 
 func copyrightChoice(options map[string]any) string {
 	choices := []string{
-		"Powered with ❤ by Blessing Skin Server.",
-		"Powered by Blessing Skin Server.",
-		"Proudly powered by Blessing Skin Server.",
-		"由 Blessing Skin Server 强力驱动。",
-		"采用 Blessing Skin Server 搭建。",
-		"使用 Blessing Skin Server 稳定运行。",
-		"自豪地采用 Blessing Skin Server。",
+		"Powered with ❤ by Paradise Cosmetics Studio.",
+		"Powered by Paradise Cosmetics Studio.",
+		"Proudly powered by Paradise Cosmetics Studio.",
+		"由 Paradise Cosmetics Studio 强力驱动。",
+		"采用 Paradise Cosmetics Studio 搭建。",
+		"使用 Paradise Cosmetics Studio 稳定运行。",
+		"自豪地采用 Paradise Cosmetics Studio。",
 	}
 	idx := 0
 	switch v := options["copyright_prefer"].(type) {

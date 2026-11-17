@@ -16,7 +16,7 @@ export default function useTexture() {
     const getTexture = async () => {
       const { hash, type } = await fetch.get<Texture>(`/skinlib/info/${tid}`)
 
-      setUrl(`${blessing.base_url}/textures/${hash}`)
+      setUrl(`${pcs.base_url}/textures/${hash}`)
       setType(type)
     }
     getTexture()

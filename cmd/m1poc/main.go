@@ -18,16 +18,16 @@ import (
 	"syscall"
 	"time"
 
-	"blessing-skin-go/internal/legacy/auth"
-	"blessing-skin-go/internal/legacy/cache"
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/remember"
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/session"
-	"blessing-skin-go/internal/legacy/users"
-	"blessing-skin-go/internal/legacy/vectors"
-	"blessing-skin-go/internal/legacy/web"
+	"paradise-cosmetics-studio/internal/legacy/auth"
+	"paradise-cosmetics-studio/internal/legacy/cache"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/remember"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/session"
+	"paradise-cosmetics-studio/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/vectors"
+	"paradise-cosmetics-studio/internal/legacy/web"
 )
 
 func main() {

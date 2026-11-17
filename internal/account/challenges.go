@@ -14,11 +14,11 @@ import (
 	"io"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/site"
 	"golang.org/x/crypto/hkdf"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 const MailTopic = "account.mail.v1"
@@ -32,14 +32,19 @@ type sealedMail struct {
 	Sealed  string `json:"sealed"`
 }
 
-const mailAAD = "blessing-skin/account-mail/v1"
+const mailAAD = "paradise-cosmetics-studio/account-mail/v2"
+const mailEnvelopeVersion = 2
 
 func mailCipher(key []byte) (cipher.AEAD, error) {
+	return mailCipherForLabel(key, mailAAD)
+}
+
+func mailCipherForLabel(key []byte, label string) (cipher.AEAD, error) {
 	derived := make([]byte, 32)
 	if len(key) < 32 {
 		return nil, errors.New("account: APP_KEY too short")
 	}
-	if _, err := io.ReadFull(hkdf.New(sha256.New, key, nil, []byte(mailAAD)), derived); err != nil {
+	if _, err := io.ReadFull(hkdf.New(sha256.New, key, nil, []byte(label)), derived); err != nil {
 		return nil, err
 	}
 	block, err := aes.NewCipher(derived)
@@ -48,37 +53,56 @@ func mailCipher(key []byte) (cipher.AEAD, error) {
 	}
 	return cipher.NewGCM(block)
 }
+
+func sealMailBody(aead cipher.AEAD, version int, label string, body []byte) (json.RawMessage, error) {
+	nonce := make([]byte, aead.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, err
+	}
+	encrypted := aead.Seal(nonce, nonce, body, []byte(label))
+	return json.Marshal(sealedMail{version, base64.RawURLEncoding.EncodeToString(encrypted)})
+}
+
+func openMailBody(aead cipher.AEAD, version int, label string, raw json.RawMessage) ([]byte, error) {
+	var envelope sealedMail
+	if err := json.Unmarshal(raw, &envelope); err != nil || envelope.Version != version {
+		return nil, errors.New("account: invalid mail envelope")
+	}
+	data, err := base64.RawURLEncoding.DecodeString(envelope.Sealed)
+	if err != nil || len(data) < aead.NonceSize()+aead.Overhead() {
+		return nil, errors.New("account: invalid mail envelope")
+	}
+	body, err := aead.Open(nil, data[:aead.NonceSize()], data[aead.NonceSize():], []byte(label))
+	if err != nil {
+		return nil, errors.New("account: invalid mail envelope")
+	}
+	return body, nil
+}
+
+func decodeMailPayload(body []byte) (mailPayload, error) {
+	var p mailPayload
+	if err := json.Unmarshal(body, &p); err != nil || (p.Purpose != "reset" && p.Purpose != "verify") || p.Token == "" || p.UID <= 0 {
+		return p, errors.New("account: invalid mail payload")
+	}
+	return p, nil
+}
+
 func (m *Mail) seal(p mailPayload) (json.RawMessage, error) {
 	body, err := json.Marshal(p)
 	if err != nil {
 		return nil, err
 	}
-	nonce := make([]byte, m.cipher.NonceSize())
-	if _, err = rand.Read(nonce); err != nil {
-		return nil, err
-	}
-	encrypted := m.cipher.Seal(nonce, nonce, body, []byte(mailAAD))
-	return json.Marshal(sealedMail{1, base64.RawURLEncoding.EncodeToString(encrypted)})
+	return sealMailBody(m.cipher, mailEnvelopeVersion, mailAAD, body)
 }
+
 func (m *Mail) open(raw json.RawMessage) (mailPayload, error) {
-	var envelope sealedMail
-	var p mailPayload
-	if err := json.Unmarshal(raw, &envelope); err != nil || envelope.Version != 1 {
-		return p, errors.New("account: invalid mail envelope")
-	}
-	data, err := base64.RawURLEncoding.DecodeString(envelope.Sealed)
-	if err != nil || len(data) < m.cipher.NonceSize()+m.cipher.Overhead() {
-		return p, errors.New("account: invalid mail envelope")
-	}
-	body, err := m.cipher.Open(nil, data[:m.cipher.NonceSize()], data[m.cipher.NonceSize():], []byte(mailAAD))
+	body, err := openMailBody(m.cipher, mailEnvelopeVersion, mailAAD, raw)
 	if err != nil {
-		return p, errors.New("account: invalid mail envelope")
+		return mailPayload{}, err
 	}
-	if err = json.Unmarshal(body, &p); err != nil || (p.Purpose != "reset" && p.Purpose != "verify") || p.Token == "" || p.UID <= 0 {
-		return p, errors.New("account: invalid mail payload")
-	}
-	return p, nil
+	return decodeMailPayload(body)
 }
+
 func (s *Service) issueChallenge(ctx context.Context, tx *sql.Tx, u *identity.User, version int64, purpose, locale string) error {
 	token := identity.Token()
 	var expiry any

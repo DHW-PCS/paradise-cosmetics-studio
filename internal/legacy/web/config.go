@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"time"
 
-	"blessing-skin-go/internal/legacy/auth"
-	"blessing-skin-go/internal/legacy/cache"
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/php"
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/session"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/auth"
+	"paradise-cosmetics-studio/internal/legacy/cache"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/session"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // UserLookup resolves a user by UID for the recaller and ban paths and can

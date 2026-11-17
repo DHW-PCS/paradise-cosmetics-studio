@@ -35,7 +35,7 @@ const Translations: React.FC = () => {
       const { value } = await showModal({
         mode: 'prompt',
         text: t('admin.i18n.updating'),
-        input: line.text[blessing.locale],
+        input: line.text[pcs.locale],
       })
       text = value
     } catch {
@@ -49,7 +49,7 @@ const Translations: React.FC = () => {
     if (code === 0) {
       toast.success(message)
       setLines((lines) => {
-        lines[index]!.text[blessing.locale] = text
+        lines[index]!.text[pcs.locale] = text
       })
     } else {
       toast.error(message)

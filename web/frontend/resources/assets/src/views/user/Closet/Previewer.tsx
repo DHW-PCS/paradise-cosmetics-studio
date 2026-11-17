@@ -14,8 +14,8 @@ interface Props {
 const Previewer: React.FC<Props> = (props) => {
   const container = useMount('#previewer')
 
-  const skin = props.skin ? `${blessing.base_url}/textures/${props.skin}` : ''
-  const cape = props.cape ? `${blessing.base_url}/textures/${props.cape}` : ''
+  const skin = props.skin ? `${pcs.base_url}/textures/${props.skin}` : ''
+  const cape = props.cape ? `${pcs.base_url}/textures/${props.cape}` : ''
 
   return (
     container &&

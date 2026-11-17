@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/admission"
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"paradise-cosmetics-studio/internal/admission"
 )
 
 type Config struct {

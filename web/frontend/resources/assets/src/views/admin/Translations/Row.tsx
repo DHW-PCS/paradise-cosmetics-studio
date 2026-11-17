@@ -21,7 +21,7 @@ interface Props {
 
 const Row: React.FC<Props> = (props) => {
   const { line, onEdit, onRemove } = props
-  const text = line.text[blessing.locale]
+  const text = line.text[pcs.locale]
 
   const handleEditClick = () => onEdit(line)
 

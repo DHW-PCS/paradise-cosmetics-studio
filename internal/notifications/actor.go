@@ -23,7 +23,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 var (

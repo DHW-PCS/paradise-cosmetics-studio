@@ -26,11 +26,11 @@ import (
 	"errors"
 	"time"
 
-	"blessing-skin-go/internal/closet"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
-	"blessing-skin-go/internal/users"
+	"paradise-cosmetics-studio/internal/closet"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
+	"paradise-cosmetics-studio/internal/users"
 )
 
 var (

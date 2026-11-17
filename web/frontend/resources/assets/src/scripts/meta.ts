@@ -1,10 +1,10 @@
-const blessingElement = document.querySelector('#blessing-globals')!
+const pcsElement = document.querySelector('#pcs-globals')!
 // @ts-ignore
-window.blessing = JSON.parse(blessingElement.textContent!)
+window.pcs = JSON.parse(pcsElement.textContent!)
 
 window.addEventListener('load', () => {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register(`${blessing.base_url}/sw.js?go-m2`)
+    navigator.serviceWorker.register(`${pcs.base_url}/sw.js?go-m2`)
   }
 })
 

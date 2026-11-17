@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // Entry is one item of the two state arrays. Object entries keep name/version;

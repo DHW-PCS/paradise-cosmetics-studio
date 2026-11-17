@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/searchstring"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/searchstring"
 )
 
 // PageLink and Paginator are the shared Laravel-shaped paginator.

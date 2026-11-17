@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/config"
+	"paradise-cosmetics-studio/internal/config"
 )
 
 type smtpCapture struct {

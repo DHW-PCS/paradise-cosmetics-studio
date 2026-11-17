@@ -54,7 +54,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/maintenance"
+	"paradise-cosmetics-studio/internal/maintenance"
 )
 
 // ---------------------------------------------------------------------------

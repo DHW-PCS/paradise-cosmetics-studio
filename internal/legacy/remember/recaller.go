@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
 )
 
 var ErrMalformed = errors.New("remember: malformed recaller")

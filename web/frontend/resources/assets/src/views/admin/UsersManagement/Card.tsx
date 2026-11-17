@@ -27,7 +27,7 @@ const Card: React.FC<Props> = (props) => {
 
   const isDarkMode = document.body.classList.contains('dark-mode')
 
-  const avatar = `${blessing.base_url}/avatar/user/${user.uid}`
+  const avatar = `${pcs.base_url}/avatar/user/${user.uid}`
   const avatarPNG = `${avatar}?png`
   const canModify = canModifyUser(user, currentUser)
 
@@ -36,7 +36,7 @@ const Card: React.FC<Props> = (props) => {
       <Icon py>
         <picture>
           <source srcSet={avatar} type="image/webp" />
-          <img className="bs-avatar" src={avatarPNG} />
+          <img className="pcs-avatar" src={avatarPNG} />
         </picture>
       </Icon>
       <div className="info-box-content">

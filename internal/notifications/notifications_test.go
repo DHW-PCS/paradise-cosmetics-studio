@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/testsupport"
 	"github.com/google/uuid"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func TestNotificationDecodeBeforeRead(t *testing.T) {

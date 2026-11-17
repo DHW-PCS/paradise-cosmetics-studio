@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // TestCoreAPIConstructorRegistersWithoutPanic exercises the real

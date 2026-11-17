@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/site"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 var (

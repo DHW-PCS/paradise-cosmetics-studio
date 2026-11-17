@@ -18,7 +18,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 
-	"blessing-skin-go/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func TestAdminSearchRequestErrors(t *testing.T) {

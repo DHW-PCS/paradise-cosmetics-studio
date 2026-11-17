@@ -28,7 +28,7 @@ customJsCss:
   title: Пользовательские CSS/JavaScript
   message: |
     Содержимое будет прикреплено к тегам &lt;style&gt; и &lt;script&gt;<br>
-    - Вот несколько полезных примеров: <a href="https://blessing.netlify.com/css-js.html">Примеры пользовательских CSS & JavaScript</a>
+    - Вот несколько полезных примеров: <a href="https://blessing.netlify.com/css-js.html" title="Upstream Blessing Skin documentation">Примеры пользовательских CSS & JavaScript</a>
   custom_css: CSS
   custom_js: JavaScript
 rate:

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // Migrate creates the Yggdrasil state tables on the offline migration

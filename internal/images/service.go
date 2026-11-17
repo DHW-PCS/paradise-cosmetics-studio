@@ -15,11 +15,11 @@ import (
 	"sync"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
 	"github.com/HugoSmits86/nativewebp"
 	xdraw "golang.org/x/image/draw"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 var (

@@ -18,11 +18,11 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 
-	"blessing-skin-go/internal/legacy/passport"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/testdb"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/passport"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // The lock-cost profile is opt-in: it spawns up to 32 concurrent bcrypt

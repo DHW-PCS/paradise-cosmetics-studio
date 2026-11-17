@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
 )
 
 // The four maintenance entries respond like the reviewed contract: 201/200

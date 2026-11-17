@@ -9,11 +9,11 @@ import (
 	"errors"
 	"time"
 
-	"blessing-skin-go/internal/database"
 	"github.com/google/uuid"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	renderer "github.com/yuin/goldmark/renderer/html"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 var (

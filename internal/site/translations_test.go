@@ -1,7 +1,7 @@
 package site
 
 import (
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/testsupport"
 	"testing"
 )
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/routes"
+	"paradise-cosmetics-studio/internal/routes"
 )
 
 // TestYggdrasilCatalogMatchesLegacyRoutes pins the catalog entries

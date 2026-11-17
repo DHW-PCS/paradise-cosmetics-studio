@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 func pngBytes(t *testing.T, width, height int, seed byte) []byte {

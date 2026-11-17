@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // CheckStateRows is a read-only schema/state check for serve and worker: both

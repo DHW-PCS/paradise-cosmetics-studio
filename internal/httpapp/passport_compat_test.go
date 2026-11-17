@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/oauthserver"
 	"golang.org/x/net/html"
+	"paradise-cosmetics-studio/internal/oauthserver"
 )
 
 // Focused frozen-contract checks using the production serializers and

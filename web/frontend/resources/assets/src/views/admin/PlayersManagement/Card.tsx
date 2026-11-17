@@ -17,9 +17,9 @@ const Card: React.FC<Props> = (props) => {
   const { player } = props
 
   const handlePreviewTextures = () => {
-    const skinPreview = `${blessing.base_url}/preview/${player.tid_skin}`
+    const skinPreview = `${pcs.base_url}/preview/${player.tid_skin}`
     const skinPreviewPNG = `${skinPreview}?png`
-    const capePreview = `${blessing.base_url}/preview/${player.tid_cape}`
+    const capePreview = `${pcs.base_url}/preview/${player.tid_cape}`
     const capePreviewPNG = `${capePreview}?png`
 
     showModal({
@@ -30,7 +30,7 @@ const Card: React.FC<Props> = (props) => {
           <div className="col-6 d-flex justify-content-center">
             {player.tid_skin > 0 && (
               <a
-                href={`${blessing.base_url}/skinlib/show/${player.tid_skin}`}
+                href={`${pcs.base_url}/skinlib/show/${player.tid_skin}`}
                 target="_blank"
               >
                 <picture>
@@ -47,7 +47,7 @@ const Card: React.FC<Props> = (props) => {
           <div className="col-6 d-flex justify-content-center">
             {player.tid_cape > 0 && (
               <a
-                href={`${blessing.base_url}/skinlib/show/${player.tid_cape}`}
+                href={`${pcs.base_url}/skinlib/show/${player.tid_cape}`}
                 target="_blank"
               >
                 <picture>
@@ -68,7 +68,7 @@ const Card: React.FC<Props> = (props) => {
 
   const isDarkMode = document.body.classList.contains('dark-mode')
 
-  const avatar = `${blessing.base_url}/avatar/player/${player.name}`
+  const avatar = `${pcs.base_url}/avatar/player/${player.name}`
   const avatarPNG = `${avatar}?png`
 
   return (
@@ -76,7 +76,7 @@ const Card: React.FC<Props> = (props) => {
       <div className="info-box-icon">
         <picture>
           <source srcSet={avatar} type="image/webp" />
-          <img className="bs-avatar" src={avatarPNG} />
+          <img className="pcs-avatar" src={avatarPNG} />
         </picture>
       </div>
       <div className="info-box-content">

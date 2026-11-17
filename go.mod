@@ -1,4 +1,4 @@
-module blessing-skin-go
+module paradise-cosmetics-studio
 
 go 1.27.3
 

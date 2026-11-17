@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/oauthserver"
 )
 
 // The password grant is a system-client capability. Frozen store() has no

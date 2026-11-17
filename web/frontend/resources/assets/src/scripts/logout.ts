@@ -14,7 +14,7 @@ export async function logout() {
   }
 
   await post(urls.auth.logout())
-  window.location.href = blessing.base_url
+  window.location.href = pcs.base_url
 }
 
 const button = document.querySelector('#logout-button')

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { hot } from 'react-hot-loader/root'
-import useBlessingExtra from '@/scripts/hooks/useBlessingExtra'
+import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import useTexture from '@/scripts/hooks/useTexture'
 import { t } from '@/scripts/i18n'
@@ -23,7 +23,7 @@ const Players: React.FC = () => {
   const [search, setSearch] = useState('')
   const [showModalAddPlayer, setShowModalAddPlayer] = useState(false)
   const [showModalReset, setShowModalReset] = useState(false)
-  const playersCount = useBlessingExtra<number>('count')
+  const playersCount = usePCSExtra<number>('count')
 
   useEmitMounted()
 

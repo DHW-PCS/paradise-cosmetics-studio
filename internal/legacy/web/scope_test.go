@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // TestAPIUserRequiresUserReadScope covers R03. A token without User.Read must be

@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/web"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/web"
 )
 
 // passportEnv wires an App around one synthetic database without registering

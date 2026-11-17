@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/php"
-	"blessing-skin-go/internal/legacy/session"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/session"
 )
 
 type contextKey struct{ name string }

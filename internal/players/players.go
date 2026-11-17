@@ -10,11 +10,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/legacy/rules"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/legacy/rules"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 var (

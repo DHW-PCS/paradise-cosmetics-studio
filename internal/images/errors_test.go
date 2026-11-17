@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 func TestRawReadPermissionFailure(t *testing.T) {

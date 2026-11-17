@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 func TestTextureAndProfileEndpoints(t *testing.T) {

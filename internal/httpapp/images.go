@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/images"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/images"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 func (a *App) playerProfileJSON(w http.ResponseWriter, r *http.Request, b *identity.BrowserSession) {

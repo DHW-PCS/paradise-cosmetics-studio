@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // Manifest declares the original installed module set for the first offline

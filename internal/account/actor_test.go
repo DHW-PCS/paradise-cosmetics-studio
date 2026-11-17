@@ -9,9 +9,9 @@ import (
 	"errors"
 	"testing"
 
-	"blessing-skin-go/internal/account"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/account"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 var (

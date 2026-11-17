@@ -8,9 +8,9 @@ import (
 	"errors"
 	"time"
 
-	"blessing-skin-go/internal/database"
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // Binding is the persistent UUID link of one real player. Version changes when

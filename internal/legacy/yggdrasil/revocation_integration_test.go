@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
 )
 
 var testKey = []byte("m1-isolated-ygg-key-32bytes-long-001")

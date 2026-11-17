@@ -15,24 +15,24 @@ type Trans struct {
 // pluginText copies the frozen plugin lang values verbatim; yggdrasil-api
 // declares literal strings in its manifest and needs no namespace.
 var pluginText = map[string]string{
-	"InvitationCodes|general|title:en":              "Registration Invitation Codes",
-	"InvitationCodes|general|title:zh_CN":           "注册邀请码",
-	"InvitationCodes|general|description:en":        "Require invitation codes for users when registering.",
-	"InvitationCodes|general|description:zh_CN":     "在管理后台生成邀请码，只有持有邀请码才可以注册成为本站用户。",
-	"Blessing\\OAuthCore|general|title:en":          "OAuth Client Core",
-	"Blessing\\OAuthCore|general|title:zh_CN":       "OAuth 客户端核心",
-	"Blessing\\OAuthCore|general|description:en":    "Core plugin of OAuth client.",
-	"Blessing\\OAuthCore|general|description:zh_CN": "OAuth 客户端核心插件",
-	"Blessing\\Legacy|general|title:en":             "Legacy Skin Loading",
-	"Blessing\\Legacy|general|title:zh_CN":          "传统皮肤加载方式",
-	"Blessing\\Legacy|general|description:en":       "Provides legacy loading which is based on player name.",
-	"Blessing\\Legacy|general|description:zh_CN":    "提供传统的皮肤加载方式，即直接访问角色名。",
+	"InvitationCodes|general|title:en":                             "Registration Invitation Codes",
+	"InvitationCodes|general|title:zh_CN":                          "注册邀请码",
+	"InvitationCodes|general|description:en":                       "Require invitation codes for users when registering.",
+	"InvitationCodes|general|description:zh_CN":                    "在管理后台生成邀请码，只有持有邀请码才可以注册成为本站用户。",
+	"ParadiseCosmeticsStudio\\OAuthCore|general|title:en":          "OAuth Client Core",
+	"ParadiseCosmeticsStudio\\OAuthCore|general|title:zh_CN":       "OAuth 客户端核心",
+	"ParadiseCosmeticsStudio\\OAuthCore|general|description:en":    "Core plugin of OAuth client.",
+	"ParadiseCosmeticsStudio\\OAuthCore|general|description:zh_CN": "OAuth 客户端核心插件",
+	"ParadiseCosmeticsStudio\\Legacy|general|title:en":             "Legacy Skin Loading",
+	"ParadiseCosmeticsStudio\\Legacy|general|title:zh_CN":          "传统皮肤加载方式",
+	"ParadiseCosmeticsStudio\\Legacy|general|description:en":       "Provides legacy loading which is based on player name.",
+	"ParadiseCosmeticsStudio\\Legacy|general|description:zh_CN":    "提供传统的皮肤加载方式，即直接访问角色名。",
 
 	// disable-registration is an out-of-scope eligibility entry that a
 	// restored plugin state can enable; its can_register rejection copy is
 	// the frozen title text used for the controlled registration refusal.
-	"Blessing\\DisableRegistration|general|title:en":    "Disable Registration",
-	"Blessing\\DisableRegistration|general|title:zh_CN": "关闭注册功能",
+	"ParadiseCosmeticsStudio\\DisableRegistration|general|title:en":    "Disable Registration",
+	"ParadiseCosmeticsStudio\\DisableRegistration|general|title:zh_CN": "关闭注册功能",
 
 	// invitation-codes contributes the registration field, its form labels
 	// and the admin codes page texts; all copied verbatim from the frozen
@@ -222,14 +222,14 @@ var fixed = []Meta{
 	},
 	{
 		Name: "legacy-api", Version: "1.1.3",
-		Title:       &Trans{Namespace: "Blessing\\Legacy", Group: "general", Key: "title"},
-		Description: &Trans{Namespace: "Blessing\\Legacy", Group: "general", Key: "description"},
+		Title:       &Trans{Namespace: "ParadiseCosmeticsStudio\\Legacy", Group: "general", Key: "title"},
+		Description: &Trans{Namespace: "ParadiseCosmeticsStudio\\Legacy", Group: "general", Key: "description"},
 		IconFa:      "republican", IconBg: "purple",
 	},
 	{
 		Name: "oauth", Version: "1.0.6",
-		Title:       &Trans{Namespace: "Blessing\\OAuthCore", Group: "general", Key: "title"},
-		Description: &Trans{Namespace: "Blessing\\OAuthCore", Group: "general", Key: "description"},
+		Title:       &Trans{Namespace: "ParadiseCosmeticsStudio\\OAuthCore", Group: "general", Key: "title"},
+		Description: &Trans{Namespace: "ParadiseCosmeticsStudio\\OAuthCore", Group: "general", Key: "description"},
 		IconFa:      "box", IconBg: "primary",
 	},
 	{

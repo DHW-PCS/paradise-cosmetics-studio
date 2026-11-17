@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // Scopes, personal access tokens and access tokens for the frozen Passport

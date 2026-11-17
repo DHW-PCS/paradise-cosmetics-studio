@@ -1,7 +1,7 @@
 package site
 
 import (
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/testsupport"
 	"testing"
 )
 
@@ -23,7 +23,27 @@ func TestAuthoritativeOptionSnapshot(t *testing.T) {
 	}
 	s.OptionSnapshot = map[string]string{}
 	values, err = s.Options(t.Context())
-	if err != nil || values["site_name"] != "Blessing Skin" {
+	if err != nil || values["site_name"] != "Paradise Cosmetics Studio" {
 		t.Fatal("empty cached source was ignored")
+	}
+}
+
+func TestProductDefaultsPreserveConfiguredBrand(t *testing.T) {
+	for _, configured := range []map[string]string{{}, {"site_name": "Blessing Skin", "announcement": "My announcement", "custom_js": "window.blessing.custom = true", "custom_css": ".bs-avatar { opacity: .5 }"}} {
+		s := &Service{OptionSnapshot: configured}
+		values, err := s.Options(t.Context())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(configured) == 0 {
+			if values["site_name"] != "Paradise Cosmetics Studio" || values["announcement"] != "Welcome to Paradise Cosmetics Studio {version}!" {
+				t.Fatalf("product defaults = %v / %v", values["site_name"], values["announcement"])
+			}
+		}
+		for key, want := range configured {
+			if values[key] != want {
+				t.Errorf("configured %s changed: %v", key, values[key])
+			}
+		}
 	}
 }

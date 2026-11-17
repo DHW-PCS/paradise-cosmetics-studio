@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // TestModuleLockRefusesBusiness checks the batch4 TX-internal gate: when

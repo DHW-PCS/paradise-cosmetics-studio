@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/oauthserver"
 )
 
 // M4-07 fix-batch focused regressions (compile + no-DB template check
@@ -49,8 +49,8 @@ func TestM407ConsentTemplateSharedHeadFootAndLocale(t *testing.T) {
 		`rel="stylesheet" href="http://localhost/skin/app/style.7eb5d06.css"`,
 		`<script src="http://localhost/skin/app/meta.bbc5028.js"></script>`,
 		`<script src="http://localhost/skin/app/app.be534b0.js"></script>`,
-		`id="blessing-globals"`,
-		`id="blessing-extra"`,
+		`id="pcs-globals"`,
+		`id="pcs-extra"`,
 		"login-box",
 	} {
 		if !strings.Contains(text, want) {

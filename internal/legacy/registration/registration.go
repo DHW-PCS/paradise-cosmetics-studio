@@ -3,12 +3,12 @@
 package registration
 
 import (
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/users"
 	"context"
 	"database/sql"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/users"
 	"regexp"
 	"strings"
 	"time"

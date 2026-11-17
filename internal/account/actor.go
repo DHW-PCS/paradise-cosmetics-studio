@@ -22,9 +22,9 @@ import (
 	"strconv"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/legacy/password"
 )
 
 var (

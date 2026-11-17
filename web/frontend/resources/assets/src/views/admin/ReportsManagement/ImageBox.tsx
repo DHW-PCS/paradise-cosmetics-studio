@@ -39,7 +39,7 @@ interface Props {
 
 const ImageBox: React.FC<Props> = (props) => {
   const { report } = props
-  const preview = `${blessing.base_url}/preview/${report.tid}?height=150`
+  const preview = `${pcs.base_url}/preview/${report.tid}?height=150`
   const previewPNG = `${preview}&png`
 
   const handleImageClick = () => props.onClick(report.texture)
@@ -88,7 +88,7 @@ const ImageBox: React.FC<Props> = (props) => {
             </a>
             <div className="dropdown-menu dropdown-menu-right">
               <a
-                href={`${blessing.base_url}/skinlib/show/${report.tid}`}
+                href={`${pcs.base_url}/skinlib/show/${report.tid}`}
                 className="dropdown-item"
                 target="_blank"
               >

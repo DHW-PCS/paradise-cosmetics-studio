@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/apilimits"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/apilimits"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func TestAPILimitsCleanupOnlyExpired(t *testing.T) {

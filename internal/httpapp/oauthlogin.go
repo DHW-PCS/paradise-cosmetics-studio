@@ -3,7 +3,7 @@ package httpapp
 import (
 	"net/http"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // oauthLogin serves the external-login entries. The provider set is empty:

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 const libraryPerPage = 20

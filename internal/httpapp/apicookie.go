@@ -10,13 +10,13 @@ import (
 	"net/http"
 	"strings"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // apiCookieName is the Go first-party API cookie. Legacy PHP cookies
 // (including laravel_token) are never read here: their values fail the
 // Go session lookup and stay invalidated.
-const apiCookieName = "bs_go_api"
+const apiCookieName = "pcs_api"
 
 // oauthTokenRefresh implements POST /oauth/token/refresh: rotate the API
 // cookie secret bound to the current browser session. The rotation is an

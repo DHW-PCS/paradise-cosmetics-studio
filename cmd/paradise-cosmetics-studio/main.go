@@ -1,4 +1,4 @@
-// Command blessing-skin runs the HTTP service, worker and offline maintenance.
+// Command paradise-cosmetics-studio runs the HTTP service, worker and offline maintenance.
 package main
 
 import (
@@ -17,24 +17,24 @@ import (
 	"syscall"
 	"time"
 
-	"blessing-skin-go/internal/account"
-	"blessing-skin-go/internal/admission"
-	"blessing-skin-go/internal/apilimits"
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/httpapp"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/invitation"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/maintenance"
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/processlock"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
-	"blessing-skin-go/internal/yggdrasil"
-	"blessing-skin-go/web"
+	"paradise-cosmetics-studio/internal/account"
+	"paradise-cosmetics-studio/internal/admission"
+	"paradise-cosmetics-studio/internal/apilimits"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/httpapp"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/invitation"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/maintenance"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/processlock"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
+	"paradise-cosmetics-studio/internal/yggdrasil"
+	"paradise-cosmetics-studio/web"
 )
 
 // buildVersion is the Go build version reported to protocol clients
@@ -49,14 +49,14 @@ func main() {
 }
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: blessing-skin <serve|worker|migrate|auth-reset|outbox-retry|version> [-env declared.env]")
+		return errors.New("usage: paradise-cosmetics-studio <serve|worker|migrate|auth-reset|outbox-retry|migrate-mail-brand|version> [-env declared.env]")
 	}
 	command := args[0]
 	if command == "version" {
-		fmt.Printf("blessing-skin-go %s (%s)\n", buildVersion, runtime.Version())
+		fmt.Printf("Paradise Cosmetics Studio %s (%s)\n", buildVersion, runtime.Version())
 		return nil
 	}
-	if command != "serve" && command != "worker" && command != "migrate" && command != "auth-reset" && command != "outbox-retry" {
+	if command != "serve" && command != "worker" && command != "migrate" && command != "auth-reset" && command != "outbox-retry" && command != "migrate-mail-brand" {
 		return errors.New("unknown command")
 	}
 	flags := flag.NewFlagSet(command, flag.ContinueOnError)
@@ -78,7 +78,7 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	offline := command == "migrate" || command == "auth-reset"
+	offline := command == "migrate" || command == "auth-reset" || command == "migrate-mail-brand"
 	lock, err := processlock.Acquire(c.LockFile, offline)
 	if err != nil {
 		return err
@@ -143,6 +143,13 @@ func run(args []string) error {
 			return err
 		}
 		slog.Info("Go additive migrations complete")
+		return nil
+	}
+	if command == "migrate-mail-brand" {
+		if err = account.MigrateMailBrand(ctx, store, c.AppKey); err != nil {
+			return errors.New("mail payload migration failed; keep service stopped and inspect the outbox and APP_KEY")
+		}
+		slog.Info("account mail payload branding migration complete")
 		return nil
 	}
 	if err = maintenance.CheckSchema(ctx, store); err != nil {

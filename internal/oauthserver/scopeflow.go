@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // LoadScopeSnapshots reads the effective scope facts at startup: the frozen

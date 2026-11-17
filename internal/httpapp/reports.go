@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/notifications"
-	"blessing-skin-go/internal/reports"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/notifications"
+	"paradise-cosmetics-studio/internal/reports"
 )
 
 func (a *App) userReportsPage(w http.ResponseWriter, r *http.Request, b *identity.BrowserSession) {

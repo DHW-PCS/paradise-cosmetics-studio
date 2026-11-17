@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/apilimits"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/apilimits"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 func coreFixture(t *testing.T) (http.Handler, *identity.Service) {
@@ -87,7 +87,7 @@ var core33 = []struct{ method, path string }{
 
 func TestCoreAPIRootAndUnauth(t *testing.T) {
 	h, _ := coreFixture(t)
-	if w := coreReq(t, h, "GET", "/api", "", nil); w.Code != 200 || !strings.Contains(w.Body.String(), "blessing_skin") {
+	if w := coreReq(t, h, "GET", "/api", "", nil); w.Code != 200 || !strings.Contains(w.Body.String(), `"pcs":"m4-05-test"`) || strings.Contains(w.Body.String(), "blessing_skin") {
 		t.Fatalf("root = %d %s", w.Code, w.Body.String())
 	} else if w.Header().Get("X-RateLimit-Limit") == "" || w.Header().Get("X-RateLimit-Remaining") == "" {
 		t.Fatal("root limiter headers missing")

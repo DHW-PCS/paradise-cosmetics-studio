@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/legacy/rules"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/site"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/legacy/rules"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 func (a *App) authorizationFailure(w http.ResponseWriter, r *http.Request, b *identity.BrowserSession, err error) bool {

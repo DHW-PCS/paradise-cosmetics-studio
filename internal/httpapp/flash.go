@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // Form errors belong to the current browser session. The session lock precedes

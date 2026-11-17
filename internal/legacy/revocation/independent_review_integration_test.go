@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
 )
 
 // reviewWatermarkHash is a synthetic password hash; only the HMAC fingerprint matters.

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // IssueCode is the native equivalent of completing an authorized

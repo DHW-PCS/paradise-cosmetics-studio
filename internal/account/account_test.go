@@ -15,15 +15,15 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/account"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/invitation"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/web"
+	"paradise-cosmetics-studio/internal/account"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/invitation"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/web"
 )
 
 type mailbox struct {

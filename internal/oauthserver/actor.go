@@ -10,8 +10,8 @@ import (
 	"strconv"
 
 	"authelia.com/provider/oauth2"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 // MigrateAPIDigest adds the first-party API cookie digest to the browser

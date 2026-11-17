@@ -1,9 +1,9 @@
 package identity
 
 import (
-	"blessing-skin-go/internal/legacy/users"
 	"context"
 	"database/sql"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 type account struct {

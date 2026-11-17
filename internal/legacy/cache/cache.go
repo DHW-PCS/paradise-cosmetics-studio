@@ -17,7 +17,7 @@ import (
 	"syscall"
 	"time"
 
-	"blessing-skin-go/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/php"
 )
 
 const forever = 9999999999

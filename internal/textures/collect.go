@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"blessing-skin-go/internal/outbox"
+	"paradise-cosmetics-studio/internal/outbox"
 )
 
 // CollectTopic is the outbox topic for unreferenced original-file removal.

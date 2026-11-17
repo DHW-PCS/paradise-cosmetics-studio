@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // The manage page renders the frozen admin layout with the plugin route.

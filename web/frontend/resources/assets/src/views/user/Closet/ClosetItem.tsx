@@ -14,7 +14,7 @@ interface Props {
 
 const ClosetItem: React.FC<Props> = (props) => {
   const { item } = props
-  const preview = `${blessing.base_url}/preview/${item.tid}?height=150`
+  const preview = `${pcs.base_url}/preview/${item.tid}?height=150`
   const previewPNG = `${preview}&png`
 
   const handleItemClick = () => {
@@ -56,7 +56,7 @@ const ClosetItem: React.FC<Props> = (props) => {
                 {t('user.removeItem')}
               </a>
               <a
-                href={`${blessing.base_url}/skinlib/show/${item.tid}`}
+                href={`${pcs.base_url}/skinlib/show/${item.tid}`}
                 className="dropdown-item"
                 target="_blank"
               >

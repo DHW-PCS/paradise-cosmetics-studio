@@ -60,8 +60,8 @@ interface Props {
 const Item: React.FC<Props> = (props) => {
   const { item } = props
 
-  const link = `${blessing.base_url}/skinlib/show/${item.tid}`
-  const preview = `${blessing.base_url}/preview/${item.tid}?height=150`
+  const link = `${pcs.base_url}/skinlib/show/${item.tid}`
+  const preview = `${pcs.base_url}/preview/${item.tid}?height=150`
   const previewPNG = `${preview}&png`
 
   const handleUploaderClick = (event: React.MouseEvent) => {

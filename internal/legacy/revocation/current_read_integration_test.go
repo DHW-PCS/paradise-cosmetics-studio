@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
 )
 
 const currentReadHash = "$2y$04$baseline-hash-for-current-read"

@@ -18,9 +18,8 @@ type Assets struct {
 	Manifest  map[string][]string
 	Templates *template.Template
 	Messages  map[string]map[string]any
-	// ReadmeYggdrasilAPI is the frozen yggdrasil-api README.md rendered by
-	// the admin readme page; the original read the plugin directory at
-	// runtime, the Go replacement ships the same bytes as a static asset.
+	// ReadmeYggdrasilAPI is the bundled Yggdrasil usage guide rendered by
+	// the admin readme page.
 	ReadmeYggdrasilAPI []byte
 }
 

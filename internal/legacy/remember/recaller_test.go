@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
 )
 
 const testKey = "base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="

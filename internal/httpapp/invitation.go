@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/invitation"
-	"blessing-skin-go/internal/modules"
 	"net/http"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/invitation"
+	"paradise-cosmetics-studio/internal/modules"
 )
 
 // servedModule reports whether the module is registered and enabled on one

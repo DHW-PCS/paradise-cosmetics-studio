@@ -6,9 +6,9 @@ import (
 	"database/sql"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/searchstring"
-	"blessing-skin-go/internal/site"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/searchstring"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 type Service struct {

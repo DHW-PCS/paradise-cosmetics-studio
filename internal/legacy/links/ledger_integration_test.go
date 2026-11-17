@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
 )
 
 const (

@@ -10,12 +10,12 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"blessing-skin-go/internal/account"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/invitation"
-	"blessing-skin-go/internal/legacy/rules"
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/site"
+	"paradise-cosmetics-studio/internal/account"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/invitation"
+	"paradise-cosmetics-studio/internal/legacy/rules"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 func clientIP(r *http.Request) string {
@@ -187,7 +187,7 @@ func (a *App) registerAccount(w http.ResponseWriter, r *http.Request, b *identit
 		// with a code=1 JSON (legacy disable-registration uses its general
 		// title text); a deployment config failure (verification without
 		// mail) stays a 503 server error via the generic branch below.
-		jsonResponse(w, 200, map[string]any{"code": 1, "message": modules.Message("Blessing\\DisableRegistration::general.title", a.locale(r, b))})
+		jsonResponse(w, 200, map[string]any{"code": 1, "message": modules.Message("ParadiseCosmeticsStudio\\DisableRegistration::general.title", a.locale(r, b))})
 		return
 	case err != nil:
 		a.serverError(w, r, b)

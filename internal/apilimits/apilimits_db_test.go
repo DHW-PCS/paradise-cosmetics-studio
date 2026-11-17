@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/apilimits"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/apilimits"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func fixedService(t *testing.T) (*apilimits.Service, *database.Store, time.Time) {

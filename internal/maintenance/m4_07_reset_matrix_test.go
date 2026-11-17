@@ -3,10 +3,10 @@ package maintenance
 import (
 	"testing"
 
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // M4-07 prepare: atomic reset must clear every credential family that

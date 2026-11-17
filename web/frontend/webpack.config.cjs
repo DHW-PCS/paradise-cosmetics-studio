@@ -48,7 +48,7 @@ module.exports = {
   ]},
   plugins: [
     new FixedAssetPlugin(),
-    new MiniCssExtractPlugin({filename:'[name].[contenthash:7].css',chunkFilename:'[id].[contenthash:7].css'}),new ManifestPlugin(),new webpack.DefinePlugin({'window.Deno':'true',Deno:{args:[],build:{},version:{}},'process.platform':'"browser"',__blessing_public_path__:JSON.stringify('/app/')})],
+    new MiniCssExtractPlugin({filename:'[name].[contenthash:7].css',chunkFilename:'[id].[contenthash:7].css'}),new ManifestPlugin(),new webpack.DefinePlugin({'window.Deno':'true',Deno:{args:[],build:{},version:{}},'process.platform':'"browser"',__pcs_public_path__:JSON.stringify('/app/')})],
   resolve:{extensions:['.js','.ts','.tsx'],alias:{'react-dom':'@hot-loader/react-dom','@':path.resolve(__dirname,'resources/assets/src'),readline:'@/scripts/cli/readline.ts',prompts:'prompts/lib/index.js',assert:false}},
   optimization:{minimizer:[new CssMinimizerPlugin({}),'...']},
   experiments:{syncWebAssembly:true},

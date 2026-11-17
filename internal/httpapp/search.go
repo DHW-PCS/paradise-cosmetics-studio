@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/searchstring"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/searchstring"
 )
 
 func (a *App) searchError(w http.ResponseWriter, r *http.Request, b *identity.BrowserSession, err error) {

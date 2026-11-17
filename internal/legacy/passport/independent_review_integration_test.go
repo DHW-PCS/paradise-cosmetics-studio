@@ -33,10 +33,10 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 
-	"blessing-skin-go/internal/legacy/registration"
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/testdb"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/registration"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 var reviewSecret = []byte("0123456789abcdef0123456789abcdef")

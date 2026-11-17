@@ -1,5 +1,5 @@
 export default function updateUserAvatar(tid: number) {
-  const avatar = `${blessing.base_url}/avatar/${tid}?size=45`
+  const avatar = `${pcs.base_url}/avatar/${tid}?size=45`
   document
     .querySelectorAll<HTMLImageElement>('[alt="User Image"]')
     .forEach((image) => {

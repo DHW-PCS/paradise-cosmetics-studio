@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 import { hot } from 'react-hot-loader/root'
 import { t } from '@/scripts/i18n'
-import useBlessingExtra from '@/scripts/hooks/useBlessingExtra'
+import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import useMount from '@/scripts/hooks/useMount'
 import * as fetch from '@/scripts/net'
@@ -22,14 +22,14 @@ const Upload: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [texture, setTexture] = useState('')
-  const nameRule = useBlessingExtra<string>('rule')
-  const contentPolicy = useBlessingExtra<string>('contentPolicy')
-  const privacyNotice = useBlessingExtra<string>('privacyNotice')
-  const award = useBlessingExtra<number>('award')
-  const currentScore = useBlessingExtra<number>('score', 0)
-  const scorePublic = useBlessingExtra<number>('scorePublic')
-  const scorePrivate = useBlessingExtra<number>('scorePrivate')
-  const closetItemCost = useBlessingExtra<number>('closetItemCost')
+  const nameRule = usePCSExtra<string>('rule')
+  const contentPolicy = usePCSExtra<string>('contentPolicy')
+  const privacyNotice = usePCSExtra<string>('privacyNotice')
+  const award = usePCSExtra<number>('award')
+  const currentScore = usePCSExtra<number>('score', 0)
+  const scorePublic = usePCSExtra<number>('scorePublic')
+  const scorePrivate = usePCSExtra<number>('scorePrivate')
+  const closetItemCost = usePCSExtra<number>('closetItemCost')
 
   const container = useMount('#previewer')
 
@@ -99,7 +99,7 @@ const Upload: React.FC = () => {
     setIsUploading(false)
 
     if (code === 0) {
-      window.location.href = blessing.base_url + urls.skinlib.show(tid)
+      window.location.href = pcs.base_url + urls.skinlib.show(tid)
     } else if (code === 2) {
       try {
         await showModal({
@@ -107,7 +107,7 @@ const Upload: React.FC = () => {
           text: message,
           okButtonText: t('user.viewInSkinlib'),
         })
-        window.location.href = blessing.base_url + urls.skinlib.show(tid)
+        window.location.href = pcs.base_url + urls.skinlib.show(tid)
       } catch {
         //
       }

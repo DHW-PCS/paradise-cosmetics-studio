@@ -1,9 +1,9 @@
 package yggdrasil
 
 import (
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/users"
 	"context"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // SignoutCredentials preserves the native player-name/email lookup and permits

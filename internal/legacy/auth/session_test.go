@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"blessing-skin-go/internal/legacy/php"
-	"blessing-skin-go/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
 )
 
 func TestPayloadCannotDowngradeToLegacy(t *testing.T) {

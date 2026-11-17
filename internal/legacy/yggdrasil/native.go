@@ -1,13 +1,13 @@
 package yggdrasil
 
 import (
-	"blessing-skin-go/internal/legacy/php"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"paradise-cosmetics-studio/internal/legacy/php"
 	"strings"
 )
 

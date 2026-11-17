@@ -195,7 +195,7 @@ const Closet: React.FC = () => {
               </li>
               <li className="nav-item d-none d-md-block">
                 <a
-                  href={`${blessing.base_url}/skinlib/upload`}
+                  href={`${pcs.base_url}/skinlib/upload`}
                   className="nav-link"
                 >
                   {t('user.closet.upload')}
@@ -229,7 +229,7 @@ const Closet: React.FC = () => {
                 <span
                   dangerouslySetInnerHTML={{
                     __html: t('user.emptyClosetMsg', {
-                      url: `${blessing.base_url}/skinlib?filter=${category}`,
+                      url: `${pcs.base_url}/skinlib?filter=${category}`,
                     }),
                   }}
                 ></span>

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { hot } from 'react-hot-loader/root'
-import useBlessingExtra from '@/scripts/hooks/useBlessingExtra'
+import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
@@ -25,8 +25,8 @@ const Registration: React.FC = () => {
   const [invitationCode, setInvitationCode] = useState('')
   const [isPending, setIsPending] = useState(false)
   const [warningMessage, setWarningMessage] = useState('')
-  const requirePlayer = useBlessingExtra<boolean>('player')
-  const invitation = useBlessingExtra<InvitationField | null>('invitation', null)
+  const requirePlayer = usePCSExtra<boolean>('player')
+  const invitation = usePCSExtra<InvitationField | null>('invitation', null)
   const confirmationRef = useRef<HTMLInputElement | null>(null)
   const captchaRef = useRef<Captcha | null>(null)
 
@@ -74,7 +74,7 @@ const Registration: React.FC = () => {
     if (code === 0) {
       toast.success(message)
       setTimeout(() => {
-        window.location.href = `${blessing.base_url}/user`
+        window.location.href = `${pcs.base_url}/user`
       }, 3000)
     } else {
       setWarningMessage(message)
@@ -185,7 +185,7 @@ const Registration: React.FC = () => {
       <Alert type="warning">{warningMessage}</Alert>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <a href={`${blessing.base_url}/auth/login`}>{t('auth.login-link')}</a>
+        <a href={`${pcs.base_url}/auth/login`}>{t('auth.login-link')}</a>
         <button className="btn btn-primary" type="submit" disabled={isPending}>
           {isPending ? (
             <>

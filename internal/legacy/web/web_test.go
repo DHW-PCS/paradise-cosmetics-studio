@@ -13,17 +13,17 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/auth"
-	"blessing-skin-go/internal/legacy/cache"
-	"blessing-skin-go/internal/legacy/laravel"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/legacy/php"
-	"blessing-skin-go/internal/legacy/registration"
-	"blessing-skin-go/internal/legacy/remember"
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/session"
-	"blessing-skin-go/internal/legacy/testdb"
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/auth"
+	"paradise-cosmetics-studio/internal/legacy/cache"
+	"paradise-cosmetics-studio/internal/legacy/laravel"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/legacy/php"
+	"paradise-cosmetics-studio/internal/legacy/registration"
+	"paradise-cosmetics-studio/internal/legacy/remember"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/session"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 var fixedNow = time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)

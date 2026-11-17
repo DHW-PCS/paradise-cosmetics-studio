@@ -6,11 +6,11 @@ import (
 	"errors"
 	"os"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/gameauth"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/gameauth"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 // Authorizer rechecks a synthetic game credential inside the business

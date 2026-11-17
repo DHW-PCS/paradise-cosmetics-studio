@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"time"
 
-	"blessing-skin-go/internal/database"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // Generate creates amount fresh codes inside one transaction guarded by the

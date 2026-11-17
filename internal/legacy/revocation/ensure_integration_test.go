@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/legacy/revocation"
-	"blessing-skin-go/internal/legacy/testdb"
+	"paradise-cosmetics-studio/internal/legacy/revocation"
+	"paradise-cosmetics-studio/internal/legacy/testdb"
 )
 
 // TestConcurrentEnsureTxCreatesOneBaseline exercises the primitive without the

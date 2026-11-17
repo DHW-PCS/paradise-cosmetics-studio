@@ -12,11 +12,11 @@ import (
 	"os"
 	"strings"
 
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/textures"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/textures"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // yggdrasilModule is the fixed module name served by this dispatcher.
@@ -450,7 +450,7 @@ func (a *App) yggHello(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"meta": map[string]any{
 			"serverName":              siteName,
-			"implementationName":      "Yggdrasil API for Blessing Skin",
+			"implementationName":      "Yggdrasil API for Paradise Cosmetics Studio",
 			"implementationVersion":   version,
 			"links":                   links,
 			"feature.non_email_login": true,

@@ -10,16 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/admission"
-	"blessing-skin-go/internal/apilimits"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/invitation"
-	"blessing-skin-go/internal/legacy/password"
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/yggdrasil"
 	"github.com/go-sql-driver/mysql"
+	"paradise-cosmetics-studio/internal/admission"
+	"paradise-cosmetics-studio/internal/apilimits"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/invitation"
+	"paradise-cosmetics-studio/internal/legacy/password"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 func Database(t *testing.T, prefix string) (*database.Store, *identity.Service) {
@@ -45,7 +45,7 @@ func Database(t *testing.T, prefix string) (*database.Store, *identity.Service) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	name := "bs_m2_" + fmt.Sprintf("%x", identity.Digest(identity.Token())[:8])
+	name := "pcs_m2_" + fmt.Sprintf("%x", identity.Digest(identity.Token())[:8])
 	if _, err = admin.Exec("CREATE DATABASE `" + name + "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"); err != nil {
 		admin.Close()
 		t.Fatal(err)

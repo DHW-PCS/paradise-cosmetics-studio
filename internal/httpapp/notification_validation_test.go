@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/web"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/web"
 )
 
 func TestAdminNotificationDatabaseFailure(t *testing.T) {

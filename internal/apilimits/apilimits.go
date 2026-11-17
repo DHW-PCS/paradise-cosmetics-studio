@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	database "blessing-skin-go/internal/database"
+	database "paradise-cosmetics-studio/internal/database"
 )
 
 const (

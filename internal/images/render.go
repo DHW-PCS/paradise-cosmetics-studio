@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"blessing-skin-go/internal/renderer"
+	"paradise-cosmetics-studio/internal/renderer"
 )
 
 type textureFile struct {

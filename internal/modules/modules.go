@@ -12,8 +12,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 var (

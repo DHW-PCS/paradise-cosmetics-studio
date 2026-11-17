@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"testing"
 
-	"blessing-skin-go/internal/config"
 	gomail "github.com/wneessen/go-mail"
+	"paradise-cosmetics-studio/internal/config"
 )
 
 func TestSMTPMessageIDIsValidStableAndHasNoOperationKeyPunctuation(t *testing.T) {
@@ -33,7 +33,7 @@ func TestSMTPMessageIDIsValidStableAndHasNoOperationKeyPunctuation(t *testing.T)
 		t.Fatal(err)
 	}
 	id := parsed.Header.Get("Message-ID")
-	if !regexp.MustCompile(`^<[a-f0-9]{64}@blessing-skin>$`).MatchString(id) || first.GetMessageID() != second.GetMessageID() {
+	if !regexp.MustCompile(`^<[a-f0-9]{64}@paradise-cosmetics-studio>$`).MatchString(id) || first.GetMessageID() != second.GetMessageID() {
 		t.Fatal("invalid or unstable Message-ID")
 	}
 }

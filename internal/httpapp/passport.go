@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
 )
 
 // The eleven frozen Passport management handlers. Registration stays with

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	database "blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/modules"
+	database "paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/modules"
 )
 
 // Every implemented transient credential family is listed here:

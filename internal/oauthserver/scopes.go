@@ -1,8 +1,8 @@
 package oauthserver
 
 import (
-	"blessing-skin-go/internal/database"
 	"context"
+	"paradise-cosmetics-studio/internal/database"
 )
 
 // DefaultScopes preserves the frozen Passport identifiers, including its typo.

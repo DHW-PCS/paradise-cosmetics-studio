@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/web"
 	"golang.org/x/net/html"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/web"
 )
 
 func TestUserMenuIdentity(t *testing.T) {

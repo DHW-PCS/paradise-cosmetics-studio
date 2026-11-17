@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"authelia.com/provider/oauth2"
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 func insertConsentContractGrant(t *testing.T, s *Server, id string, uid int64, expires int64, scopes []string) {

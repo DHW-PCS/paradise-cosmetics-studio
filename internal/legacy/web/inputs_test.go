@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // TestPHPTrimDefaultSet pins the exact PHP trim() default character set:

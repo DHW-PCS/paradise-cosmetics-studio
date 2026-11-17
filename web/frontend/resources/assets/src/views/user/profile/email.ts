@@ -17,6 +17,6 @@ export default async function handler(event: Event) {
   )
   await showModal({ mode: 'alert', text: message })
   if (code === 0) {
-    window.location.href = `${blessing.base_url}/auth/login`
+    window.location.href = `${pcs.base_url}/auth/login`
   }
 }

@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/legacy/users"
 	"golang.org/x/crypto/bcrypt"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // Error mirrors the OAuth error body produced by OAuthServerException.

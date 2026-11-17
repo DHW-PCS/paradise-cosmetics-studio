@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func TestOfflineResetAndBoundedCleanup(t *testing.T) {

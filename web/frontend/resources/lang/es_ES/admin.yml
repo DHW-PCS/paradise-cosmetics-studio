@@ -67,8 +67,8 @@ i18n:
 status:
   info: Información
   health: Salud
-  bs:
-    name: Blessing Skin
+  pcs:
+    name: Paradise Cosmetics Studio
     version: Versión
     env: Entorno de aplicación
     debug: '¿Depurar o no?'

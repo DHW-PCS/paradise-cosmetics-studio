@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/internal/textures"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/internal/textures"
 )
 
 func TestManageAssociationErrors(t *testing.T) {

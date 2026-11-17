@@ -11,7 +11,7 @@ import (
 	"errors"
 	"time"
 
-	"blessing-skin-go/internal/legacy/users"
+	"paradise-cosmetics-studio/internal/legacy/users"
 )
 
 // Config holds the frozen settings for the PoC.

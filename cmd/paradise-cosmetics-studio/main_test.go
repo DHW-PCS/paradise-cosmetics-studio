@@ -1,14 +1,16 @@
 package main
 
 import (
+	"io"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/processlock"
-	"blessing-skin-go/internal/testsupport"
 	"github.com/go-sql-driver/mysql"
+	"paradise-cosmetics-studio/internal/processlock"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 func TestOfflineCommandsProtectInstalledSite(t *testing.T) {
@@ -141,5 +143,45 @@ func TestMigrateInitializesModuleStateRows(t *testing.T) {
 	}
 	if err = store.DB.QueryRow("SELECT option_value FROM " + store.Table("options") + " WHERE option_name='go_module_installations'").Scan(&installed); err != nil || installed != `[{"name":"legacy-api","version":"1.1.3"},{"name":"yggdrasil-api","version":"5.2.1"}]` {
 		t.Fatalf("repeat takeover rewrote the rows: %q", installed)
+	}
+}
+
+func TestProductCommandIdentity(t *testing.T) {
+	if err := run(nil); err == nil || !strings.Contains(err.Error(), "usage: paradise-cosmetics-studio ") {
+		t.Fatalf("usage = %v", err)
+	}
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	previous := os.Stdout
+	os.Stdout = writer
+	defer func() { os.Stdout = previous }()
+	runErr := run([]string{"version"})
+	writer.Close()
+	os.Stdout = previous
+	output, err := io.ReadAll(reader)
+	if err != nil || runErr != nil {
+		t.Fatalf("version: %v / %v", runErr, err)
+	}
+	if !strings.HasPrefix(string(output), "Paradise Cosmetics Studio "+buildVersion+" (") {
+		t.Fatalf("version = %q", output)
+	}
+}
+
+func TestMailBrandMigrationRequiresStoppedService(t *testing.T) {
+	directory := t.TempDir()
+	lockFile := filepath.Join(directory, "instance.lock")
+	for key, value := range map[string]string{"APP_ROOT": directory, "APP_LOCK_FILE": lockFile, "APP_KEY": "synthetic-only-secret-with-thirty-two-bytes", "DB_CONNECTION": "mysql", "DB_DATABASE": "synthetic_pcs", "DB_USERNAME": "synthetic_pcs"} {
+		t.Setenv(key, value)
+	}
+	lock, err := processlock.Acquire(lockFile, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Close()
+	if err := run([]string{"migrate-mail-brand"}); err == nil || !strings.Contains(err.Error(), "instance lock unavailable") {
+		t.Fatalf("mail migration admitted alongside a running service: %v", err)
 	}
 }

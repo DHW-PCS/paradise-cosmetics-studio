@@ -1,5 +1,5 @@
 export function getExtraData(): Record<string, any> {
-  const jsonElement = document.querySelector('#blessing-extra')
+  const jsonElement = document.querySelector('#pcs-extra')
   /* istanbul ignore next */
   if (jsonElement) {
     return JSON.parse(jsonElement.textContent ?? '{}')
@@ -8,4 +8,4 @@ export function getExtraData(): Record<string, any> {
   }
 }
 
-blessing.extra = getExtraData()
+pcs.extra = getExtraData()

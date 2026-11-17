@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // yggConfigForm is the flash form for the module config save roundtrip.

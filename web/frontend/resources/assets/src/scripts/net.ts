@@ -108,7 +108,7 @@ export function get<T = any>(url: string, params = empty): Promise<T> {
 
   const qs = new URLSearchParams(params).toString()
 
-  return walkFetch(new Request(`${blessing.base_url}${url}?${qs}`, init))
+  return walkFetch(new Request(`${pcs.base_url}${url}?${qs}`, init))
 }
 
 function nonGet<T = any>(
@@ -122,7 +122,7 @@ function nonGet<T = any>(
     data,
   })
 
-  const request = new Request(`${blessing.base_url}${url}`, {
+  const request = new Request(`${pcs.base_url}${url}`, {
     body: data instanceof FormData ? data : JSON.stringify(data),
     method: method.toUpperCase(),
     ...init,
@@ -155,7 +155,7 @@ export function del<T = any>(
   return nonGet<T>('DELETE', url, data)
 }
 
-blessing.fetch = {
+pcs.fetch = {
   get,
   post,
   put,

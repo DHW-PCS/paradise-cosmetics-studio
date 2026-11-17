@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/players"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/players"
 )
 
 func (a *App) playerSetTexture(w http.ResponseWriter, r *http.Request, b *identity.BrowserSession) {

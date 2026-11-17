@@ -28,7 +28,7 @@ customJsCss:
   title: Custom CSS/JavaScript
   message: |
     The contents will be attached to &lt;style&gt; and &lt;script&gt; tags.<br>
-    - Here are some useful examples: <a href="https://blessing.netlify.com/css-js.html">Examples of Custom CSS & JavaScript</a>
+    - Here are some useful examples: <a href="https://blessing.netlify.com/css-js.html" title="Upstream Blessing Skin documentation">Examples of Custom CSS & JavaScript</a>
   custom_css: CSS
   custom_js: JavaScript
 rate:

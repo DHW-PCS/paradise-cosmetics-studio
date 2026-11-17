@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/outbox"
-	"blessing-skin-go/internal/site"
 	gomail "github.com/wneessen/go-mail"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/outbox"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 type Message struct{ To, Subject, HTML, ID string }
@@ -172,7 +172,7 @@ func (s *SMTP) message(message Message) (*gomail.Msg, error) {
 	}
 	msg.Subject(message.Subject)
 	msg.SetBodyString(gomail.TypeTextHTML, message.HTML)
-	msg.SetMessageIDWithValue(fmt.Sprintf("%x@blessing-skin", identity.Digest(message.ID)))
+	msg.SetMessageIDWithValue(fmt.Sprintf("%x@paradise-cosmetics-studio", identity.Digest(message.ID)))
 	return msg, nil
 }
 

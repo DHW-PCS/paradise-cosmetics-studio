@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/site"
+	"paradise-cosmetics-studio/internal/site"
 )
 
 func TestDerivedCacheLifetime(t *testing.T) {

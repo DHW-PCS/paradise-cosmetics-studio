@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"authelia.com/provider/oauth2"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/maintenance"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/maintenance"
 )
 
 type introspectionFailure struct {

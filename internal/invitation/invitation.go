@@ -11,8 +11,8 @@ import (
 	"log/slog"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/modules"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/modules"
 )
 
 var (

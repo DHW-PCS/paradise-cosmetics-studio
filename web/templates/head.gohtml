@@ -7,7 +7,7 @@
 {{.MetaExtras}}
 <link rel="preconnect" href="https://unpkg.com/" crossorigin>
 {{if .CDNHost}}<link rel="preconnect" href="{{.CDNHost}}" id="cdn-host" crossorigin>{{end}}
-<script id="blessing-globals" type="application/json">{{.Globals}}</script>
+<script id="pcs-globals" type="application/json">{{.Globals}}</script>
 {{range .MetaJS}}<script src="{{.}}"></script>{{end}}
 <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" crossorigin>
 {{range .CSS}}<link rel="stylesheet" href="{{.}}">{{end}}

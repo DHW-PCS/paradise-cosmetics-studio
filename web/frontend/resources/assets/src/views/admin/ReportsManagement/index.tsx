@@ -91,7 +91,7 @@ const ReportsManagement: React.FC = () => {
   }
 
   const textureUrl =
-    viewingTexture && `${blessing.base_url}/textures/${viewingTexture.hash}`
+    viewingTexture && `${pcs.base_url}/textures/${viewingTexture.hash}`
 
   return (
     <div className="row">

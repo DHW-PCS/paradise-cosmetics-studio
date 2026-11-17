@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/identity"
+	"paradise-cosmetics-studio/internal/identity"
 )
 
 func ownedClientOperations(s *Server, browser *identity.BrowserSession) []struct {

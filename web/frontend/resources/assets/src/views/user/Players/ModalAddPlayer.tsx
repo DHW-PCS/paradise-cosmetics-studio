@@ -47,7 +47,7 @@ const ModalAddPlayer: React.FC<Props> = (props) => {
     props.onClose()
   }
 
-  const { score, cost, rule, length } = blessing.extra as Extra
+  const { score, cost, rule, length } = pcs.extra as Extra
   const isScoreEnough = score >= cost
 
   return (

@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/maintenance"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/players"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/maintenance"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/players"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 // TestConcurrentRefreshExactlyOneWins exercises the atomic rotation

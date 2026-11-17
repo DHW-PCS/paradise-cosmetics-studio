@@ -4,7 +4,7 @@ import { Toast } from './scripts/toast'
 
 declare global {
   // eslint-disable-next-line no-redeclare
-  let blessing: {
+  let pcs: {
     base_url: string
     debug: boolean
     env: string

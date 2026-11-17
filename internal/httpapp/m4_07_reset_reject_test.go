@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"blessing-skin-go/internal/maintenance"
+	"paradise-cosmetics-studio/internal/maintenance"
 )
 
 // M4-07 prepare: atomic auth-reset x every credential entry (HTTP level).

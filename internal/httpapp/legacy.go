@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"blessing-skin-go/internal/images"
+	"paradise-cosmetics-studio/internal/images"
 )
 
 // legacyAPIModule is the fixed module name for the Legacy API 1.1.3 routes.

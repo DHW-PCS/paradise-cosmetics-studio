@@ -16,13 +16,13 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/admission"
-	"blessing-skin-go/internal/config"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/oauthserver"
-	"blessing-skin-go/internal/site"
-	"blessing-skin-go/internal/testsupport"
-	"blessing-skin-go/internal/yggdrasil"
+	"paradise-cosmetics-studio/internal/admission"
+	"paradise-cosmetics-studio/internal/config"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/oauthserver"
+	"paradise-cosmetics-studio/internal/site"
+	"paradise-cosmetics-studio/internal/testsupport"
+	"paradise-cosmetics-studio/internal/yggdrasil"
 )
 
 func appFixture(t *testing.T) (http.Handler, *identity.Service) {
@@ -215,26 +215,26 @@ func TestInlineJSONAndHTMLAreEscaped(t *testing.T) {
 	if strings.Contains(w.Body.String(), `</script><img`) {
 		t.Fatal("unescaped inline JSON")
 	}
-	pattern := regexp.MustCompile(`<script id="blessing-globals" type="application/json">(.*?)</script>`)
+	pattern := regexp.MustCompile(`<script id="pcs-globals" type="application/json">(.*?)</script>`)
 	match := pattern.FindSubmatch(w.Body.Bytes())
 	if len(match) != 2 || !json.Valid(bytes.TrimSpace(match[1])) {
 		t.Fatal("globals is not valid escaped JSON")
 	}
 }
 
-func TestOriginalInterfaceCopy(t *testing.T) {
+func TestProductInterfaceCopy(t *testing.T) {
 	h, _ := appFixture(t)
 	w := request(t, h, "GET", "/auth/login?lang=en", "", "", nil)
-	for _, text := range []string{"Log In - Blessing Skin", "Log in to manage your skin &amp; players", "Register a new account"} {
+	for _, text := range []string{"Log In - Paradise Cosmetics Studio", "Log in to manage your skin &amp; players", "Register a new account"} {
 		if !strings.Contains(w.Body.String(), text) {
 			t.Fatalf("original login copy missing: %s", text)
 		}
 	}
 	cookie, _ := credentials(t, h, false)
 	w = request(t, h, "GET", "/user?lang=en", "", "", cookie)
-	for _, text := range []string{"Dashboard - Blessing Skin", "Powered with ❤ by", "Blessing Skin Server", "All rights reserved.", "中文 (简体)", "中文 (正體)", "Русский язык", "Announcement", "What is score?", "Welcome to Blessing Skin {version}!"} {
+	for _, text := range []string{"Dashboard - Paradise Cosmetics Studio", "Powered with ❤ by", "Paradise Cosmetics Studio", "All rights reserved.", "中文 (简体)", "中文 (正體)", "Русский язык", "Announcement", "What is score?", "Welcome to Paradise Cosmetics Studio {version}!"} {
 		if !strings.Contains(w.Body.String(), text) {
-			t.Fatalf("original interface copy missing: %s", text)
+			t.Fatalf("product interface copy missing: %s", text)
 		}
 	}
 	if strings.Contains(w.Body.String(), "Blessing Skin Go") || strings.Contains(w.Body.String(), "· MIT") {
@@ -271,7 +271,7 @@ func TestOriginalLocaleSelectionAndNotFoundCopy(t *testing.T) {
 	r.AddCookie(&http.Cookie{Name: "locale", Value: "en"})
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
-	if !strings.Contains(w.Body.String(), "仪表盘 - Blessing Skin") {
+	if !strings.Contains(w.Body.String(), "仪表盘 - Paradise Cosmetics Studio") {
 		t.Fatal("authenticated account locale did not override browser preference")
 	}
 	w = request(t, h, "GET", "/missing?lang=zh_CN", "", "", nil)
@@ -442,7 +442,7 @@ func TestInstalledOptionsHeadFootAndAccountTemplates(t *testing.T) {
 	h, _ := appFixtureWithOptions(t, options)
 	cookie, _ := credentials(t, h, false)
 	w := request(t, h, "GET", "/user?lang=en", "", "", cookie)
-	for _, text := range []string{"Welcome to Blessing Skin 6.0.2!", `name="theme-color" content="#17a2b8"`, `rel="preconnect"`, `rel="shortcut icon"`, "body { color: red; }", "window.installedFixture = true;", `name="fixture" content="installed"`, `class="bs-avatar"`} {
+	for _, text := range []string{"Welcome to Blessing Skin 6.0.2!", `name="theme-color" content="#17a2b8"`, `rel="preconnect"`, `rel="shortcut icon"`, "body { color: red; }", "window.installedFixture = true;", `name="fixture" content="installed"`, `class="pcs-avatar"`} {
 		if !strings.Contains(w.Body.String(), text) {
 			t.Fatalf("installed option/template slot missing: %s", text)
 		}
@@ -451,7 +451,7 @@ func TestInstalledOptionsHeadFootAndAccountTemplates(t *testing.T) {
 		t.Fatal("installation or tag filtering changed")
 	}
 	w = request(t, h, "GET", "/auth/register?lang=en", "", "", nil)
-	if w.Code != 200 || !strings.Contains(w.Body.String(), "Welcome to Blessing Skin!") || !strings.Contains(w.Body.String(), `"player":true`) {
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Welcome to "+options["site_name"]+"!") || !strings.Contains(w.Body.String(), `"player":true`) {
 		t.Fatal("registration form contract missing")
 	}
 }

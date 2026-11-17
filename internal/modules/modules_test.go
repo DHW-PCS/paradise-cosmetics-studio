@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"blessing-skin-go/internal/database"
-	"blessing-skin-go/internal/identity"
-	"blessing-skin-go/internal/modules"
-	"blessing-skin-go/internal/testsupport"
+	"paradise-cosmetics-studio/internal/database"
+	"paradise-cosmetics-studio/internal/identity"
+	"paradise-cosmetics-studio/internal/modules"
+	"paradise-cosmetics-studio/internal/testsupport"
 )
 
 type harness struct {
@@ -418,5 +418,29 @@ func TestRequestValuesFeedDisplayRows(t *testing.T) {
 	}
 	if title, description := modules.Metas()[0].Translations("zh_CN"); title != "注册邀请码" || description == "" {
 		t.Fatalf("frozen plugin translations lost: %s / %s", title, description)
+	}
+}
+
+func TestProductModuleNamespaces(t *testing.T) {
+	for _, m := range modules.Metas() {
+		if m.Name != "legacy-api" && m.Name != "oauth" {
+			continue
+		}
+		for _, text := range []*modules.Trans{m.Title, m.Description} {
+			if !strings.HasPrefix(text.Namespace, "ParadiseCosmeticsStudio\\") {
+				t.Errorf("module %s namespace = %s", m.Name, text.Namespace)
+			}
+			for _, locale := range []string{"en", "zh_CN"} {
+				if text.Localized(locale) == "" {
+					t.Errorf("module %s missing %s translation", m.Name, locale)
+				}
+			}
+		}
+	}
+	if modules.Message("ParadiseCosmeticsStudio\\DisableRegistration::general.title", "en") != "Disable Registration" {
+		t.Fatal("registration restriction translation missing")
+	}
+	if modules.Message("Blessing\\DisableRegistration::general.title", "en") != "" {
+		t.Fatal("old namespace still resolves")
 	}
 }

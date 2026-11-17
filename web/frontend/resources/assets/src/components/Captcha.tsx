@@ -23,8 +23,8 @@ class Captcha extends React.Component<Record<string, unknown>, State> {
     this.state = {
       value: '',
       time: Date.now(),
-      sitekey: blessing.extra.recaptcha,
-      invisible: blessing.extra.invisible,
+      sitekey: pcs.extra.recaptcha,
+      invisible: pcs.extra.invisible,
     }
     this.ref = React.createRef()
   }
@@ -88,7 +88,7 @@ class Captcha extends React.Component<Record<string, unknown>, State> {
           />
         </div>
         <img
-          src={`${blessing.base_url}/auth/captcha?v=${this.state.time}`}
+          src={`${pcs.base_url}/auth/captcha?v=${this.state.time}`}
           alt={t('auth.captcha')}
           css={cssUtils.pointerCursor}
           height={34}
