@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A web application brings your custom skins back in offline Minecraft servers.",
   "author": "printempw",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "private": true,
   "scripts": {
     "build": "node tools/build-translations.cjs && webpack --config webpack.config.cjs",

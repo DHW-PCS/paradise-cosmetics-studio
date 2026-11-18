@@ -2,6 +2,12 @@
 
 基于 Blessing Skin Server 6.0.2 的 Go 重写项目，提供 Minecraft cosmetics hosting。业务、协议与迁移工作仍按阶段验收，尚未完成的入口明确返回失败。
 
+## 许可证
+
+本项目的原创内容采用 [GNU Affero General Public License v3.0](LICENSE)（`AGPL-3.0-only`）。复用的 Blessing Skin Server 内容及其他第三方材料保留各自的许可证和版权声明，详见 [第三方说明](THIRD_PARTY_NOTICES.md)。
+
+## 构建与运行
+
 构建已使用 Go 1.27.3、Node.js 24.22.1、Yarn 1.22.22 验证。Makefile 固定 Go toolchain，frontend 使用 packageManager 和原 yarn.lock；不使用 PHP 生成 route、翻译或页面资源。
 
 名称校验使用随源码固定的 native PCRE2 10.39 maintenance library。构建需要 C compiler 和 `CGO_ENABLED=1`，library 静态编入 Go binary，不依赖系统 PCRE2。Cross build 需要目标平台的 C toolchain；维护与 qualification 说明见 [internal/pcre/README.md](internal/pcre/README.md)。发行时保留 `dist/licenses/PCRE2.txt` 和 third-party notices。
@@ -50,8 +56,6 @@ dist/paradise-cosmetics-studio auth-reset -env /absolute/path/site.env
 该命令原子清理当前 Go 临时认证状态，保留账户、密码、UID version、client、UUID、业务数据、文件和 outbox。完整恢复仍需核对业务/文件/任务恢复点。它不能替代业务数据修复，也不执行 PHP 回退。
 
 日常 checks 使用 `make check`；设置 M2_TEST_DSN 后，数据库 checks 只接受 loopback TCP，创建/清理独立的合成数据库。未设置时会跳过 DB checks，不能把 skip 当作通过。
-
-原 frontend、语言、图像和模板来源及 license 见 [第三方说明](THIRD_PARTY_NOTICES.md)。
 
 ## 更名后的升级
 
