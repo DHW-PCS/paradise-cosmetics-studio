@@ -64,8 +64,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Minecraft texture renderer (`internal/renderer`)
 
-`internal/renderer` is a Go port of `blessing/texture-renderer` 6.0.2, which is
-vendored read-only at `.local/refactoring/reference-src/6.0.2/vendor/blessing/texture-renderer`.
+`internal/renderer` is a Go port of the `blessing/texture-renderer` PHP package
+bundled with Blessing Skin Server 6.0.2.
 The PHP implementation is MIT licensed, copyright 2020-present The Blessing Skin
 Team; the Minecraft skin rendering algorithm it is based on (PHP Minecraft Skin
 Renderer) is BSD licensed, copyright 2012, Pierre Gros. The complete license
