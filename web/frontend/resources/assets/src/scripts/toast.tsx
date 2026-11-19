@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
+import { render, unmountComponentAtNode } from './reactRoot'
 import { nanoid } from 'nanoid'
 import * as emitter from './event'
 import ToastBox, { ToastType } from '../components/Toast'
@@ -55,14 +55,14 @@ export const ToastContainer: React.FC = () => {
 export class Toast {
   private container: HTMLDivElement
 
-  constructor(render?: (element: JSX.Element) => void) {
+  constructor(renderElement?: (element: React.ReactElement) => void) {
     this.container = document.createElement('div')
     document.body.appendChild(this.container)
 
-    if (render) {
-      render(<ToastContainer />)
+    if (renderElement) {
+      renderElement(<ToastContainer />)
     } else {
-      ReactDOM.render(<ToastContainer />, this.container)
+      render(<ToastContainer />, this.container)
     }
   }
 
@@ -87,7 +87,7 @@ export class Toast {
   }
 
   dispose() {
-    ReactDOM.unmountComponentAtNode(this.container)
+    unmountComponentAtNode(this.container)
     this.container.remove()
   }
 }

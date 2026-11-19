@@ -4,11 +4,13 @@
     "target": "es2017",
     "module": "esnext",
     "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
     "declaration": false,
     "declarationMap": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./resources/assets/src/*"]
+      "@/*": ["./resources/assets/src/*"],
+      "@oreui-web/react/*": ["./node_modules/@oreui-web/react/dist/components/*"]
     },
     "resolveJsonModule": true
   },

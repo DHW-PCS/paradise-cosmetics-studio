@@ -34,10 +34,10 @@ class ManifestPlugin {
 module.exports = {
   mode: 'production',
   entry: {
-    app: ['react-hot-loader/patch', '@/index.tsx'],
-    style: ['@/styles/common.css','admin-lte/dist/css/alt/adminlte.components.min.css','admin-lte/dist/css/alt/adminlte.core.min.css','admin-lte/dist/css/alt/adminlte.pages.min.css','admin-lte/dist/css/alt/adminlte.light.min.css'],
+    app: '@/index.tsx',
+    style: ['@oreui-web/react/styles.css','@/styles/common.css','react-loading-skeleton/dist/skeleton.css','admin-lte/dist/css/alt/adminlte.components.min.css','admin-lte/dist/css/alt/adminlte.core.min.css','admin-lte/dist/css/alt/adminlte.pages.min.css','admin-lte/dist/css/alt/adminlte.light.min.css'],
     meta: '@/scripts/meta.ts', sw: '@/scripts/sw.ts',
-    home: '@/scripts/homePage.ts', 'home-css': '@/styles/home.css',
+    home: '@/scripts/homePage.tsx', 'home-css': '@/styles/home.css',
     spectre: ['spectre.css/dist/spectre.min.css','@/fonts/minecraft.css','@/styles/spectre.css'],
   },
   output: { path:path.resolve(__dirname,'../static/app'),publicPath:'auto',filename:'[name].[contenthash:7].js',chunkFilename:'[id].[contenthash:7].js',crossOriginLoading:'anonymous',clean:true },
@@ -49,7 +49,7 @@ module.exports = {
   plugins: [
     new FixedAssetPlugin(),
     new MiniCssExtractPlugin({filename:'[name].[contenthash:7].css',chunkFilename:'[id].[contenthash:7].css'}),new ManifestPlugin(),new webpack.DefinePlugin({'window.Deno':'true',Deno:{args:[],build:{},version:{}},'process.platform':'"browser"',__pcs_public_path__:JSON.stringify('/app/')})],
-  resolve:{extensions:['.js','.ts','.tsx'],alias:{'react-dom':'@hot-loader/react-dom','@':path.resolve(__dirname,'resources/assets/src'),readline:'@/scripts/cli/readline.ts',prompts:'prompts/lib/index.js',assert:false}},
+  resolve:{extensions:['.js','.ts','.tsx'],alias:{'@':path.resolve(__dirname,'resources/assets/src'),readline:'@/scripts/cli/readline.ts',prompts:'prompts/lib/index.js',assert:false}},
   optimization:{minimizer:[new CssMinimizerPlugin({}),'...']},
   experiments:{syncWebAssembly:true},
   stats:'errors-warnings',ignoreWarnings:[/size limit/i],

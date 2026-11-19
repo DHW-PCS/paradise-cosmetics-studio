@@ -12,23 +12,42 @@ body {
   height: 100vh;
 }
 
-.navbar {
+#home-navbar > ore-navbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  z-index: 1030;
+  color: var(--ore-color-gray-100);
   transition: color 0.25s ease-in-out, border-color 0.25s ease-in-out,
     background-color 0.25s ease-in-out;
 }
-.navbar.transparent {
-  background-color: rgba(255, 255, 255, 0.2);
+#home-navbar > ore-navbar > .ore-navbar-actions {
+  grid-column: 3;
+  justify-self: end;
 }
-.navbar.transparent .navbar-brand {
-  color: #5e5e5e;
+#home-navbar > ore-navbar.transparent {
+  --ore-navbar-background: rgba(255, 255, 255, 0.2);
+  --ore-navbar-bottom-shadow: transparent;
+  --ore-navbar-shadow: transparent;
+  --ore-navbar-foreground: var(--ore-color-gray-100);
+  --ore-navbar-action-background: transparent;
+  --ore-navbar-action-highlight: transparent;
+  --ore-navbar-action-shadow: transparent;
 }
-.navbar-brand {
+#home-navbar .ore-navbar-title {
+  color: var(--ore-color-gray-100);
   font-family: Minecraft;
+  text-decoration: none;
 }
-.navbar-nav {
-  display: inline-flex;
-  align-items: center;
-  align-self: center;
+#home-navbar .nav-item {
+  display: flex;
+  align-items: stretch;
+}
+#home-navbar .user-menu > a {
+  min-height: calc(var(--ore-navbar-unit) * 18);
+  padding: 0 calc(var(--ore-navbar-unit) * 5);
+  color: inherit;
 }
 
 .splash {
@@ -73,19 +92,12 @@ body {
   }
 }
 
-.main-button {
-  color: #fff;
-  padding: 0.8em 2.5em;
-  border-radius: 5px;
-  background: transparent;
-  border: 1px solid #fff;
-  font-size: 120%;
-  transition: color 0.25s ease-in-out, border-color 0.25s ease-in-out,
-    background-color 0.25s ease-in-out;
+.splash-action ore-button {
+  --ore-button-unit: 3px;
+  --ore-button-foreground: #fff;
 }
-.main-button:hover {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.2);
+#footer-wrap ore-button {
+  --ore-button-unit: 2px;
 }
 
 #fixed-bg {

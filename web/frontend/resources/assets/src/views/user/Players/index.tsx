@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { hot } from 'react-hot-loader/root'
 import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import useTexture from '@/scripts/hooks/useTexture'
@@ -233,4 +232,4 @@ const Players: React.FC = () => {
   )
 }
 
-export default hot(Players)
+export default Players

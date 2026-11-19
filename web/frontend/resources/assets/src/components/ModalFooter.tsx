@@ -1,6 +1,7 @@
 import React from 'react'
 
 export interface Props {
+  children?: React.ReactNode
   flexFooter?: boolean
   okButtonText?: string
   okButtonType?: string

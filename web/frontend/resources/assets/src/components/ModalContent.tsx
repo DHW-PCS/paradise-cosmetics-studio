@@ -3,6 +3,7 @@ import React from 'react'
 export interface Props {
   text?: string
   dangerousHTML?: string
+  children?: React.ReactNode
 }
 
 const ModalContent: React.FC<Props> = (props) => {

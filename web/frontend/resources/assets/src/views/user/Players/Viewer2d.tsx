@@ -14,6 +14,7 @@ const TexturePreview = styled.div`
 `
 
 interface Props {
+  children?: React.ReactNode
   skin: string
   cape: string
 }

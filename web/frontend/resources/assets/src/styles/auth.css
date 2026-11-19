@@ -1,8 +1,423 @@
-.login-logo a {
-  font-family: Minecraft;
-  transition: all 0.2s ease-in-out;
+body.auth-page {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 28px 16px 20px;
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-90);
+  font-family: var(--ore-font-body);
 }
 
-.login-logo a:hover {
-  color: #42a5f5;
+.auth-frame {
+  display: grid;
+  width: min(100%, 380px);
+  gap: 16px;
+  margin: auto;
+}
+
+.auth-notice {
+  margin: 0;
+  color: var(--ore-color-gray-30);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.auth-root,
+.auth-server-panel {
+  width: 100%;
+}
+
+ore-card.auth-card {
+  --ore-card-unit: 3px;
+  --ore-card-background: var(--ore-color-gray-80);
+  --ore-card-foreground: var(--ore-color-white);
+
+  width: 100%;
+  max-width: 380px;
+  margin-inline: auto;
+  row-gap: 0;
+}
+
+.auth-card-titlebar {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  padding: 6px;
+  border: 2px solid var(--ore-color-gray-60);
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-70);
+  text-align: center;
+}
+
+.auth-card-back {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+  border: 0;
+  color: var(--ore-color-white);
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-card-back:hover {
+  background: var(--ore-color-neutral-background-hover);
+}
+
+.auth-card-back:focus-visible {
+  outline: 2px solid var(--ore-color-focus-ring);
+}
+
+.auth-card-back svg {
+  width: 16px;
+  height: 16px;
+}
+
+ore-container.auth-option-container {
+  --ore-container-padding: 12px var(--auth-body-padding);
+  --ore-container-gap: 0;
+
+  margin-inline: calc(-1 * var(--auth-body-padding));
+  margin-bottom: calc(-1 * var(--auth-body-padding));
+}
+
+.auth-card-title {
+  margin: 0;
+  color: inherit;
+  font-family: var(--ore-font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.auth-card-description {
+  margin: 0;
+  color: var(--ore-color-gray-30);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.auth-card-form {
+  display: grid;
+  width: 100%;
+  gap: 0;
+}
+
+.auth-card-body {
+  --auth-body-padding: 20px;
+
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--auth-body-padding);
+  border: 2px solid var(--ore-color-gray-60);
+  border-top: 0;
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-80);
+}
+
+.auth-card-content {
+  display: grid;
+  width: 100%;
+  gap: 16px;
+}
+
+.auth-card-actions {
+  display: grid;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 16px 20px 18px;
+  border: 2px solid var(--ore-color-gray-60);
+  border-top: 2px solid var(--ore-color-gray-50);
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-70);
+}
+
+.auth-card-actions ore-button {
+  width: 100%;
+  --ore-button-unit: 2px;
+}
+
+.auth-field {
+  width: 100%;
+  max-width: 100%;
+  --ore-textfield-unit: 2px;
+}
+
+.auth-email-field {
+  --ore-textfield-unit: 2px;
+  --ore-textfield-background: var(--ore-color-neutral-surface-raised);
+  --ore-textfield-shadow: var(--ore-color-neutral-surface-sunken);
+  --ore-textfield-border: var(--ore-color-border);
+  --ore-textfield-input-foreground: var(--ore-color-foreground);
+  --ore-textfield-caret: var(--ore-color-primary-background);
+  --ore-textfield-focus-ring: transparent;
+
+  position: relative;
+  display: inline-grid;
+  width: 100%;
+  color: var(--ore-color-foreground);
+  font-family: var(--ore-font-body);
+}
+
+.auth-email-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(var(--ore-textfield-unit) * 22);
+  margin: 0;
+  padding: calc(var(--ore-textfield-unit) * 3)
+    calc(var(--ore-textfield-unit) * 4) var(--ore-textfield-unit);
+  border: 0;
+  outline: 0;
+  color: var(--ore-textfield-input-foreground);
+  background:
+    linear-gradient(
+        var(--ore-textfield-shadow),
+        var(--ore-textfield-shadow)
+      )
+      center var(--ore-textfield-unit) /
+      calc(100% - var(--ore-textfield-unit) * 2)
+      calc(var(--ore-textfield-unit) * 2) no-repeat,
+    linear-gradient(
+        var(--ore-textfield-background),
+        var(--ore-textfield-background)
+      )
+      center calc(var(--ore-textfield-unit) * 3) /
+      calc(100% - var(--ore-textfield-unit) * 2)
+      calc(100% - var(--ore-textfield-unit) * 4) no-repeat,
+    var(--ore-textfield-border);
+  font: inherit;
+  font-size: calc(var(--ore-textfield-unit) * 8);
+  caret-color: var(--ore-textfield-caret);
+}
+
+.auth-email-field:focus-within .auth-email-input {
+  box-shadow: 0 0 0 var(--ore-textfield-unit) var(--ore-color-focus-ring);
+}
+
+.auth-suggestions-container {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 2px);
+  right: 0;
+  left: 0;
+}
+
+.auth-suggestions-list {
+  display: none;
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  padding: 4px;
+  border: 2px solid var(--ore-color-gray-60);
+  background: var(--ore-color-gray-90);
+  list-style: none;
+}
+
+.auth-suggestions-list.show {
+  display: grid;
+  gap: 2px;
+}
+
+.auth-suggestion {
+  padding: 9px 10px;
+  color: var(--ore-color-white);
+  cursor: pointer;
+}
+
+.auth-suggestion:hover,
+.auth-suggestion-highlighted {
+  color: var(--ore-color-gray-100);
+  background: var(--ore-color-primary-background);
+}
+
+.auth-options,
+.auth-form-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.auth-secondary-link {
+  margin: 0;
+  font-size: 14px;
+}
+
+.auth-options {
+  flex-wrap: wrap;
+  color: var(--ore-color-gray-20);
+  font-size: 14px;
+}
+
+.auth-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.auth-checkbox ore-checkbox {
+  flex: 0 0 auto;
+}
+
+.auth-link {
+  color: var(--ore-color-blue-10);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-link:hover {
+  color: var(--ore-color-white);
+}
+
+.auth-link:focus-visible {
+  outline: 2px solid var(--ore-color-focus-ring);
+  outline-offset: 3px;
+}
+
+ore-button.auth-submit {
+  width: 100%;
+  --ore-button-unit: 2px;
+}
+
+.auth-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 2px solid currentColor;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.auth-message-warning,
+.auth-message-danger {
+  color: var(--ore-color-red-10);
+  background: var(--ore-color-gray-90);
+}
+
+.auth-message-success {
+  color: var(--ore-color-green-20);
+  background: var(--ore-color-gray-90);
+}
+
+.auth-message-info {
+  color: var(--ore-color-blue-10);
+  background: var(--ore-color-gray-90);
+}
+
+.auth-captcha {
+  min-width: 0;
+  margin: 0;
+}
+
+.auth-captcha-manual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.auth-captcha-image {
+  display: block;
+  width: 120px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.auth-captcha-refresh {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+  padding: 0 8px;
+  border: 2px solid var(--ore-color-gray-50);
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-80);
+  cursor: pointer;
+}
+
+.auth-captcha-refresh:hover {
+  background: var(--ore-color-gray-70);
+}
+
+.auth-server-panel {
+  box-sizing: border-box;
+  padding: 24px;
+  border: 2px solid var(--ore-color-gray-60);
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-80);
+}
+
+.auth-server-panel form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-server-label {
+  display: grid;
+  gap: 8px;
+  color: var(--ore-color-gray-20);
+}
+
+.auth-server-panel input[type='email'] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 2px solid var(--ore-color-gray-50);
+  color: var(--ore-color-gray-100);
+  background: var(--ore-color-white);
+  font: inherit;
+}
+
+.auth-server-panel button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid var(--ore-color-border);
+  color: var(--ore-color-gray-100);
+  background: var(--ore-color-primary-background);
+  font: inherit;
+  cursor: pointer;
+}
+
+.auth-server-panel button:hover {
+  background: var(--ore-color-primary-background-hover);
+}
+
+.auth-server-message {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.auth-login-register {
+  margin: 0;
+  color: var(--ore-color-gray-30);
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  body.auth-page {
+    padding: 20px 12px 16px;
+  }
+
+  .auth-card-body {
+    --auth-body-padding: 16px;
+
+    padding: var(--auth-body-padding);
+  }
+
+  .auth-card-actions {
+    padding: 14px 16px 16px;
+  }
+
+  .auth-card-title {
+    font-size: 22px;
+  }
 }

@@ -6,6 +6,7 @@ import ViewerSkeleton from '@/components/ViewerSkeleton'
 const Viewer = React.lazy(() => import('@/components/Viewer'))
 
 interface Props {
+  children?: React.ReactNode
   skin?: string
   cape?: string
   isAlex: boolean

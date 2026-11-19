@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import ReactDOM from 'react-dom'
+import { render, unmountComponentAtNode } from './reactRoot'
 import styled from '@emotion/styled'
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
@@ -132,9 +132,9 @@ export function launch() {
   document.body.appendChild(container)
 
   const handleClose = () => {
-    ReactDOM.unmountComponentAtNode(container)
+    unmountComponentAtNode(container)
     container.remove()
   }
 
-  ReactDOM.render(<TerminalWindow onClose={handleClose} />, container)
+  render(<TerminalWindow onClose={handleClose} />, container)
 }

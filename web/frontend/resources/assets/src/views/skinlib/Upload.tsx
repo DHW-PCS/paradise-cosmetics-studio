@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
-import { hot } from 'react-hot-loader/root'
 import { t } from '@/scripts/i18n'
 import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
@@ -256,4 +255,4 @@ const Upload: React.FC = () => {
   )
 }
 
-export default hot(Upload)
+export default Upload

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { hot } from 'react-hot-loader/root'
 import { useImmer } from 'use-immer'
 import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useIsLargeScreen from '@/scripts/hooks/useIsLargeScreen'
@@ -375,4 +374,4 @@ const UsersManagement: React.FC = () => {
   )
 }
 
-export default hot(UsersManagement)
+export default UsersManagement

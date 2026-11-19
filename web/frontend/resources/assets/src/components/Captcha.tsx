@@ -3,7 +3,7 @@ import * as React from 'react'
 import Reaptcha from 'reaptcha'
 import { emit, on } from '@/scripts/event'
 import { t } from '@/scripts/i18n'
-import * as cssUtils from '@/styles/utils'
+import { Textfield } from '@oreui-web/react/textfield'
 
 const eventId = Symbol()
 
@@ -52,8 +52,10 @@ class Captcha extends React.Component<Record<string, unknown>, State> {
     }
   }
 
-  handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ value: event.target.value })
+  handleValueChange = (event: Event) => {
+    this.setState({
+      value: (event.currentTarget as HTMLElement & { value: string }).value,
+    })
   }
 
   handleVerify = (value: string) => {
@@ -67,7 +69,7 @@ class Captcha extends React.Component<Record<string, unknown>, State> {
 
   render() {
     return this.state.sitekey ? (
-      <div className="mb-2">
+      <div className="auth-captcha">
         <Reaptcha
           ref={this.ref}
           sitekey={this.state.sitekey}
@@ -76,25 +78,30 @@ class Captcha extends React.Component<Record<string, unknown>, State> {
         />
       </div>
     ) : (
-      <div className="d-flex">
-        <div className="form-group mb-3 mr-2">
-          <input
-            type="text"
-            className="form-control"
-            placeholder={t('auth.captcha')}
-            required
-            value={this.state.value}
-            onChange={this.handleValueChange}
-          />
-        </div>
-        <img
-          src={`${pcs.base_url}/auth/captcha?v=${this.state.time}`}
-          alt={t('auth.captcha')}
-          css={cssUtils.pointerCursor}
-          height={34}
-          title={t('auth.change-captcha')}
-          onClick={this.handleRefresh}
+      <div className="auth-captcha auth-captcha-manual">
+        <Textfield
+          {...({
+            className: 'auth-field',
+            label: t('auth.captcha'),
+            required: true,
+            type: 'text',
+            value: this.state.value,
+          } as any)}
+          onInput={this.handleValueChange}
         />
+        <button
+          className="auth-captcha-refresh"
+          type="button"
+          title={t('auth.change-captcha')}
+          aria-label={t('auth.change-captcha')}
+          onClick={this.handleRefresh}
+        >
+          <img
+            src={`${pcs.base_url}/auth/captcha?v=${this.state.time}`}
+            alt=""
+            className="auth-captcha-image"
+          />
+        </button>
       </div>
     )
   }

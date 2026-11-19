@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { hot } from 'react-hot-loader/root'
 import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
@@ -7,8 +6,13 @@ import * as fetch from '@/scripts/net'
 import { showModal } from '@/scripts/notify'
 import urls from '@/scripts/urls'
 import Alert from '@/components/Alert'
+import AuthCard from '@/components/AuthCard'
+import AuthField from '@/components/AuthField'
 import Captcha from '@/components/Captcha'
 import EmailSuggestion from '@/components/EmailSuggestion'
+import { Button } from '@oreui-web/react/button'
+import { Checkbox } from '@oreui-web/react/checkbox'
+import { Container } from '@oreui-web/react/container'
 
 type SuccessfulResponse = {
   code: 0
@@ -45,12 +49,10 @@ const Login: React.FC = () => {
     setHasTooManyFails(pcs.extra.tooManyFails as boolean)
   }, [])
 
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value)
-  }
-
-  const handleRememberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRemember(event.target.checked)
+  const handleRememberChange = (event: Event) => {
+    setRemember(
+      (event.currentTarget as HTMLElement & { checked: boolean }).checked,
+    )
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -93,7 +95,23 @@ const Login: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <AuthCard
+      title={t('auth.login')}
+      onSubmit={handleSubmit}
+      actions={
+        <Button
+          {...({
+            className: 'auth-submit',
+            type: 'submit',
+            color: 'primary',
+            loading: isPending,
+            disabled: isPending,
+          } as any)}
+        >
+          {isPending ? t('auth.loggingIn') : t('auth.login')}
+        </Button>
+      }
+    >
       <EmailSuggestion
         type="text"
         placeholder={t('auth.identification')}
@@ -102,56 +120,32 @@ const Login: React.FC = () => {
         value={identification}
         onChange={setIdentification}
       />
-      <div className="input-group mb-3">
-        <input
-          type="password"
-          className="form-control"
-          placeholder={t('auth.password')}
-          autoComplete="current-password"
-          value={password}
-          onChange={handlePasswordChange}
-          required
-        />
-        <div className="input-group-append">
-          <div className="input-group-text">
-            <i className="fas fa-lock"></i>
-          </div>
-        </div>
-      </div>
-
+      <AuthField
+        type="password"
+        label={t('auth.password')}
+        autoComplete="current-password"
+        value={password}
+        onChange={setPassword}
+        required
+      />
       {hasTooManyFails && <Captcha ref={ref} />}
-
       <Alert type="warning">{warningMessage}</Alert>
-
-      <div className="d-flex justify-content-between mb-3">
-        <label>
-          <input
-            type="checkbox"
-            className="mr-1"
-            checked={remember}
-            onChange={handleRememberChange}
-          />
-          {t('auth.keep')}
-        </label>
-        <a href={`${pcs.base_url}/auth/forgot`}>{t('auth.forgot-link')}</a>
-      </div>
-
-      <button
-        className="btn btn-primary btn-block"
-        type="submit"
-        disabled={isPending}
-      >
-        {isPending ? (
-          <>
-            <i className="fas fa-spinner fa-spin mr-1"></i>
-            {t('auth.loggingIn')}
-          </>
-        ) : (
-          t('auth.login')
-        )}
-      </button>
-    </form>
+      <Container {...({ className: 'auth-option-container', variant: 'light' } as any)}>
+        <div className="auth-options">
+          <label className="auth-checkbox">
+            <Checkbox
+              {...({ checked: remember } as any)}
+              onChange={handleRememberChange}
+            />
+            <span>{t('auth.keep')}</span>
+          </label>
+          <a className="auth-link" href={`${pcs.base_url}/auth/forgot`}>
+            {t('auth.forgot-link')}
+          </a>
+        </div>
+      </Container>
+    </AuthCard>
   )
 }
 
-export default hot(Login)
+export default Login

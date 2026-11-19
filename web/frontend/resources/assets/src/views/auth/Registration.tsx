@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react'
-import { hot } from 'react-hot-loader/root'
 import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
@@ -7,8 +6,11 @@ import * as fetch from '@/scripts/net'
 import { toast } from '@/scripts/notify'
 import urls from '@/scripts/urls'
 import Alert from '@/components/Alert'
+import AuthCard from '@/components/AuthCard'
+import AuthField from '@/components/AuthField'
 import Captcha from '@/components/Captcha'
 import EmailSuggestion from '@/components/EmailSuggestion'
+import { Button } from '@oreui-web/react/button'
 
 // The invitation-codes field rides only the register request, unlike the
 // original Svelte bootstrap that mutated every fetch payload globally.
@@ -27,30 +29,9 @@ const Registration: React.FC = () => {
   const [warningMessage, setWarningMessage] = useState('')
   const requirePlayer = usePCSExtra<boolean>('player')
   const invitation = usePCSExtra<InvitationField | null>('invitation', null)
-  const confirmationRef = useRef<HTMLInputElement | null>(null)
   const captchaRef = useRef<Captcha | null>(null)
 
   useEmitMounted()
-
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value)
-  }
-
-  const handleConfirmationChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setConfirmation(event.target.value)
-  }
-
-  const handleNickNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNickName(event.target.value)
-  }
-
-  const handlePlayerNameChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setPlayerName(event.target.value)
-  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -58,7 +39,7 @@ const Registration: React.FC = () => {
 
     if (password !== confirmation) {
       setWarningMessage(t('auth.invalidConfirmPwd'))
-      confirmationRef.current!.focus()
+      document.querySelector<HTMLInputElement>('.auth-confirmation input')?.focus()
       return
     }
 
@@ -84,7 +65,23 @@ const Registration: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <AuthCard
+      title={t('auth.register')}
+      onSubmit={handleSubmit}
+      actions={
+        <Button
+          {...({
+            className: 'auth-submit',
+            type: 'submit',
+            color: 'primary',
+            loading: isPending,
+            disabled: isPending,
+          } as any)}
+        >
+          {isPending ? t('auth.registering') : t('auth.register')}
+        </Button>
+      }
+    >
       <EmailSuggestion
         type="email"
         required
@@ -93,112 +90,62 @@ const Registration: React.FC = () => {
         value={email}
         onChange={setEmail}
       />
-      <div className="input-group mb-3">
-        <input
-          type="password"
-          required
-          minLength={8}
-          maxLength={32}
-          className="form-control"
-          placeholder={t('auth.password')}
-          autoComplete="new-password"
-          value={password}
-          onChange={handlePasswordChange}
-        />
-        <div className="input-group-append">
-          <div className="input-group-text">
-            <i className="fas fa-lock"></i>
-          </div>
-        </div>
-      </div>
-      <div className="input-group mb-3">
-        <input
-          type="password"
-          required
-          minLength={8}
-          maxLength={32}
-          className="form-control"
-          placeholder={t('auth.repeat-pwd')}
-          autoComplete="new-password"
-          ref={confirmationRef}
-          value={confirmation}
-          onChange={handleConfirmationChange}
-        />
-        <div className="input-group-append">
-          <div className="input-group-text">
-            <i className="fas fa-sign-in-alt"></i>
-          </div>
-        </div>
-      </div>
+      <AuthField
+        type="password"
+        label={t('auth.password')}
+        autoComplete="new-password"
+        minLength={8}
+        maxLength={32}
+        required
+        value={password}
+        onChange={setPassword}
+      />
+      <AuthField
+        className="auth-confirmation"
+        type="password"
+        label={t('auth.repeat-pwd')}
+        autoComplete="new-password"
+        minLength={8}
+        maxLength={32}
+        required
+        value={confirmation}
+        onChange={setConfirmation}
+      />
       {requirePlayer ? (
-        <div className="input-group mb-3" title={t('auth.player-name-intro')}>
-          <input
-            type="text"
-            required
-            className="form-control"
-            placeholder={t('auth.player-name')}
-            value={playerName}
-            onChange={handlePlayerNameChange}
-          />
-          <div className="input-group-append">
-            <div className="input-group-text">
-              <i className="fas fa-gamepad"></i>
-            </div>
-          </div>
-        </div>
+        <AuthField
+          type="text"
+          label={t('auth.player-name')}
+          required
+          value={playerName}
+          onChange={setPlayerName}
+        />
       ) : (
-        <div className="input-group mb-3" title={t('auth.nickname-intro')}>
-          <input
-            type="text"
-            required
-            className="form-control"
-            placeholder={t('auth.nickname')}
-            value={nickName}
-            onChange={handleNickNameChange}
-          />
-          <div className="input-group-append">
-            <div className="input-group-text">
-              <i className="fas fa-gamepad"></i>
-            </div>
-          </div>
-        </div>
+        <AuthField
+          type="text"
+          label={t('auth.nickname')}
+          required
+          value={nickName}
+          onChange={setNickName}
+        />
       )}
-      {invitation ? (
-        <div className="input-group mb-3">
-          <input
-            type="text"
-            required
-            className="form-control"
-            placeholder={invitation.label}
-            value={invitationCode}
-            onChange={(event) => setInvitationCode(event.target.value)}
-          />
-          <div className="input-group-append">
-            <div className="input-group-text">
-              <i className="fas fa-receipt"></i>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {invitation && (
+        <AuthField
+          type="text"
+          label={invitation.label}
+          required
+          value={invitationCode}
+          onChange={setInvitationCode}
+        />
+      )}
       <Captcha ref={captchaRef} />
-
       <Alert type="warning">{warningMessage}</Alert>
-
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <a href={`${pcs.base_url}/auth/login`}>{t('auth.login-link')}</a>
-        <button className="btn btn-primary" type="submit" disabled={isPending}>
-          {isPending ? (
-            <>
-              <i className="fas fa-spinner fa-spin mr-1"></i>
-              {t('auth.registering')}
-            </>
-          ) : (
-            t('auth.register')
-          )}
-        </button>
-      </div>
-    </form>
+      <p className="auth-secondary-link">
+        <a className="auth-link" href={`${pcs.base_url}/auth/login`}>
+          {t('auth.login-link')}
+        </a>
+      </p>
+    </AuthCard>
   )
 }
 
-export default hot(Registration)
+export default Registration

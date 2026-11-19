@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
-import { hot } from 'react-hot-loader/root'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { toast } from '@/scripts/notify'
 import urls from '@/scripts/urls'
 import Alert from '@/components/Alert'
+import AuthCard from '@/components/AuthCard'
+import AuthField from '@/components/AuthField'
+import { Button } from '@oreui-web/react/button'
 
 const Reset: React.FC = () => {
   const [password, setPassword] = useState('')
@@ -14,16 +16,6 @@ const Reset: React.FC = () => {
   const [isPending, setIsPending] = useState(false)
 
   useEmitMounted()
-
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value)
-  }
-
-  const handleConfirmationChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setConfirmation(event.target.value)
-  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -50,62 +42,52 @@ const Reset: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="input-group mb-3">
-        <input
-          type="password"
-          required
-          autoFocus
-          minLength={8}
-          maxLength={32}
-          className="form-control"
-          placeholder={t('auth.password')}
-          value={password}
-          onChange={handlePasswordChange}
-        />
-        <div className="input-group-append">
-          <div className="input-group-text">
-            <i className="fas fa-lock"></i>
-          </div>
-        </div>
-      </div>
-      <div className="input-group mb-3">
-        <input
-          type="password"
-          required
-          minLength={8}
-          maxLength={32}
-          className="form-control"
-          placeholder={t('auth.repeat-pwd')}
-          autoComplete="new-password"
-          value={confirmation}
-          onChange={handleConfirmationChange}
-        />
-        <div className="input-group-append">
-          <div className="input-group-text">
-            <i className="fas fa-sign-in-alt"></i>
-          </div>
-        </div>
-      </div>
-
+    <AuthCard
+      title={t('auth.reset')}
+      onSubmit={handleSubmit}
+      actions={
+        <Button
+          {...({
+            className: 'auth-submit',
+            type: 'submit',
+            color: 'primary',
+            loading: isPending,
+            disabled: isPending,
+          } as any)}
+        >
+          {isPending ? t('auth.resetting') : t('auth.reset')}
+        </Button>
+      }
+    >
+      <AuthField
+        type="password"
+        label={t('auth.password')}
+        autoComplete="new-password"
+        autoFocus
+        minLength={8}
+        maxLength={32}
+        required
+        value={password}
+        onChange={setPassword}
+      />
+      <AuthField
+        type="password"
+        label={t('auth.repeat-pwd')}
+        autoComplete="new-password"
+        minLength={8}
+        maxLength={32}
+        required
+        value={confirmation}
+        onChange={setConfirmation}
+      />
       <Alert type="warning">{warningMessage}</Alert>
-
-      <button
-        className="btn btn-primary float-right"
-        type="submit"
-        disabled={isPending}
-      >
-        {isPending ? (
-          <>
-            <i className="fas fa-spinner fa-spin mr-1"></i>
-            {t('auth.resetting')}
-          </>
-        ) : (
-          t('auth.reset')
-        )}
-      </button>
-    </form>
+      <p className="auth-secondary-link">
+        <a className="auth-link" href={`${pcs.base_url}/auth/login`}>
+          {t('auth.forgot.login-link')}
+        </a>
+      </p>
+    </AuthCard>
   )
 }
 
-export default hot(Reset)
+export default Reset

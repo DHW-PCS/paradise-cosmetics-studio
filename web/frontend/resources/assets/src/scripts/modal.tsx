@@ -1,5 +1,5 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { render, unmountComponentAtNode } from './reactRoot'
 import Modal, { ModalOptions, ModalResult } from '../components/Modal'
 
 export function showModal(options: ModalOptions = {}): Promise<ModalResult> {
@@ -8,11 +8,11 @@ export function showModal(options: ModalOptions = {}): Promise<ModalResult> {
     document.body.appendChild(container)
 
     const handleClose = () => {
-      ReactDOM.unmountComponentAtNode(container)
+      unmountComponentAtNode(container)
       document.body.removeChild(container)
     }
 
-    ReactDOM.render(
+    render(
       <Modal
         {...options}
         show

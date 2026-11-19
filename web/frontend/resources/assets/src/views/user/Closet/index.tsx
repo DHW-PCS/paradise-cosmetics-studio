@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { hot } from 'react-hot-loader/root'
 import debounce from 'lodash.debounce'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
@@ -285,4 +284,4 @@ const Closet: React.FC = () => {
   )
 }
 
-export default hot(Closet)
+export default Closet

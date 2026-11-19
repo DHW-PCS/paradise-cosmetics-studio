@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { hot } from 'react-hot-loader/root'
 import { useImmer } from 'use-immer'
 import useIsLargeScreen from '@/scripts/hooks/useIsLargeScreen'
 import { t } from '@/scripts/i18n'
@@ -276,4 +275,4 @@ const PlayersManagement: React.FC = () => {
   )
 }
 
-export default hot(PlayersManagement)
+export default PlayersManagement

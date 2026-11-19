@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { hot } from 'react-hot-loader/root'
 import { enableMapSet } from 'immer'
 import { useImmer } from 'use-immer'
 import { t } from '@/scripts/i18n'
@@ -164,4 +163,4 @@ const PluginsMarket: React.FC = () => {
   )
 }
 
-export default hot(PluginsMarket)
+export default PluginsMarket

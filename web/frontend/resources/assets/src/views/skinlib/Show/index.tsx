@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { hot } from 'react-hot-loader/root'
 import Skeleton from 'react-loading-skeleton'
 import usePCSExtra from '@/scripts/hooks/usePCSExtra'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
@@ -484,4 +483,4 @@ const Show: React.FC = () => {
   )
 }
 
-export default hot(Show)
+export default Show

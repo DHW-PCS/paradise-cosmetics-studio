@@ -3,8 +3,13 @@ import * as ReactDOM from 'react-dom'
 import $ from 'jquery'
 import './scripts/app'
 import routes from './scripts/route'
+import { render, unmountComponentAtNode } from './scripts/reactRoot'
 
-Object.assign(window, { React, ReactDOM, $ })
+const legacyReactDOM = Object.assign({}, ReactDOM, {
+  render,
+  unmountComponentAtNode,
+})
+Object.assign(window, { React, ReactDOM: legacyReactDOM, $ })
 
 if (pcs.route.startsWith('admin')) {
   const entry = document.querySelector<HTMLAnchorElement>('#launch-cli')
@@ -34,6 +39,8 @@ if (route) {
     )
     const c =
       typeof route.el === 'string' ? document.querySelector(route.el) : route.el
-    ReactDOM.render(<Root />, c)
+    if (c) {
+      render(<Root />, c)
+    }
   }
 }

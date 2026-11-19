@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react'
-import { hot } from 'react-hot-loader/root'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import urls from '@/scripts/urls'
 import Alert from '@/components/Alert'
+import AuthCard from '@/components/AuthCard'
 import Captcha from '@/components/Captcha'
 import EmailSuggestion from '@/components/EmailSuggestion'
+import { Button } from '@oreui-web/react/button'
 
 const Forgot: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -37,7 +38,23 @@ const Forgot: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <AuthCard
+      title={t('auth.forgot-link')}
+      onSubmit={handleSubmit}
+      actions={
+        <Button
+          {...({
+            className: 'auth-submit',
+            type: 'submit',
+            color: 'primary',
+            loading: isSending,
+            disabled: isSending,
+          } as any)}
+        >
+          {isSending ? t('auth.sending') : t('auth.send')}
+        </Button>
+      }
+    >
       <EmailSuggestion
         type="email"
         placeholder={t('auth.email')}
@@ -46,29 +63,16 @@ const Forgot: React.FC = () => {
         value={email}
         onChange={setEmail}
       />
-
       <Captcha ref={ref} />
-
       <Alert type="success">{successMessage}</Alert>
       <Alert type="warning">{warningMessage}</Alert>
-
-      <div className="d-flex justify-content-between align-items-center">
-        <a href={`${pcs.base_url}/auth/login`}>
+      <p className="auth-secondary-link">
+        <a className="auth-link" href={`${pcs.base_url}/auth/login`}>
           {t('auth.forgot.login-link')}
         </a>
-        <button className="btn btn-primary" type="submit" disabled={isSending}>
-          {isSending ? (
-            <>
-              <i className="fas fa-spinner fa-spin mr-1" />
-              {t('auth.sending')}
-            </>
-          ) : (
-            t('auth.send')
-          )}
-        </button>
-      </div>
-    </form>
+      </p>
+    </AuthCard>
   )
 }
 
-export default hot(Forgot)
+export default Forgot

@@ -8,6 +8,7 @@ import Viewer2d from './Viewer2d'
 const Viewer3d = React.lazy(() => import('@/components/Viewer'))
 
 interface Props {
+  children?: React.ReactNode
   skin: string
   cape: string
   isAlex: boolean
