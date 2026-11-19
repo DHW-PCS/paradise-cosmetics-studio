@@ -1,37 +1,34 @@
-# Third-party material
+# Third-party notices
 
-The frontend sources, locale files and bundled images under `web/frontend/resources`, the original dependency lockfile, the adapted Go templates, and the legacy migration fixture schema and Steve PNG under `tools/legacy-fixture/fixture` originate from Blessing Skin Server 6.0.2, copyright 2016-present The Blessing Skin Team, under the MIT License. The complete original notice is preserved in [web/frontend/LICENSE](web/frontend/LICENSE).
+## Blessing Skin Server and plugins
 
-The legacy fixture also includes table definitions from the [Blessing Skin plugins](https://github.com/bs-community/blessing-skin-plugins), under the same MIT copyright and notice.
+The frontend sources, locale files and bundled images under `web/frontend/resources`, the original dependency lockfile, the adapted Go templates, and the legacy fixture schema and Steve PNG come from [Blessing Skin Server 6.0.2](https://github.com/bs-community/blessing-skin-server). The fixture also includes table definitions from [Blessing Skin plugins](https://github.com/bs-community/blessing-skin-plugins).
 
-The original project is [bs-community/blessing-skin-server](https://github.com/bs-community/blessing-skin-server). Go module dependencies and their pinned versions are recorded in `go.mod` and `go.sum`; frontend dependencies remain pinned by `web/frontend/yarn.lock`.
+These materials are copyright 2016-present The Blessing Skin Team and use the MIT License. See [web/frontend/LICENSE](web/frontend/LICENSE) for the complete original notice.
 
-## Native PCRE2 (`internal/pcre`)
+Go module versions and checksums are in [go.mod](go.mod) and [go.sum](go.sum). Frontend dependency versions are pinned in [web/frontend/yarn.lock](web/frontend/yarn.lock).
 
-The bundled PCRE2 10.39 maintenance sources are fixed at upstream commit
-`07eb542ff0b19bebc47221ced817362b652f8098`, including upstream backports. The
-library and its SLJIT compiler are statically linked with CGO. Copyright
-1997–2021 University of Cambridge, 2010–2021 Zoltan Herczeg (PCRE2 JIT), and
-2009–2021 Zoltan Herczeg (SLJIT). The complete BSD license and binary
-redistribution terms are preserved in [internal/pcre/LICENCE](internal/pcre/LICENCE).
-`make build` copies this license into `dist/licenses/PCRE2.txt` for distribution.
-Source provenance and build configuration are in [internal/pcre/README.md](internal/pcre/README.md).
+## PCRE2 and SLJIT
+
+PCS statically links the bundled PCRE2 10.39 maintenance library and its SLJIT compiler using CGO. Copyright 1997 to 2021 University of Cambridge, 2010 to 2021 Zoltan Herczeg (PCRE2 JIT), and 2009 to 2021 Zoltan Herczeg (SLJIT).
+
+The [BSD license](internal/pcre/LICENCE) includes the binary redistribution terms. `make build` copies it to `dist/licenses/PCRE2.txt`. See the [PCRE2 maintenance notes](internal/pcre/README.md) for the pinned revision and source archive.
+
+## Minecraft texture renderer
+
+[`internal/renderer`](internal/renderer) ports the `blessing/texture-renderer` PHP package from Blessing Skin Server 6.0.2. The PHP implementation is copyright 2020-present The Blessing Skin Team and uses the [MIT License](internal/renderer/LICENSE-MIT). Its underlying PHP Minecraft Skin Renderer algorithm is copyright 2012 Pierre Gros and uses the [BSD license](internal/renderer/LICENSE-BSD).
+
+The Go port keeps the upstream UV mapping, projection, visible-face selection, draw order and GD-compatible rasterisation and antialiasing. It uses the Go standard library.
 
 ## CAPTCHA fonts
 
-The CAPTCHA renderer embeds the six `captcha0.ttf`–`captcha5.ttf` faces that ship
-with gregwar/captcha v1.1.9, copied unmodified from the frozen 6.0.2 vendor tree
-into `internal/captcha/fonts/`. They are distributed under the MIT License,
-copyright 2012–2017 Grégoire Passault; the complete notice is preserved in
-[internal/captcha/fonts/GREGWRAR-LICENSE.txt](internal/captcha/fonts/GREGWRAR-LICENSE.txt).
+### gregwar/captcha
 
-The renderer also uses the font stack from golang.org/x/image v0.47.0.
+The renderer embeds six font files (`captcha0.ttf` through `captcha5.ttf`) from gregwar/captcha v1.1.9. The copies in `internal/captcha/fonts/` are unchanged from the Blessing Skin Server 6.0.2 vendor tree. Copyright 2012 to 2017 Grégoire Passault. See the [MIT notice](internal/captcha/fonts/GREGWRAR-LICENSE.txt).
 
-These fonts were created by the Bigelow & Holmes foundry specifically for the
-Go project. See https://blog.golang.org/go-fonts for details.
+### Go fonts
 
-They are licensed under the same open source license as the rest of the Go
-project's software:
+The renderer also uses the Go fonts from `golang.org/x/image` v0.47.0. Bigelow & Holmes created these fonts for the Go project. See [Go fonts](https://blog.golang.org/go-fonts).
 
 Copyright (c) 2016 Bigelow & Holmes Inc.. All rights reserved.
 
@@ -63,17 +60,3 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-## Minecraft texture renderer (`internal/renderer`)
-
-`internal/renderer` is a Go port of the `blessing/texture-renderer` PHP package
-bundled with Blessing Skin Server 6.0.2.
-The PHP implementation is MIT licensed, copyright 2020-present The Blessing Skin
-Team; the Minecraft skin rendering algorithm it is based on (PHP Minecraft Skin
-Renderer) is BSD licensed, copyright 2012, Pierre Gros. The complete license
-texts are preserved in `internal/renderer/LICENSE-MIT` and
-`internal/renderer/LICENSE-BSD`.
-
-The Go port keeps the upstream UV mapping, projection, visible-face selection,
-draw order and GD-compatible rasterisation/antialiasing. It uses only the Go
-standard library (no CGO, no third-party packages).
