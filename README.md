@@ -55,6 +55,10 @@ dist/paradise-cosmetics-studio auth-reset -env /absolute/path/site.env
 
 该命令原子清理当前 Go 临时认证状态，保留账户、密码、UID version、client、UUID、业务数据、文件和 outbox。完整恢复仍需核对业务/文件/任务恢复点。它不能替代业务数据修复，也不执行 PHP 回退。
 
+## 开发与测试
+
+使用[仓库附带的旧站迁移 fixture](tools/legacy-fixture/README.md)建立本地测试站。它包含 6.0.2 业务 schema、合成账户与材质、四模块数据和恢复指引；每个副本在本机生成独立的测试凭据。
+
 日常 checks 使用 `make check`；设置 M2_TEST_DSN 后，数据库 checks 只接受 loopback TCP，创建/清理独立的合成数据库。未设置时会跳过 DB checks，不能把 skip 当作通过。
 
 ## 更名后的升级
