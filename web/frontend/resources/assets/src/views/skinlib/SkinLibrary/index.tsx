@@ -6,6 +6,8 @@ import * as fetch from '@/scripts/net'
 import { toast } from '@/scripts/notify'
 import { Paginator, TextureType } from '@/scripts/types'
 import urls from '@/scripts/urls'
+import { Button as OreButton } from '@oreui-web/react/button'
+import { Textfield } from '@oreui-web/react/textfield'
 import Loading from '@/components/Loading'
 import Pagination from '@/components/Pagination'
 import addClosetItem from '../Show/addClosetItem'
@@ -199,22 +201,24 @@ const SkinLibrary: React.FC = () => {
                       onChange={handleFilterChange}
                     />
                   </div>
-                  <input
-                    type="text"
-                    inputMode="search"
-                    className="form-control"
-                    value={name}
-                    placeholder={t('vendor.datatable.search')}
-                    onChange={handleNameChange}
+                  <Textfield
+                    {...({
+                      type: 'text',
+                      inputMode: 'search',
+                      value: name,
+                      placeholder: t('vendor.datatable.search'),
+                      onInput: handleNameChange,
+                    } as any)}
                   />
                   <div className="input-group-append">
-                    <button
-                      className="btn btn-primary px-3"
-                      type="submit"
-                      title={t('vendor.datatable.search')}
+                    <OreButton
+                      {...({
+                        type: 'submit',
+                        title: t('vendor.datatable.search'),
+                      } as any)}
                     >
                       <i className="fas fa-search"></i>
-                    </button>
+                    </OreButton>
                   </div>
                 </div>
               </form>
@@ -267,7 +271,7 @@ const SkinLibrary: React.FC = () => {
             )}
           </div>
           <div className="card-footer">
-            <div className="d-flex justify-content-center">
+            <div className="d-flex justify-content-end">
               <Pagination
                 page={page}
                 totalPages={totalPages}

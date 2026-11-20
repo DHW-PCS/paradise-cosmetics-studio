@@ -4,6 +4,8 @@ import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { Paginator, Texture, TextureType } from '@/scripts/types'
 import { toast, showModal } from '@/scripts/notify'
+import { Button } from '@oreui-web/react/button'
+import { Textfield } from '@oreui-web/react/textfield'
 import Loading from '@/components/Loading'
 import Pagination from '@/components/Pagination'
 import ViewerSkeleton from '@/components/ViewerSkeleton'
@@ -98,17 +100,18 @@ const ReportsManagement: React.FC = () => {
         <div className="card">
           <div className="card-header">
             <form className="input-group" onSubmit={handleSubmitQuery}>
-              <input
-                type="text"
-                className="form-control"
-                title={t('vendor.datatable.search')}
-                value={query}
-                onChange={handleQueryChange}
+              <Textfield
+                {...({
+                  type: 'text',
+                  title: t('vendor.datatable.search'),
+                  value: query,
+                  onInput: handleQueryChange,
+                } as any)}
               />
               <div className="input-group-append">
-                <button className="btn btn-primary" type="submit">
+                <Button {...({ type: 'submit' } as any)}>
                   {t('vendor.datatable.search')}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

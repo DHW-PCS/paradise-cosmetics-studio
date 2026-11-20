@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { Button } from '@oreui-web/react/button'
 import { Navbar } from '@oreui-web/react/navbar'
+import 'oreui-web/dropdown'
 import { getExtraData } from './extra'
 
 export function scrollHander() {
@@ -31,6 +32,17 @@ if (navbar) {
     />,
   )
 }
+
+document.addEventListener('click', async (event) => {
+  if (!(event.target instanceof Element)) {
+    return
+  }
+  if (!event.target.closest('#home-logout-button')) {
+    return
+  }
+  const { logout } = await import('./logout')
+  await logout()
+})
 
 document.querySelectorAll<HTMLElement>('[data-oreui-button]').forEach((mount) => {
   const { href, label } = mount.dataset

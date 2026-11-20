@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import type { User } from '@/scripts/types'
 import ButtonEdit from '@/components/ButtonEdit'
@@ -92,20 +93,25 @@ const Row: React.FC<Props> = (props) => {
       </td>
       <td>{user.register_at}</td>
       <td>
-        <button
-          className="btn btn-default mr-2"
-          disabled={!canModify}
-          onClick={props.onPasswordChange}
+        <Button
+          {...({
+            color: 'secondary',
+            className: 'mr-2',
+            disabled: !canModify,
+            onClick: props.onPasswordChange,
+          } as any)}
         >
           {t('admin.changePassword')}
-        </button>
-        <button
-          className="btn btn-danger"
-          disabled={!canModify || user.uid === currentUser.uid}
-          onClick={props.onDelete}
+        </Button>
+        <Button
+          {...({
+            color: 'destructive',
+            disabled: !canModify || user.uid === currentUser.uid,
+            onClick: props.onDelete,
+          } as any)}
         >
           {t('admin.deleteUser')}
-        </button>
+        </Button>
       </td>
     </tr>
   )

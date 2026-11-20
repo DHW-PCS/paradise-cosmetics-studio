@@ -7,6 +7,9 @@ import * as fetch from '@/scripts/net'
 import { User, UserPermission, Paginator } from '@/scripts/types'
 import { toast, showModal } from '@/scripts/notify'
 import urls from '@/scripts/urls'
+import { Button } from '@oreui-web/react/button'
+import { Table } from '@oreui-web/react/table'
+import { Textfield } from '@oreui-web/react/textfield'
 import type { Props as ModalInputProps } from '@/components/ModalInput'
 import Pagination from '@/components/Pagination'
 import Header from './Header'
@@ -265,18 +268,19 @@ const UsersManagement: React.FC = () => {
     <div className="card">
       <Header className="card-header">
         <form className="input-group" onSubmit={handleSubmitQuery}>
-          <input
-            type="text"
-            inputMode="search"
-            className="form-control"
-            title={t('vendor.datatable.search')}
-            value={query}
-            onChange={handleQueryChange}
+          <Textfield
+            {...({
+              type: 'text',
+              inputMode: 'search',
+              title: t('vendor.datatable.search'),
+              value: query,
+              onInput: handleQueryChange,
+            } as any)}
           />
           <div className="input-group-append">
-            <button className="btn btn-primary" type="submit">
+            <Button {...({ type: 'submit' } as any)}>
               {t('vendor.datatable.search')}
-            </button>
+            </Button>
           </div>
         </form>
         <div className="btn-group btn-group-toggle">
@@ -309,8 +313,9 @@ const UsersManagement: React.FC = () => {
       {users.length === 0 && !isLoading ? (
         <div className="card-body text-center">{t('general.noResult')}</div>
       ) : isTableMode ? (
-        <div className="card-body table-responsive p-0">
-          <table className={`table ${isLoading ? '' : 'table-striped'}`}>
+        <div className="card-body p-0">
+          <Table {...({ variant: isLoading ? 'plain' : 'striped' } as any)}>
+            <table>
             <thead>
               <tr>
                 <th>UID</th>
@@ -343,7 +348,8 @@ const UsersManagement: React.FC = () => {
                     />
                   ))}
             </tbody>
-          </table>
+            </table>
+          </Table>
         </div>
       ) : (
         <div className="card-body d-flex flex-wrap">

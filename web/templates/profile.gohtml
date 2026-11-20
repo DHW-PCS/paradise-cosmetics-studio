@@ -9,9 +9,9 @@
     {{index .TextHTML "user.profile.avatar.notice"}}
   </div>
   <div class="card-footer">
-    <button class="btn btn-primary" id="reset-avatar">
+    <ore-button id="reset-avatar" type="button">
       {{index .Texts "user.profile.avatar.reset"}}
-    </button>
+    </ore-button>
   </div>
 </div>
 
@@ -24,26 +24,26 @@
   <div class="card-body">
     <div class="form-group">
       <label>{{index .Texts "user.profile.password.old"}}</label>
-      <input type="password" class="form-control" name="oldPassword"
-        required autocomplete="current-password">
+      <ore-textfield type="password" name="oldPassword"
+        required autocomplete="current-password"></ore-textfield>
     </div>
 
     <div class="form-group">
       <label>{{index .Texts "user.profile.password.new"}}</label>
-      <input type="password" class="form-control" name="newPassword" required
-        minlength="8" maxlength="32" autocomplete="new-password">
+      <ore-textfield type="password" name="newPassword" required
+        minlength="8" maxlength="32" autocomplete="new-password"></ore-textfield>
     </div>
 
     <div class="form-group">
       <label>{{index .Texts "user.profile.password.confirm"}}</label>
-      <input type="password" class="form-control" name="confirm" required
-        minlength="8" maxlength="32" autocomplete="new-password">
+      <ore-textfield type="password" name="confirm" required
+        minlength="8" maxlength="32" autocomplete="new-password"></ore-textfield>
     </div>
   </div>
   <div class="card-footer">
-    <button class="btn btn-primary" type="submit">
+    <ore-button type="submit">
       {{index .Texts "user.profile.password.button"}}
-    </button>
+    </ore-button>
   </div>
 </form>
 
@@ -56,14 +56,14 @@
   </div>
   <div class="card-body">
     <div class="form-group">
-      <input type="text" class="form-control" name="nickname" required
-        value="{{.User.Nickname}}">
+      <ore-textfield type="text" name="nickname" required
+        value="{{.User.Nickname}}"></ore-textfield>
     </div>
   </div>
   <div class="card-footer">
-    <button class="btn btn-primary" type="submit">
+    <ore-button type="submit">
       {{index .Texts "general.submit"}}
-    </button>
+    </ore-button>
   </div>
 </form>
 
@@ -75,19 +75,19 @@
   </div>
   <div class="card-body">
     <div class="form-group">
-      <input type="email" class="form-control" name="email" required
+      <ore-textfield type="email" name="email" required
         value="{{.User.Email}}"
-        placeholder="{{index .Texts "user.profile.email.new"}}">
+        placeholder="{{index .Texts "user.profile.email.new"}}"></ore-textfield>
     </div>
     <div class="form-group">
-      <input type="password" class="form-control" name="password" required
-        placeholder="{{index .Texts "user.profile.email.password"}}" autocomplete="current-password">
+      <ore-textfield type="password" name="password" required
+        placeholder="{{index .Texts "user.profile.email.password"}}" autocomplete="current-password"></ore-textfield>
     </div>
   </div>
   <div class="card-footer">
-    <button class="btn btn-primary" type="submit">
+    <ore-button type="submit">
       {{index .Texts "user.profile.email.button"}}
-    </button>
+    </ore-button>
   </div>
 </form>
 
@@ -100,18 +100,18 @@
   <div class="card-body">
     {{if .Admin}}
       <p>{{index .Texts "user.profile.delete.admin"}}</p>
-      <button class="btn btn-danger" disabled="disabled">
+      <ore-button color="destructive" disabled>
         {{index .Texts "user.profile.delete.button"}}
-      </button>
+      </ore-button>
     {{else}}
       <p>{{index .Texts "user.profile.delete.notice"}}</p>
-      <button
-        class="btn btn-danger"
+      <ore-button
+        color="destructive"
         data-toggle="modal"
         data-target="#modal-delete-account"
       >
         {{index .Texts "user.profile.delete.button"}}
-      </button>
+      </ore-button>
     {{end}}
   </div>
 </div>
@@ -131,8 +131,8 @@
         <div class="modal-body">
           <div>{{index .TextHTML "user.profile.delete.modal-notice"}}</div>
           <br>
-          <input type="password" class="form-control" required name="password"
-            placeholder="{{index .Texts "user.profile.delete.password"}}" autocomplete="current-password">
+          <ore-textfield type="password" required name="password"
+            placeholder="{{index .Texts "user.profile.delete.password"}}" autocomplete="current-password"></ore-textfield>
         </div>
         <div class="modal-footer d-flex justify-content-between">
           <button type="button" class="btn btn-outline-light" data-dismiss="modal">

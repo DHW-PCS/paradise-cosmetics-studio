@@ -3,6 +3,7 @@ import { useImmer } from 'use-immer'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { showModal, toast } from '@/scripts/notify'
+import { Table } from '@oreui-web/react/table'
 import type { Paginator } from '@/scripts/types'
 import Loading from '@/components/Loading'
 import Pagination from '@/components/Pagination'
@@ -74,7 +75,8 @@ const Translations: React.FC = () => {
   return (
     <>
       <div className="card-body p-0">
-        <table className="table table-striped">
+        <Table {...({ variant: 'striped' } as any)}>
+          <table>
           <thead>
             <tr>
               <th>{t('admin.i18n.group')}</th>
@@ -107,7 +109,8 @@ const Translations: React.FC = () => {
               ))
             )}
           </tbody>
-        </table>
+          </table>
+        </Table>
       </div>
       <div className="card-footer d-flex flex-row-reverse">
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />

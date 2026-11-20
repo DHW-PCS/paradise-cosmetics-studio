@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
+import { Button } from '@oreui-web/react/button'
 import useMount from '@/scripts/hooks/useMount'
 import { t } from '@/scripts/i18n'
 import ViewerSkeleton from '@/components/ViewerSkeleton'
@@ -22,9 +23,9 @@ const Previewer: React.FC<Props> = (props) => {
   const switchMode = () => setIs3d((is) => !is)
 
   const switcher = (
-    <button className="btn btn-default" onClick={switchMode}>
+    <Button {...({ color: 'secondary', onClick: switchMode } as any)}>
       {is3d ? t('user.switch2dPreview') : t('user.switch3dPreview')}
-    </button>
+    </Button>
   )
 
   const { skin, cape, isAlex } = props

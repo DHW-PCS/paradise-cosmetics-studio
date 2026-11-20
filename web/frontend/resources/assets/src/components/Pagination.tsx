@@ -21,8 +21,9 @@ const Pagination: React.FC<Props> = (props) => {
   }
 
   return (
-    <ul className="pagination">
+    <ul className="pagination justify-content-end">
       <PaginationItem
+        primary
         title={t('vendor.datatable.prev')}
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
@@ -108,6 +109,7 @@ const Pagination: React.FC<Props> = (props) => {
         </>
       )}
       <PaginationItem
+        primary
         title={t('vendor.datatable.next')}
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}

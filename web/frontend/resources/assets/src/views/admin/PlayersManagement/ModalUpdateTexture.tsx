@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { t } from '@/scripts/i18n'
 import { TextureType } from '@/scripts/types'
 import Modal from '@/components/Modal'
+import { Textfield } from '@oreui-web/react/textfield'
 
 interface Props {
   open: boolean
@@ -68,13 +69,13 @@ const ModalUpdateTexture: React.FC<Props> = (props) => {
       </div>
       <div className="form-group">
         <label htmlFor="update-texture-tid">TID</label>
-        <input
-          type="number"
-          id="update-texture-tid"
-          className="form-control"
-          placeholder={t('admin.pidNotice')}
-          value={tid}
-          onChange={handleTidChange}
+        <Textfield
+          {...({
+            type: 'number',
+            placeholder: t('admin.pidNotice'),
+            value: tid,
+            onInput: handleTidChange,
+          } as any)}
         />
       </div>
     </Modal>

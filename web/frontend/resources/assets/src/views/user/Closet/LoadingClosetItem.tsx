@@ -1,24 +1,28 @@
 import React from 'react'
 import styled from '@emotion/styled'
 import Skeleton from 'react-loading-skeleton'
-import { Card, DropdownButton } from './styles'
+import { Card } from '@oreui-web/react/card'
+import { Container } from '@oreui-web/react/container'
 
 const ItemNameSkeleton = styled(Skeleton)`
   width: 150px;
 `
 
 const LoadingClosetItem: React.FC = () => (
-  <Card className="card mr-3 mb-3">
-    <div className="card-body"></div>
-    <div className="card-footer pb-2 pt-2 pl-1 pr-1">
-      <div className="container d-flex justify-content-between">
-        <ItemNameSkeleton />
-        <span className="d-inline-block">
-          <DropdownButton>
-            <i className="fas fa-cog" />
-          </DropdownButton>
-        </span>
-      </div>
+  <Card {...({ className: 'skin-card closet-item-card' } as any)}>
+    <div className="ore-card-media closet-item-media">
+      <span className="ore-card-overlay-top-end closet-item-trigger">
+        <i className="fas fa-cog" aria-hidden="true"></i>
+      </span>
+    </div>
+    <div className="ore-card-body">
+      <Container
+        {...({ className: 'closet-item-caption', variant: 'light' } as any)}
+      >
+        <div className="ore-card-title">
+          <ItemNameSkeleton />
+        </div>
+      </Container>
     </div>
   </Card>
 )

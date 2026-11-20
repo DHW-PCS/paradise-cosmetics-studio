@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { showModal, toast } from '@/scripts/notify'
+import { Button } from '@oreui-web/react/button'
+import { Table } from '@oreui-web/react/table'
 import Loading from '@/components/Loading'
 import Row from './Row'
 import ModalCreate from './ModalCreate'
@@ -112,12 +114,13 @@ const OAuth: React.FC = () => {
 
   return (
     <>
-      <button className="btn btn-primary" onClick={handleShowModalCreate}>
+      <Button {...({ onClick: handleShowModalCreate } as any)}>
         {t('user.oauth.create')}
-      </button>
+      </Button>
       <div className="card mt-2">
         <div className="card-body p-0">
-          <table className="table table-striped">
+          <Table {...({ variant: 'striped' } as any)}>
+            <table>
             <thead>
               <tr>
                 <th>{t('user.oauth.id')}</th>
@@ -146,7 +149,8 @@ const OAuth: React.FC = () => {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </Table>
         </div>
       </div>
       <ModalCreate

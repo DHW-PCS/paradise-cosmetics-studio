@@ -9,6 +9,7 @@ import * as fetch from '@/scripts/net'
 import { showModal, toast } from '@/scripts/notify'
 import { Texture, TextureType } from '@/scripts/types'
 import urls from '@/scripts/urls'
+import { Button as OreButton } from '@oreui-web/react/button'
 import ButtonEdit from '@/components/ButtonEdit'
 import ViewerSkeleton from '@/components/ViewerSkeleton'
 import ModalApply from '@/views/user/Closet/ModalApply'
@@ -272,61 +273,78 @@ const Show: React.FC = () => {
               initPositionZ={60}
             >
               {currentUid === 0 ? (
-                <button
-                  className="btn btn-outline-secondary"
-                  title={t('skinlib.show.anonymous')}
-                  disabled
+                <OreButton
+                  {...({
+                    color: 'secondary',
+                    title: t('skinlib.show.anonymous'),
+                    disabled: true,
+                  } as any)}
                 >
                   {t('skinlib.addToCloset')}
-                </button>
+                </OreButton>
               ) : (
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     {liked && (
-                      <button
-                        className="btn btn-outline-success mr-2"
-                        onClick={handleOpenModalApply}
+                      <OreButton
+                        {...({
+                          className: 'mr-2',
+                          onClick: handleOpenModalApply,
+                        } as any)}
                       >
                         {t('skinlib.apply')}
-                      </button>
+                      </OreButton>
                     )}
                     {liked ? (
-                      <button
-                        className="btn btn-outline-primary mr-2"
-                        onClick={handleRemoveItemClick}
+                      <OreButton
+                        {...({
+                          className: 'mr-2',
+                          onClick: handleRemoveItemClick,
+                        } as any)}
                       >
                         {t('skinlib.removeFromCloset')}
-                      </button>
+                      </OreButton>
                     ) : (
-                      <button
-                        className="btn btn-outline-primary mr-2"
-                        onClick={handleAddItemClick}
+                      <OreButton
+                        {...({
+                          className: 'mr-2',
+                          onClick: handleAddItemClick,
+                        } as any)}
                       >
                         {t('skinlib.addToCloset')}
-                      </button>
+                      </OreButton>
                     )}
                     {texture.type !== TextureType.Cape && (
-                      <button
-                        className="btn btn-outline-info mr-2"
-                        onClick={handleSetAsAvatar}
+                      <OreButton
+                        {...({
+                          color: 'secondary',
+                          className: 'mr-2',
+                          onClick: handleSetAsAvatar,
+                        } as any)}
                       >
                         {t('user.setAsAvatar')}
-                      </button>
+                      </OreButton>
                     )}
                     {canBeDownloaded && (
-                      <button
-                        className="btn btn-outline-info mr-2"
-                        onClick={handleDownloadClick}
+                      <OreButton
+                        {...({
+                          color: 'secondary',
+                          className: 'mr-2',
+                          onClick: handleDownloadClick,
+                        } as any)}
                       >
                         {t('skinlib.show.download')}
-                      </button>
+                      </OreButton>
                     )}
-                    <button
-                      className="btn btn-outline-info mr-2"
-                      onClick={handleReport}
+                    <OreButton
+                      {...({
+                        color: 'secondary',
+                        className: 'mr-2',
+                        onClick: handleReport,
+                      } as any)}
                     >
                       {t('skinlib.report.title')}
-                    </button>
+                    </OreButton>
                   </div>
                   <div
                     className={liked ? 'text-red' : 'text-gray'}
@@ -455,17 +473,21 @@ const Show: React.FC = () => {
           </div>
           <div className="card-footer">
             <div className="container d-flex justify-content-between">
-              <button className="btn btn-warning" onClick={handlePrivacyClick}>
+              <OreButton
+                {...({ color: 'secondary', onClick: handlePrivacyClick } as any)}
+              >
                 {texture.public
                   ? t('skinlib.setAsPrivate')
                   : t('skinlib.setAsPublic')}
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={handleDeleteTextureClick}
+              </OreButton>
+              <OreButton
+                {...({
+                  color: 'destructive',
+                  onClick: handleDeleteTextureClick,
+                } as any)}
               >
                 {t('skinlib.show.delete-texture')}
-              </button>
+              </OreButton>
             </div>
           </div>
         </div>

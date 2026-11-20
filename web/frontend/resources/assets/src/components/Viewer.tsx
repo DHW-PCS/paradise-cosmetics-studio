@@ -4,8 +4,10 @@ import { css } from '@emotion/react'
 import styled from '@emotion/styled'
 import * as skinview3d from 'skinview3d'
 import { t } from '@/scripts/i18n'
-import * as cssUtils from '@/styles/utils'
 import * as breakpoints from '@/styles/breakpoints'
+import { Card } from '@oreui-web/react/card'
+import { Container } from '@oreui-web/react/container'
+import { Button } from '@oreui-web/react/button'
 import SkinSteve from '../../../misc/textures/steve.png'
 import bg1 from '../../../misc/backgrounds/1.webp'
 import bg2 from '../../../misc/backgrounds/2.webp'
@@ -120,13 +122,16 @@ const Viewer: React.FC<Props> = (props) => {
       const viewer = viewRef.current
       const parent = canvas.parentElement
       const width = parent?.clientWidth ?? canvas.clientWidth
+      const height = parent?.clientHeight ?? canvas.clientHeight
       if (!viewer || !width) {
         return
       }
-      viewer.setSize(width, Math.max(canvas.clientHeight, 500))
+      viewer.setSize(width, Math.max(height, 300))
     }
     const observer = new ResizeObserver(resize)
-    observer.observe(canvas)
+    // observe the wrapper instead of the canvas: the canvas width is pinned
+    // inline by setSize, so it would never re-fire when the layout narrows
+    observer.observe(canvas.parentElement ?? canvas)
     window.addEventListener('resize', resize)
     return () => {
       observer.disconnect()
@@ -226,15 +231,15 @@ const Viewer: React.FC<Props> = (props) => {
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <div className="d-flex justify-content-between">
-          <h3 className="card-title">
+    <Card {...({ className: 'user-card preview-card' } as any)}>
+      <Container {...({ className: 'user-card-header', variant: 'light' } as any)}>
+        <div className="d-flex justify-content-between w-100">
+          <h2>
             <span>{t('general.texturePreview')}</span>
             {props.showIndicator && (
               <span className="badge bg-olive ml-1">{indicator}</span>
             )}
-          </h3>
+          </h2>
           <div>
             <ActionButton
               className={`fas fa-${running ? 'walking' : 'running'}`}
@@ -266,47 +271,69 @@ const Viewer: React.FC<Props> = (props) => {
             ></ActionButton>
           </div>
         </div>
-      </div>
-      <div className="card-body p-0">
+      </Container>
+      <div className="ore-card-body user-card-body">
         <canvas ref={containerRef} css={cssViewer}></canvas>
       </div>
-      <div className="card-footer">
-        <div className="mt-2 mb-3 d-flex">
-          <div
-            className="btn-color bg-white rounded-pill mr-2 elevation-2"
-            title={t('colors.white')}
-            onClick={setWhite}
+      <Container {...({ className: 'user-card-footer', variant: 'light' } as any)}>
+        <div className="preview-swatches">
+          <Button
+            {...({
+              className: 'preview-swatch preview-swatch-white',
+              title: t('colors.white'),
+              onClick: setWhite,
+            } as any)}
           />
-          <div
-            className="btn-color bg-black rounded-pill mr-2 elevation-2"
-            title={t('colors.black')}
-            onClick={setBlack}
+          <Button
+            {...({
+              className: 'preview-swatch preview-swatch-black',
+              title: t('colors.black'),
+              onClick: setBlack,
+            } as any)}
           />
-          <div
-            className="btn-color bg-gray rounded-pill mr-2 elevation-2"
-            title={t('colors.gray')}
-            onClick={setGray}
+          <Button
+            {...({
+              className: 'preview-swatch preview-swatch-gray',
+              title: t('colors.gray'),
+              onClick: setGray,
+            } as any)}
           />
-          <div
-            className="btn-color bg-green rounded-pill mr-2 elevation-2"
-            css={cssUtils.center}
-            title={t('colors.prev')}
-            onClick={setPrevPicture}
+          <Button
+            {...({
+              className: 'preview-swatch preview-swatch-nav',
+              title: t('colors.prev'),
+              onClick: setPrevPicture,
+            } as any)}
           >
-            <i className="fas fa-arrow-left"></i>
-          </div>
-          <div
-            className="btn-color bg-green rounded-pill mr-2 elevation-2"
-            css={cssUtils.center}
-            title={t('colors.next')}
-            onClick={setNextPicture}
+            <svg viewBox="0 0 8 8" aria-hidden="true">
+              <path
+                fill="currentColor"
+                fillRule="evenodd"
+                d="M5 2h1V1H5zM2 5h1V4H2zm3-3H4v1h1-1v.003H3v1h1-1V6h1v-.997 1h.034V7H5v1h1V2z"
+                transform="translate(0 -.5)"
+              />
+            </svg>
+          </Button>
+          <Button
+            {...({
+              className: 'preview-swatch preview-swatch-nav',
+              title: t('colors.next'),
+              onClick: setNextPicture,
+            } as any)}
           >
-            <i className="fas fa-arrow-right"></i>
-          </div>
+            <svg viewBox="0 0 8 8" aria-hidden="true">
+              <path
+                fill="currentColor"
+                fillRule="evenodd"
+                d="M3 7H2v1h1zm3-3H5v1h1zM3 7h1V6H3h1v-.003h1v-1H4h1V3H4v.997-1h-.034V2H3V1H2v6z"
+                transform="translate(0 -.5)"
+              />
+            </svg>
+          </Button>
         </div>
         {props.children}
-      </div>
-    </div>
+      </Container>
+    </Card>
   )
 }
 

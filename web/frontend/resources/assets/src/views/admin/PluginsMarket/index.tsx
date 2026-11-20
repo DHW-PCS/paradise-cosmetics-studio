@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { enableMapSet } from 'immer'
 import { useImmer } from 'use-immer'
 import { t } from '@/scripts/i18n'
+import { Textfield } from '@oreui-web/react/textfield'
+import { Table } from '@oreui-web/react/table'
 import * as fetch from '@/scripts/net'
 import { toast, showModal } from '@/scripts/notify'
 import Loading from '@/components/Loading'
@@ -113,12 +115,13 @@ const PluginsMarket: React.FC = () => {
   return (
     <div className="card">
       <div className="card-header">
-        <input
-          type="text"
-          className="form-control"
-          placeholder={t('vendor.datatable.search')}
-          value={search}
-          onChange={handleSearchChange}
+        <Textfield
+          {...({
+            type: 'text',
+            placeholder: t('vendor.datatable.search'),
+            value: search,
+            onInput: handleSearchChange,
+          } as any)}
         />
       </div>
       {isLoading ? (
@@ -128,8 +131,9 @@ const PluginsMarket: React.FC = () => {
       ) : searchedPlugins.length === 0 ? (
         <div className="card-body text-center">{t('general.noResult')}</div>
       ) : (
-        <div className="card-body table-responsive p-0">
-          <table className="table table-striped">
+        <div className="card-body p-0">
+          <Table {...({ variant: 'striped' } as any)}>
+            <table>
             <thead>
               <tr>
                 <th>{t('admin.pluginTitle')}</th>
@@ -151,7 +155,8 @@ const PluginsMarket: React.FC = () => {
                 />
               ))}
             </tbody>
-          </table>
+            </table>
+          </Table>
         </div>
       )}
       <div className="card-footer">

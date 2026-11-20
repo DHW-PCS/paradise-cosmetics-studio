@@ -7,6 +7,9 @@ import * as fetch from '@/scripts/net'
 import { showModal, toast } from '@/scripts/notify'
 import { Player, TextureType } from '@/scripts/types'
 import urls from '@/scripts/urls'
+import { Button } from '@oreui-web/react/button'
+import { Table } from '@oreui-web/react/table'
+import { Textfield } from '@oreui-web/react/textfield'
 import Row from './Row'
 import LoadingRow from './LoadingRow'
 import Previewer from './Previewer'
@@ -161,15 +164,17 @@ const Players: React.FC = () => {
     <>
       <div className="card">
         <div className="card-header">
-          <input
-            type="text"
-            className="form-control"
-            placeholder={t('user.typeToSearch')}
-            onChange={handleSearch}
+          <Textfield
+            {...({
+              type: 'text',
+              placeholder: t('user.typeToSearch'),
+              onInput: handleSearch,
+            } as any)}
           />
         </div>
-        <div className="card-body p-0 table-responsive">
-          <table className="table table-hover">
+        <div className="card-body p-0">
+          <Table>
+            <table>
             <thead>
               <tr>
                 <th style={{ width: '12%' }}>PID</th>
@@ -204,13 +209,14 @@ const Players: React.FC = () => {
                   ))
               )}
             </tbody>
-          </table>
+            </table>
+          </Table>
         </div>
         <div className="card-footer">
-          <button className="btn btn-primary" onClick={openModalAddPlayer}>
+          <Button {...({ onClick: openModalAddPlayer } as any)}>
             <i className="fas fa-plus mr-1"></i>
             <span>{t('user.player.add-player')}</span>
-          </button>
+          </Button>
         </div>
       </div>
       <Previewer

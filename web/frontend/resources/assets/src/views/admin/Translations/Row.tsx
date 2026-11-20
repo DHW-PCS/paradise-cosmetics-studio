@@ -1,5 +1,6 @@
 import styled from '@emotion/styled'
 import React from 'react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import type { Line } from './types'
 
@@ -33,12 +34,16 @@ const Row: React.FC<Props> = (props) => {
       <Key>{line.key}</Key>
       <td>{text || t('admin.i18n.empty')}</td>
       <Operations>
-        <button className="btn btn-default mr-2" onClick={handleEditClick}>
+        <Button
+          {...({ color: 'secondary', className: 'mr-2', onClick: handleEditClick } as any)}
+        >
           {t('admin.i18n.modify')}
-        </button>
-        <button className="btn btn-danger" onClick={handleRemoveClick}>
+        </Button>
+        <Button
+          {...({ color: 'destructive', onClick: handleRemoveClick } as any)}
+        >
           {t('admin.i18n.delete')}
-        </button>
+        </Button>
       </Operations>
     </tr>
   )

@@ -3,6 +3,8 @@ import { useImmer } from 'use-immer'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { toast, showModal } from '@/scripts/notify'
+import { Button } from '@oreui-web/react/button'
+import { Textfield } from '@oreui-web/react/textfield'
 import FileInput from '@/components/FileInput'
 import Loading from '@/components/Loading'
 import InfoBox from './InfoBox'
@@ -201,13 +203,15 @@ const PluginsManagement: React.FC = () => {
             />
           </div>
           <div className="card-footer">
-            <button
-              className="btn btn-primary float-right"
-              disabled={isUploading}
-              onClick={handleUpload}
+            <Button
+              {...({
+                className: 'float-right',
+                disabled: isUploading,
+                onClick: handleUpload,
+              } as any)}
             >
               {isUploading ? <Loading /> : t('general.submit')}
-            </button>
+            </Button>
           </div>
         </div>
         <div className="card card-primary card-outline">
@@ -218,24 +222,26 @@ const PluginsManagement: React.FC = () => {
             <p>{t('admin.downloadRemoteNotice')}</p>
             <div className="form-group">
               <label htmlFor="zip-url">URL</label>
-              <input
-                type="text"
-                id="zip-url"
-                className="form-control"
-                inputMode="url"
-                value={url}
-                onChange={handleUrlChange}
+              <Textfield
+                {...({
+                  type: 'text',
+                  inputMode: 'url',
+                  value: url,
+                  onInput: handleUrlChange,
+                } as any)}
               />
             </div>
           </div>
           <div className="card-footer">
-            <button
-              className="btn btn-primary float-right"
-              disabled={isDownloading}
-              onClick={handleSubmitUrl}
+            <Button
+              {...({
+                className: 'float-right',
+                disabled: isDownloading,
+                onClick: handleSubmitUrl,
+              } as any)}
             >
               {isDownloading ? <Loading /> : t('general.submit')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

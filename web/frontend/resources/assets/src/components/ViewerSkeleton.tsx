@@ -1,17 +1,19 @@
 import React from 'react'
 import { t } from '@/scripts/i18n'
+import { Card } from '@oreui-web/react/card'
+import { Container } from '@oreui-web/react/container'
 
 const ViewerSkeleton: React.FC = () => (
-  <div className="card">
-    <div className="card-header">
-      <div className="d-flex justify-content-between">
-        <h3 className="card-title">
+  <Card {...({ className: 'user-card preview-card' } as any)}>
+    <Container {...({ className: 'user-card-header', variant: 'light' } as any)}>
+      <div className="d-flex justify-content-between w-100">
+        <h2>
           <span>{t('general.texturePreview')}</span>
-        </h3>
+        </h2>
       </div>
-    </div>
-    <div className="card-body"></div>
-  </div>
+    </Container>
+    <div className="ore-card-body user-card-body"></div>
+  </Card>
 )
 
 export default ViewerSkeleton

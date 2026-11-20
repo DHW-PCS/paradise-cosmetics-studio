@@ -1,9 +1,14 @@
 import React from 'react'
+import { Button as OreButton } from '@oreui-web/react/button'
 
 interface Props {
   children?: React.ReactNode
   disabled?: boolean
   active?: boolean
+  // Prev/next items use the ore primary button; page numbers use the normal
+  // (secondary) style. The active page stays secondary and is highlighted
+  // through the .page-item.active CSS override (gray-60 face).
+  primary?: boolean
   title?: string
   className?: string
   onClick?(): void
@@ -28,11 +33,20 @@ const PaginationItem: React.FC<Props> = (props) => {
     }
   }
 
+  const color = props.primary ? 'primary' : 'secondary'
+
   return (
-    <li className={classes.join(' ')} title={props.title} onClick={handleClick}>
-      <a href="#" className="page-link" aria-disabled={props.disabled}>
+    <li className={classes.join(' ')} title={props.title}>
+      <OreButton
+        {...({
+          type: 'button',
+          color,
+          disabled: props.disabled,
+          onClick: handleClick,
+        } as any)}
+      >
         {props.children}
-      </a>
+      </OreButton>
     </li>
   )
 }

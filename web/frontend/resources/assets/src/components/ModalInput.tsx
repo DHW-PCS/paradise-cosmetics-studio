@@ -1,4 +1,5 @@
 import React, { HTMLAttributes } from 'react'
+import { Textfield } from '@oreui-web/react/textfield'
 
 export interface Props {
   inputType?: string
@@ -36,14 +37,15 @@ const ModalInput: React.FC<InternalProps & Props> = (props) => (
       </>
     ) : (
       <div className="form-group">
-        <input
-          value={props.value}
-          onChange={props.onChange}
-          type={props.inputType}
-          inputMode={props.inputMode}
-          className="form-control"
-          placeholder={props.placeholder}
-        ></input>
+        <Textfield
+          {...({
+            value: props.value,
+            onInput: props.onChange,
+            type: props.inputType,
+            inputMode: props.inputMode,
+            placeholder: props.placeholder,
+          } as any)}
+        />
       </div>
     )}
     {props.invalid && (

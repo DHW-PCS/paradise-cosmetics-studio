@@ -706,7 +706,7 @@ type ViewModel struct {
 	YggReadme                                                                                                                                          YggReadmeView
 	Profile, Reports                                                                                                                                   string
 	AdminPage                                                                                                                                          bool
-	BaseURL, Locale, Language, SiteName, Title, CSRF, UserCenter, AdminPanel, Users, Logout, Nickname                                                  string
+	BaseURL, Locale, Language, SiteName, Title, CSRF, UserCenter, AdminPanel, Users, Logout, Nickname, Version                                         string
 	Login, Dark, Admin                                                                                                                                 bool
 	CSS, MetaJS, AppJS                                                                                                                                 []string
 	Globals, Extra                                                                                                                                     map[string]any
@@ -843,7 +843,7 @@ func (a *App) renderPage(w http.ResponseWriter, r *http.Request, b *identity.Bro
 	}
 	frontend, _ := messages["front-end"].(map[string]any)
 	globals := map[string]any{"base_url": a.cfg.BaseURL, "site_name": name, "route": routeName, "locale": locale, "i18n": frontend, "version": "6.0.2"}
-	view := ViewModel{BaseURL: a.cfg.BaseURL, Locale: locale, Language: site.LocaleTag(locale), SiteName: name, Title: title, CSRF: b.CSRF, UserCenter: t("general.user-center"), AdminPanel: t("general.admin-panel"), Users: t("general.user-manage"), Logout: t("general.logout"), Login: login, Globals: globals, Extra: extra}
+	view := ViewModel{BaseURL: a.cfg.BaseURL, Locale: locale, Language: site.LocaleTag(locale), SiteName: name, Title: title, Version: a.buildVersion, CSRF: b.CSRF, UserCenter: t("general.user-center"), AdminPanel: t("general.admin-panel"), Users: t("general.user-manage"), Logout: t("general.logout"), Login: login, Globals: globals, Extra: extra}
 	if !literal {
 		view.Title = t(title)
 	}

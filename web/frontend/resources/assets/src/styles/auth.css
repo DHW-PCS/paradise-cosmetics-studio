@@ -76,7 +76,7 @@ ore-card.auth-card {
   height: 16px;
 }
 
-ore-container.auth-option-container {
+body.auth-page ore-container.auth-option-container {
   --ore-container-padding: 12px var(--auth-body-padding);
   --ore-container-gap: 0;
 

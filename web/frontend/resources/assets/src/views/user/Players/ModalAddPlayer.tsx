@@ -5,6 +5,10 @@ import { toast } from '@/scripts/notify'
 import type { Player } from '@/scripts/types'
 import urls from '@/scripts/urls'
 import Modal from '@/components/Modal'
+import { Textfield } from '@oreui-web/react/textfield'
+import { Accordion } from '@oreui-web/react/accordion'
+import { IconButton } from '@oreui-web/react/icon-button'
+import { Container } from '@oreui-web/react/container'
 
 type Extra = {
   score: number
@@ -21,6 +25,7 @@ interface Props {
 
 const ModalAddPlayer: React.FC<Props> = (props) => {
   const [name, setName] = useState('')
+  const [noticeOpen, setNoticeOpen] = useState(true)
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value)
@@ -58,32 +63,44 @@ const ModalAddPlayer: React.FC<Props> = (props) => {
       onClose={handleClose}
     >
       <div className="form-group">
-        <label htmlFor="new-player-name">
-          {t('general.player.player-name')}
-        </label>
-        <input
-          type="text"
-          className="form-control"
-          id="new-player-name"
-          value={name}
-          onChange={handleNameChange}
+        <Textfield
+          {...({
+            type: 'text',
+            label: t('general.player.player-name'),
+            value: name,
+            onInput: handleNameChange,
+          } as any)}
         />
       </div>
-      <div className="callout callout-info">
-        <ul className="m-0 p-0 pl-3">
-          <li>{rule}</li>
-          <li>{length}</li>
-        </ul>
-      </div>
-      <div
-        className={`alert alert-${isScoreEnough ? 'success' : 'danger'}`}
-        role="alert"
+      <Accordion
+        {...({
+          className: 'add-player-notice',
+          open: noticeOpen,
+          onOpenChange: (event: CustomEvent<boolean>) =>
+            setNoticeOpen(event.detail),
+        } as any)}
       >
-        <i className={`icon fas fa-${isScoreEnough ? 'check' : 'times'}`}></i>
-        <span className="ml-1">
-          {t('user.cur-score')} {score}
-        </span>
-      </div>
+        <IconButton
+          {...({
+            className: 'ore-accordion-trigger',
+            type: 'button',
+            'aria-label': t('general.notice'),
+          } as any)}
+        >
+          <span className="ore-accordion-title">{t('general.notice')}</span>
+        </IconButton>
+        <div className="ore-accordion-content">
+          <ul className="m-0 p-0 pl-3">
+            <li {...({
+              className: `add-player-score ${
+                isScoreEnough ? 'is-enough' : 'is-not-enough'
+              }`
+            } as any)}>{t('user.cur-score')} {score}</li>
+            <li>{rule}</li>
+            <li>{length}</li>
+          </ul>
+        </div>
+      </Accordion>
     </Modal>
   )
 }

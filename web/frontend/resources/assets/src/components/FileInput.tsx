@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { useRef } from 'react'
 import { css } from '@emotion/react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 
 const hideRawBrowseButton = css`
@@ -41,9 +42,11 @@ const FileInput: React.FC<Props> = (props) => {
           </label>
         </div>
         <div className="input-group-append">
-          <button className="btn btn-default" onClick={handleClick}>
+          <Button
+            {...({ color: 'secondary', onClick: handleClick } as any)}
+          >
             {t('skinlib.upload.select-file')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

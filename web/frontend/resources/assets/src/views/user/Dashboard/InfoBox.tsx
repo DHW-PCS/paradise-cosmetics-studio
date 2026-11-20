@@ -1,4 +1,5 @@
 import React from 'react'
+import { Container } from '@oreui-web/react/container'
 
 interface Props {
   name: string
@@ -11,23 +12,32 @@ interface Props {
 
 const InfoBox: React.FC<Props> = (props) => {
   const total = ~~(props.used + props.unused)
-  const percentage = (props.used / total) * 100
+  const percentage = total > 0 ? (props.used / total) * 100 : 0
 
   return (
-    <div className={`info-box bg-${props.color}`}>
-      <span className="info-box-icon">
-        <i className={`fas fa-${props.icon}`}></i>
-      </span>
-      <div className="info-box-content">
-        <span className="info-box-text">{props.name}</span>
-        <span className="info-box-number">
-          <b>{props.used}</b> / {total} {props.unit}
-        </span>
-        <div className="progress">
-          <div className="progress-bar" style={{ width: `${percentage}%` }} />
-        </div>
+    <Container
+      {...({
+        className: `dashboard-info-box accent-${props.color}`,
+        variant: 'dark',
+      } as any)}
+    >
+      <div className="dashboard-info-box-heading">
+        <i className={`fas fa-${props.icon}`} aria-hidden="true"></i>
+        <span>{props.name}</span>
       </div>
-    </div>
+      <div className="dashboard-info-box-number">
+        <b>{props.used}</b> / {total} {props.unit}
+      </div>
+      <div
+        className="dashboard-info-box-progress"
+        role="progressbar"
+        aria-valuenow={Math.round(percentage)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <span style={{ width: `${percentage}%` }} />
+      </div>
+    </Container>
   )
 }
 

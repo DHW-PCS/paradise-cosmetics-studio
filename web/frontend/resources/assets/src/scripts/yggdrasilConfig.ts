@@ -17,8 +17,8 @@ document
     if (response.code === 0) {
       toast.success(t('yggdrasil-api.key-generated'))
 
-      document.querySelector<HTMLTextAreaElement>(
-        'textarea[name=ygg_private_key]',
+      document.querySelector<any>(
+        'ore-textarea[name=ygg_private_key]',
       )!.value = response.key
       const form = document.querySelector('input[value=keypair]')!
         .parentElement as HTMLFormElement

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import $ from 'jquery'
 import { t } from '@/scripts/i18n'
 import * as fetch from '@/scripts/net'
 import { toast } from '@/scripts/notify'
@@ -7,6 +6,8 @@ import type { Player } from '@/scripts/types'
 import urls from '@/scripts/urls'
 import Loading from '@/components/Loading'
 import Modal from '@/components/Modal'
+import { Button } from '@oreui-web/react/button'
+import { Textfield } from '@oreui-web/react/textfield'
 
 const baseUrl = pcs.base_url
 
@@ -51,21 +52,14 @@ const ModalApply: React.FC<Props> = (props) => {
     )
     if (code === 0) {
       toast.success(message)
-      $('#modal-apply').modal('hide')
+      props.onClose()
     } else {
       toast.error(message)
     }
   }
 
   return (
-    <Modal
-      show={props.show}
-      id="modal-apply"
-      title={t('user.closet.use-as.title')}
-      flexFooter
-      footer={<></>}
-      onClose={props.onClose}
-    >
+    <Modal show={props.show} id="modal-apply" title={t('user.closet.use-as.title')} onClose={props.onClose}>
       {isLoading ? (
         <Loading />
       ) : players.length === 0 ? (
@@ -73,21 +67,25 @@ const ModalApply: React.FC<Props> = (props) => {
       ) : (
         <>
           <div className="form-group">
-            <input
-              type="text"
-              className="form-control"
-              placeholder={t('user.typeToSearch')}
-              onChange={handleSearch}
+            <Textfield
+              {...({
+                type: 'text',
+                placeholder: t('user.typeToSearch'),
+                onInput: handleSearch,
+              } as any)}
             />
           </div>
           {players
             .filter((player) => player.name.includes(search))
             .map((player) => (
-              <button
+              <Button
                 key={player.pid}
-                className="btn btn-block btn-outline-info text-left"
-                title={player.name}
-                onClick={() => handleSelect(player)}
+                {...({
+                  color: 'secondary',
+                  className: 'apply-player-button',
+                  title: player.name,
+                  onClick: () => handleSelect(player),
+                } as any)}
               >
                 <picture>
                   <source
@@ -102,7 +100,7 @@ const ModalApply: React.FC<Props> = (props) => {
                   />
                 </picture>
                 <span className="ml-1">{player.name}</span>
-              </button>
+              </Button>
             ))}
         </>
       )}

@@ -7,6 +7,8 @@ import { toast } from '@/scripts/notify'
 import useTween from '@/scripts/hooks/useTween'
 import urls from '@/scripts/urls'
 import * as breakpoints from '@/styles/breakpoints'
+import { Card } from '@oreui-web/react/card'
+import { Container } from '@oreui-web/react/container'
 import InfoBox from './InfoBox'
 import SignButton from './SignButton'
 import * as scoreUtils from './scoreUtils'
@@ -98,14 +100,15 @@ const Dashboard: React.FC = () => {
   }, [])
 
   return (
-    <div className="card card-primary card-outline">
-      <div className="card-header">
-        <h3 className="card-title">{t('user.used.title')}</h3>
-      </div>
-      <div className="card-body">
-        <div className="row">
-          <div className="col-md-1"></div>
-          <div className="col-md-6">
+    <Card {...({ className: 'user-card usage-card' } as any)}>
+      <Container
+        {...({ className: 'user-card-header', variant: 'light' } as any)}
+      >
+        <h2>{t('user.used.title')}</h2>
+      </Container>
+      <div className="ore-card-body user-card-body">
+        <div className="dashboard-usage-grid">
+          <div className="dashboard-usage-stats">
             <InfoBox
               color="teal"
               icon="gamepad"
@@ -134,7 +137,7 @@ const Dashboard: React.FC = () => {
               />
             )}
           </div>
-          <div className="col-md-4 text-center">
+          <div className="dashboard-usage-score">
             <ScoreTitle>{t('user.cur-score')}</ScoreTitle>
             <Score data-toggle="modal" data-target="#modal-score-instruction">
               {~~tweenedScore}
@@ -143,7 +146,9 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="card-footer">
+      <Container
+        {...({ className: 'user-card-footer', variant: 'light' } as any)}
+      >
         <SignButton
           isLoading={loading}
           lastSign={lastSign}
@@ -151,8 +156,8 @@ const Dashboard: React.FC = () => {
           signGap={signGap}
           onClick={handleSign}
         />
-      </div>
-    </div>
+      </Container>
+    </Card>
   )
 }
 

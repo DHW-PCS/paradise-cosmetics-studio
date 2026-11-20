@@ -40,14 +40,81 @@ body {
   font-family: Minecraft;
   text-decoration: none;
 }
+#home-navbar > ore-navbar > .ore-navbar-actions > .ore-navbar-action[href$="/skinlib"] {
+  color: var(--ore-color-gray-100);
+  text-decoration: none;
+}
+#home-navbar > ore-navbar > .ore-navbar-actions > .ore-navbar-action[href$="/skinlib"]:hover,
+#home-navbar > ore-navbar > .ore-navbar-actions > .ore-navbar-action[href$="/skinlib"]:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#home-navbar > ore-navbar > .ore-navbar-actions > .ore-navbar-action[href$="/auth/login"] {
+  color: var(--ore-color-gray-100);
+}
+#home-navbar > ore-navbar > .ore-navbar-actions > .ore-navbar-action[href$="/auth/login"]:hover,
+#home-navbar > ore-navbar > .ore-navbar-actions > .ore-navbar-action[href$="/auth/login"]:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 #home-navbar .nav-item {
   display: flex;
   align-items: stretch;
 }
-#home-navbar .user-menu > a {
+#home-navbar > ore-navbar .home-nav-dropdown {
+  min-width: 0;
+  flex: 0 0 auto;
+  color: inherit;
+}
+#home-navbar .home-nav-dropdown > .ore-dropdown-trigger {
+  width: auto;
+  min-width: 0;
   min-height: calc(var(--ore-navbar-unit) * 18);
   padding: 0 calc(var(--ore-navbar-unit) * 5);
+  border: 0;
+  border-left: var(--ore-navbar-unit) solid var(--ore-navbar-action-shadow);
   color: inherit;
+  background: var(--ore-navbar-action-background);
+  box-shadow: inset var(--ore-navbar-unit) 0 0
+    var(--ore-navbar-action-highlight);
+  font: inherit;
+  font-size: calc(var(--ore-navbar-unit) * 8);
+}
+#home-navbar .home-nav-dropdown > .ore-dropdown-trigger::after {
+  display: none;
+  content: none;
+}
+.home-user-dropdown > .ore-dropdown-trigger {
+  gap: calc(var(--ore-navbar-unit) * 3);
+}
+.home-user-dropdown .pcs-avatar {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+}
+.home-nav-dropdown .ore-dropdown-menu {
+  --ore-dropdown-unit: 2px;
+  min-width: 180px;
+  width: max-content;
+  margin-top: 45px;
+}
+.home-nav-dropdown .ore-dropdown-item {
+  min-height: calc(var(--ore-dropdown-unit) * 20);
+  color: var(--ore-color-white);
+  font-size: calc(var(--ore-dropdown-unit) * 7);
+  text-decoration: none;
+}
+.home-nav-dropdown .ore-dropdown-item:hover,
+.home-nav-dropdown .ore-dropdown-item:focus-visible {
+  color: var(--ore-color-white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.home-user-dropdown .pcs-avatar {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  object-fit: cover;
 }
 
 .splash {

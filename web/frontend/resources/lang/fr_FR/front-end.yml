@@ -239,6 +239,7 @@ general:
   submit: Envoyer
   close: Fermer
   more: Plus
+  notice: Notice
   tip: Conseil
   noResult: Aucun résultat.
   texturePreview: Aperçu de la texture

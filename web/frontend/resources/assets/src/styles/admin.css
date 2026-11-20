@@ -1,7 +1,790 @@
-.chart {
-  width: 100%;
-  height: 400px;
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) {
+  --ore-content-card-border: var(--ore-color-gray-30);
+  --ore-content-card-light: var(--ore-color-nav-background);
+  --ore-content-card-dark: var(--ore-color-white);
+
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--ore-content-card-border);
+  box-shadow: 0 0 0 var(--ore-size-unit) var(--ore-content-card-border);
 }
+
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-header {
+  background: var(--ore-content-card-dark);
+}
+
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-header .card-title {
+  color: inherit;
+  font-size: calc(var(--ore-size-unit) * 8);
+  font-weight: 400;
+  line-height: calc(var(--ore-size-unit) * 10);
+}
+
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-body {
+  border: 0;
+  background: var(--ore-content-card-dark);
+}
+
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-footer {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-height: calc(var(--ore-size-unit) * 20);
+  padding: 12px 16px;
+  border: 0;
+  border-top: var(--ore-size-unit) solid var(--ore-color-neutral-specular);
+  background: var(--ore-content-card-light);
+}
+
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-footer > form {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-footer > ore-button,
+.app-content-scroll > .content .card:not(.dashboard-card):not(.dashboard-stat-card) > .card-footer > form > ore-button {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+}
+
+.dashboard-card,
+.dashboard-stat-card {
+  --ore-card-unit: 2px;
+  --ore-card-background: var(--ore-color-white);
+  --ore-card-foreground: var(--ore-color-gray-100);
+
+  width: 100%;
+  max-width: none;
+  row-gap: 0;
+}
+
+.dashboard-card-header,
+.dashboard-card-footer {
+  --ore-container-background: var(--ore-color-nav-background);
+}
+
+.dashboard-card-body,
+.dashboard-stat-body {
+  background: var(--ore-color-white);
+  color: var(--ore-color-gray-100);
+}
+
+.dashboard-card-header {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 12px 16px;
+  --ore-container-gap: 0;
+
+  width: 100%;
+}
+
+.dashboard-card-header h2 {
+  margin: 0;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.dashboard-card-body {
+  min-width: 0;
+  padding: 20px;
+  background: var(--ore-color-gray-80);
+}
+
+.dashboard-card-footer,
+.dashboard-stat-footer {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 12px 16px;
+  --ore-container-gap: 0;
+
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-card-footer ore-button {
+  width: 100%;
+}
+
+.user-card {
+  --ore-card-unit: var(--ore-size-unit);
+  --ore-card-border: var(--ore-color-gray-30);
+  --ore-card-background: var(--ore-color-white);
+  --ore-card-foreground: var(--ore-color-gray-100);
+  --ore-card-highlight: var(--ore-color-white);
+  --ore-card-shadow: var(--ore-color-white);
+
+  width: 100%;
+  max-width: none;
+  row-gap: 0;
+  margin-bottom: 15px;
+  font-family: inherit;
+}
+
+.user-card-header,
+.user-card-footer {
+  --ore-container-unit: var(--ore-size-unit);
+  --ore-container-light-background: var(--ore-color-white);
+  --ore-container-highlight: var(--ore-color-gray-30);
+  --ore-container-shadow: var(--ore-color-gray-30);
+  --ore-container-foreground: var(--ore-color-gray-100);
+  --ore-container-padding: 12px 16px;
+  --ore-container-gap: 8px;
+
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  font-family: inherit;
+}
+
+.user-card-header h2 {
+  margin: 0;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.user-card-header a {
+  color: inherit;
+}
+
+.user-card-body {
+  display: block;
+  min-width: 0;
+  border: 0;
+  padding: 20px;
+}
+
+.user-card-footer {
+  --ore-container-light-background: var(--ore-color-nav-background);
+}
+
+.usage-card .user-card-footer ore-button {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+
+.closet-card > .ore-card-body {
+  --ore-button-shadow: var(--ore-color-gray-90);
+  --ore-color-primary-highlight: var(--ore-color-secondary-highlight);
+
+  margin: 0 -5px;
+  background:
+    linear-gradient(var(--ore-color-border), var(--ore-color-border))
+      center 0 / 100% var(--ore-size-unit) no-repeat,
+    linear-gradient(var(--ore-color-border), var(--ore-color-border))
+      center bottom / 100% var(--ore-size-unit) no-repeat,
+    linear-gradient(var(--ore-color-border), var(--ore-color-border))
+      left 0 / var(--ore-size-unit) 100% no-repeat,
+    linear-gradient(var(--ore-color-border), var(--ore-color-border))
+      right 0 / var(--ore-size-unit) 100% no-repeat,
+    linear-gradient(var(--ore-button-shadow), var(--ore-button-shadow))
+      center calc(100% - var(--ore-size-unit)) /
+      calc(100% - var(--ore-size-unit) * 2) calc(var(--ore-size-unit) * 2)
+      no-repeat,
+    linear-gradient(var(--ore-color-white), var(--ore-color-white))
+      center var(--ore-size-unit) /
+      calc(100% - var(--ore-size-unit) * 2) var(--ore-size-unit) no-repeat,
+    linear-gradient(var(--ore-color-primary-highlight), var(--ore-color-primary-highlight))
+      center calc(100% - var(--ore-size-unit) * 3) /
+      calc(100% - var(--ore-size-unit) * 2) var(--ore-size-unit) no-repeat,
+    linear-gradient(var(--ore-color-primary-highlight), var(--ore-color-primary-highlight))
+      left var(--ore-size-unit) / var(--ore-size-unit)
+      calc(100% - var(--ore-size-unit) * 4 - 1px) no-repeat,
+    linear-gradient(var(--ore-color-primary-highlight), var(--ore-color-primary-highlight))
+      right var(--ore-size-unit) / var(--ore-size-unit)
+      calc(100% - var(--ore-size-unit) * 4 - 1px) no-repeat,
+    linear-gradient(var(--ore-card-background), var(--ore-card-background))
+      center 0 / 100% 100% no-repeat;
+}
+
+.closet-card > .ore-card-body > div {
+    justify-content: center;
+}
+
+.closet-card > .user-card-header {
+  --ore-container-shadow: transparent;
+
+  padding-bottom: 0;
+  margin-bottom: -8px;
+}
+
+.closet-card > .user-card-footer {
+  --ore-container-highlight: transparent;
+
+  padding-bottom: 0;
+  margin-bottom: -7px;
+}
+
+.user-card ore-button {
+  font-family: inherit;
+}
+
+#previewer {
+  height: 100%;
+  max-height: calc(100vh - 92px); /* navbar 44px + content padding 24px * 2 */
+}
+
+.preview-card {
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.preview-card .user-card-body {
+  display: flex;
+  padding: 0;
+}
+
+.preview-card .user-card-body canvas {
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0; /* allow shrinking below the 500px floor so the viewport cap wins */
+}
+
+/* background swatch chips (solid-color blank buttons) */
+.preview-swatches {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(var(--ore-size-unit) * 4);
+  min-width: 0;
+}
+
+.preview-card .preview-swatch {
+  min-width: 0;
+  width: calc(var(--ore-size-unit) * 18);
+  height: calc(var(--ore-size-unit) * 12);
+  padding: 0;
+  width: 40px;
+}
+
+.preview-card .preview-swatch-white {
+  --ore-button-background: var(--ore-color-white);
+  --ore-button-highlight: var(--ore-color-white);
+  --ore-button-shadow: var(--ore-color-gray-40);
+}
+
+.preview-card .preview-swatch-black {
+  --ore-button-background: var(--ore-color-black);
+  --ore-button-highlight: var(--ore-color-gray-90);
+  --ore-button-shadow: var(--ore-color-black);
+  --ore-button-border: var(--ore-color-gray-60);
+}
+
+.preview-card .preview-swatch-gray {
+  --ore-button-background: var(--ore-color-gray-50);
+  --ore-button-highlight: color-mix(
+    in srgb,
+    var(--ore-color-gray-50),
+    var(--ore-color-white) 20%
+  );
+  --ore-button-shadow: var(--ore-color-gray-70);
+}
+
+/* prev/next background switch: plain primary ore-button (default green) */
+.preview-card .preview-swatch-nav {
+  margin-inline-start: auto; /* push the pair to the right end */
+}
+
+.preview-card .preview-swatch-nav + .preview-swatch-nav {
+  margin-inline-start: 0; /* only the first one absorbs the free space */
+}
+
+.preview-card .preview-swatch-nav svg {
+  width: calc(var(--ore-size-unit) * 6);
+  height: calc(var(--ore-size-unit) * 6);
+}
+
+/* apply / reset buttons share the row evenly */
+.preview-card .user-card-footer > .d-flex:not(:first-child) > ore-button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.preview-card .user-card-footer {
+  flex-wrap: wrap;
+}
+
+.preview-card .user-card-footer ore-button {
+  min-width: 0;
+}
+
+.preview-card .user-card-footer > :first-child {
+  flex: 1 1 100%;
+}
+
+.preview-card .user-card-footer > .d-flex:not(:first-child) {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: calc(var(--ore-size-unit) * 4);
+}
+
+/* skin library item card (light ore-card) */
+.skin-card {
+  --ore-card-unit: var(--ore-size-unit);
+  --ore-card-border: var(--ore-color-gray-30);
+  --ore-card-background: var(--ore-color-white);
+  --ore-card-foreground: var(--ore-color-gray-100);
+  --ore-card-highlight: var(--ore-color-white);
+  --ore-card-shadow: var(--ore-card-background);
+  --ore-card-description: var(--ore-color-gray-50);
+
+  width: 245px;
+  max-width: none;
+  row-gap: 0;
+  font-family: inherit;
+  transition: box-shadow 0.3s;
+}
+
+.skin-card:hover {
+  box-shadow:
+    0 0 0 var(--ore-card-unit) var(--ore-card-border),
+    0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.skin-card > .ore-card-media {
+  display: block;
+  aspect-ratio: auto;
+  height: 210px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.skin-card .ore-card-media img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+.skin-card .ore-card-overlay-top-start,
+.skin-card .ore-card-overlay-top-end,
+.skin-card .ore-card-overlay-bottom-start {
+  margin: 6px;
+}
+
+.skin-card .card-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.skin-like {
+  cursor: pointer;
+}
+
+.skin-like i {
+  margin-right: 4px;
+}
+
+.skin-like i.skin-like-active {
+  color: var(--ore-color-red-30);
+}
+
+.skin-card .ore-card-meta.skin-uploader {
+  max-width: 120px;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: var(--ore-card-description);
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0 calc(var(--ore-card-unit) * 3.35) 0 0;
+  text-overflow: ellipsis;
+}
+
+.skin-card .ore-card-meta.skin-uploader:hover {
+  color: var(--ore-card-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* closet item card (same light ore-card, selection ring) */
+.closet-item-card {
+  width: 200px;
+  margin: 5px;
+}
+
+.closet-item-card > .ore-card-media {
+  background: transparent;
+  cursor: pointer;
+  height: auto;
+  padding: 15px;
+}
+
+.closet-item-card.closet-item-selected {
+  --ore-card-border: var(--ore-color-primary-background);
+}
+
+/* the cog settings chip opening the item menu */
+.closet-item-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 28px;
+  border: 0;
+  color: var(--ore-color-white);
+  background: var(--ore-color-neutral-surface-deep);
+}
+
+.closet-item-dropdown {
+  min-width: 0;
+}
+
+.closet-item-dropdown > .ore-dropdown-trigger {
+  width: 36px;
+  height: 100%;
+  padding: 0;
+}
+
+.closet-item-dropdown > .ore-dropdown-trigger::after {
+  display: none; /* the chevron belongs to select-like triggers */
+}
+
+.closet-item-dropdown > .ore-dropdown-menu {
+  min-width: 180px;
+}
+
+/* global ore modal */
+.global-modal .ore-modal-title {
+  grid-column: 2;
+  font-size: 1em;
+}
+.global-modal .ore-modal-header-button {
+    padding: 0;
+}
+.global-modal .ore-modal-header-button span {
+    margin-top: -5px;
+}
+
+.global-modal-footer {
+  display: flex;
+  flex-direction: column; /* one button per row, full width */
+  gap: calc(var(--ore-modal-unit) * 4);
+}
+
+.global-modal-footer ore-button {
+  width: 100%;
+  min-width: 0;
+}
+
+/* textfield/textarea: light tokens by default (dark contexts re-darken below) */
+ore-textfield,
+ore-textarea {
+  --ore-textfield-background: var(--ore-color-white);
+  --ore-textfield-shadow: var(--ore-color-gray-30);
+  --ore-textfield-border: var(--ore-color-gray-30);
+  --ore-textfield-foreground: var(--ore-color-gray-100);
+  --ore-textfield-input-foreground: var(--ore-color-gray-100);
+
+  --ore-textarea-background: var(--ore-color-white);
+  --ore-textarea-shadow: var(--ore-color-gray-30);
+  --ore-textarea-border: var(--ore-color-gray-30);
+  --ore-textarea-foreground: var(--ore-color-gray-100);
+  --ore-textarea-input-foreground: var(--ore-color-gray-100);
+
+  font-family: inherit;
+}
+
+/* dark contexts keep the ore dark theme */
+.dashboard-card-body ore-textfield,
+.dashboard-card-body ore-textarea,
+ore-modal ore-textfield,
+ore-modal ore-textarea,
+.auth-card ore-textfield,
+.auth-card ore-textarea {
+  --ore-textfield-background: var(--ore-color-neutral-surface-raised);
+  --ore-textfield-shadow: var(--ore-color-neutral-surface-sunken);
+  --ore-textfield-border: var(--ore-color-border);
+  --ore-textfield-foreground: var(--ore-color-foreground);
+  --ore-textfield-input-foreground: var(--ore-color-foreground);
+
+  --ore-textarea-background: var(--ore-color-neutral-surface-raised);
+  --ore-textarea-shadow: var(--ore-color-neutral-surface-sunken);
+  --ore-textarea-border: var(--ore-color-border);
+  --ore-textarea-foreground: var(--ore-color-foreground);
+  --ore-textarea-input-foreground: var(--ore-color-foreground);
+}
+
+/* grow inside bootstrap input-groups (search rows) */
+.input-group > ore-textfield {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+/* modal inputs fill the dialog width (default cap is 244px) */
+ore-modal ore-textfield,
+ore-modal ore-textarea {
+  width: 100%;
+}
+
+/* ore tables: light tokens by default (they only live in light list cards) */
+ore-table {
+  --ore-table-header-background: var(--ore-color-gray-10);
+  --ore-table-row-background: var(--ore-color-white);
+  --ore-table-row-background-alternate: var(--ore-color-gray-10);
+  --ore-table-foreground: var(--ore-color-gray-100);
+  --ore-table-border: var(--ore-color-gray-30);
+}
+
+/* list tables fill the card; columns size to their content (was table-responsive) */
+ore-table > table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* rows keep a hover affordance for clickable lists (was table-hover) */
+ore-table tbody tr:hover td {
+  background: var(--ore-color-gray-20);
+}
+
+/* score status bar inside the add-player notice accordion */
+.add-player-score {
+  margin-top: calc(var(--ore-size-unit) * 4);
+  --ore-container-unit: 2px;
+  --ore-container-padding: 10px 14px;
+  --ore-container-gap: 8px;
+}
+
+/* player selection buttons in the apply modal */
+#modal-apply ore-container[variant='dark'] {
+  --ore-container-gap: calc(var(--ore-size-unit) * 4);
+}
+
+.apply-player-button {
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.apply-player-button img {
+    width: 35px;
+    height: 35px;
+    margin: 5px;
+}
+
+.add-player-score.is-enough {
+  color: var(--ore-color-green-20);
+}
+
+.add-player-score.is-not-enough {
+  color: var(--ore-color-red-10);
+}
+
+/* the name bar inside the item body (light ore-container) */
+.closet-item-caption {
+  --ore-container-unit: var(--ore-size-unit);
+  --ore-container-light-background: var(--ore-color-gray-10);
+  --ore-container-highlight: transparent;
+  --ore-container-shadow: transparent;
+  --ore-container-foreground: var(--ore-color-gray-100);
+  --ore-container-padding: calc(var(--ore-size-unit) * 3)
+    calc(var(--ore-size-unit) * 6);
+  --ore-container-gap: 0;
+
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  font-family: inherit;
+}
+
+.user-card-header ore-tab-button {
+  min-width: 0;
+  --ore-tab-on-background: var(--ore-color-gray-60);
+  --ore-tab-on-highlight: var(--ore-color-gray-50);
+  --ore-tab-on-foreground: var(--ore-color-white);
+}
+
+.user-card-header ore-textfield {
+  --ore-textfield-background: var(--ore-color-white);
+  --ore-textfield-shadow: var(--ore-color-gray-30);
+  --ore-textfield-border: var(--ore-color-gray-30);
+  --ore-textfield-foreground: var(--ore-color-gray-100);
+  --ore-textfield-input-foreground: var(--ore-color-gray-100);
+
+  width: 200px;
+  font-family: inherit;
+}
+
+.user-card-header ore-textfield:has(.ore-textfield-input:focus-visible) {
+  --ore-textfield-focus-ring: var(--ore-color-gray-40);
+}
+
+.dashboard-stat-grid,
+.dashboard-admin-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.dashboard-stat-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 20px;
+}
+
+.dashboard-admin-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-stat-body {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--ore-color-gray-80);
+}
+
+.dashboard-stat-body .stats {
+  font-size: 28px;
+}
+
+.dashboard-stat-body > i {
+  color: var(--ore-color-gray-30);
+  font-size: 32px;
+}
+
+.dashboard-stat-footer {
+  justify-content: space-between;
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-70);
+  font: inherit;
+  text-decoration: none;
+}
+
+.dashboard-stat-footer:hover {
+  color: var(--ore-color-white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dashboard-usage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(180px, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.dashboard-usage-stats {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-info-box {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 12px;
+  --ore-container-gap: 8px;
+  --ore-container-dark-background: transparent;
+  --ore-container-divider: transparent;
+  --ore-container-foreground: var(--ore-color-gray-100);
+
+  width: 100%;
+}
+
+.dashboard-info-box-heading,
+.dashboard-info-box-number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-info-box-number {
+  font-size: 18px;
+}
+
+.dashboard-info-box-progress {
+  height: 6px;
+  background: var(--ore-color-gray-30);
+}
+
+.dashboard-info-box-progress span {
+  display: block;
+  height: 100%;
+  background: var(--ore-color-primary-background);
+}
+
+.dashboard-info-box.accent-teal {
+  --ore-container-foreground: var(--ore-color-blue-10);
+}
+
+.dashboard-info-box.accent-maroon {
+  --ore-container-foreground: var(--ore-color-red-10);
+}
+
+.dashboard-usage-score {
+  color: var(--ore-color-gray-100);
+  text-align: center;
+}
+
+.dashboard-usage-score p {
+  margin: 8px 0;
+}
+
+.dashboard-usage-score > p:nth-child(2) {
+  color: var(--ore-color-gray-100);
+  font-family: Minecraft;
+  font-size: 42px;
+}
+
+.dashboard-form-label,
+.dashboard-radio {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.dashboard-radio {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dashboard-form-label input,
+.dashboard-form-label textarea,
+.dashboard-radio input[type='number'],
+.dashboard-radio input[type='email'] {
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 2px solid var(--ore-color-gray-60);
+  color: var(--ore-color-white);
+  background: var(--ore-color-gray-90);
+  font: inherit;
+}
+
+.dashboard-form-label textarea {
+  resize: vertical;
+}
+
+.dashboard-message {
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 2px solid currentColor;
+}
+
+.dashboard-message-error {
+  color: var(--ore-color-red-10);
+}
+
+.dashboard-message-success {
+  color: var(--ore-color-green-20);
+}
+
+@media (max-width: 768px) {
+  .dashboard-stat-grid,
+  .dashboard-admin-grid,
+  .dashboard-usage-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .chart:not(:first-of-type) {
   margin-top: 12px;
 }
@@ -14,4 +797,345 @@
   width: 40px;
   height: 20px;
   cursor: pointer;
+}
+
+.main-sidebar.app-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--ore-color-gray-90);
+}
+
+.app-sidebar-header.auth-option-container {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 0 16px;
+  --ore-container-gap: 0;
+
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: calc(var(--ore-size-unit) * 22);
+}
+
+.app-sidebar-brand {
+  overflow: hidden;
+  color: var(--ore-color-white);
+  font-family: Minecraft;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8em;
+}
+
+.app-sidebar-brand:hover {
+  color: var(--ore-color-white);
+}
+
+.main-sidebar.app-sidebar > .sidebar.app-sidebar-layout {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+  padding: 12px 8px 0;
+}
+
+.app-sidebar-user.auth-option-container {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 8px;
+  --ore-container-gap: 8px;
+
+  flex: 0 0 auto;
+  width: calc(100% + 16px);
+  margin: -13px -8px 0 -8px;
+}
+
+.app-sidebar-user-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-sidebar-user-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.app-sidebar-user .pcs-avatar {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+}
+
+.app-sidebar-role {
+  width: max-content;
+  padding: 2px 6px;
+  color: var(--ore-color-white);
+  background: var(--ore-color-primary-background);
+  font-size: 11px;
+}
+
+.app-sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -10px;
+}
+
+.app-sidebar-list {
+  min-width: 0;
+  padding: 0 10px;
+}
+
+.app-sidebar-menu {
+  display: grid;
+}
+
+.app-sidebar-group {
+  --ore-accordion-unit: 2px;
+  --ore-accordion-border: var(--ore-color-gray-70);
+  --ore-accordion-background: var(--ore-color-gray-90);
+  --ore-accordion-foreground: var(--ore-color-gray-20);
+  --ore-accordion-content-foreground: var(--ore-color-gray-20);
+
+  outline: 3px solid var(--ore-color-gray-70);
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.app-sidebar-group > .ore-accordion-trigger {
+  --ore-icon-button-background: var(--ore-color-gray-80);
+  --ore-icon-button-highlight: var(--ore-color-gray-70);
+  --ore-icon-button-shadow-color: var(--ore-color-gray-100);
+  --ore-icon-button-corner: var(--ore-color-gray-70);
+  --ore-icon-button-border: var(--ore-color-gray-70);
+  --ore-icon-button-foreground: var(--ore-color-white);
+  --ore-icon-button-width: 100%;
+  --ore-icon-button-height: auto;
+  --ore-icon-button-place-items: center stretch;
+  --ore-icon-button-padding: 8px 12px;
+  --ore-icon-button-box-shadow: 0 0 0 var(--ore-accordion-unit)
+    var(--ore-icon-button-border);
+
+  width: 100%;
+  margin-inline: 0;
+  color: var(--ore-color-white);
+  font-size: 12px;
+}
+
+.app-sidebar-group > .ore-accordion-content {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.app-sidebar-group-content {
+  display: grid;
+  gap: 2px;
+}
+
+.app-sidebar-accordion {
+  --ore-accordion-unit: 2px;
+  --ore-accordion-border: var(--ore-color-gray-70);
+  --ore-accordion-background: var(--ore-color-gray-90);
+  --ore-accordion-foreground: var(--ore-color-white);
+  --ore-accordion-content-foreground: var(--ore-color-gray-20);
+
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.app-sidebar-accordion > .ore-accordion-trigger {
+  --ore-icon-button-background: var(--ore-color-gray-80);
+  --ore-icon-button-highlight: var(--ore-color-gray-70);
+  --ore-icon-button-shadow-color: var(--ore-color-gray-90);
+  --ore-icon-button-corner: var(--ore-color-gray-70);
+
+  color: var(--ore-color-white);
+}
+
+.app-sidebar-accordion > .ore-accordion-trigger > .ore-accordion-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-sidebar-accordion .ore-accordion-content {
+  padding: 8px 6px 4px 14px;
+  border-color: var(--ore-color-gray-70);
+  background: var(--ore-color-gray-90);
+}
+
+.app-sidebar-menu-children {
+  display: grid;
+  gap: 4px;
+}
+
+ore-container.app-sidebar-menu-item {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 2px;
+  --ore-container-gap: 0;
+  --ore-container-dark-background: var(--ore-color-gray-80);
+  --ore-container-foreground: var(--ore-color-white);
+
+  width: 100%;
+}
+
+.app-sidebar-menu-link {
+  display: flex;
+  min-width: 0;
+  min-height: 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  color: var(--ore-color-white);
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.app-sidebar-menu-link:hover,
+.app-sidebar-menu-link:focus-visible {
+  color: var(--ore-color-white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.app-sidebar-menu-link.active {
+  background: var(--ore-color-primary-background);
+  text-decoration: none;
+}
+
+.app-sidebar-menu-link > i {
+  flex: 0 0 18px;
+}
+
+.app-sidebar-footer.auth-option-container {
+  --ore-container-unit: 2px;
+  --ore-container-padding: 5px 10px;
+  --ore-container-gap: 0;
+
+  flex: 0 0 auto;
+  width: calc(100% + 16px);
+  margin: 0 -8px;
+  color: var(--ore-color-disabled);
+  font-size: 12px;
+}
+
+body.sidebar-mini > .wrapper {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-rows: calc(var(--ore-size-unit) * 22) minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100vh;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+
+body.sidebar-mini > .wrapper > .app-navbar {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: calc(var(--ore-size-unit) * 22);
+  max-height: calc(var(--ore-size-unit) * 22);
+}
+
+body.sidebar-mini > .wrapper > .main-sidebar.app-sidebar {
+  position: relative !important;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  inset: auto;
+  width: 250px;
+  height: 100%;
+  min-height: 0;
+  margin: 0 !important;
+}
+
+body.sidebar-mini > .wrapper > .content-wrapper {
+  display: flex;
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  overflow: hidden;
+}
+
+.app-content-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.app-content-scroll > .content {
+  min-height: 100%;
+  padding: 24px;
+  color: var(--ore-color-gray-100);
+}
+
+body.sidebar-mini > .wrapper > .main-footer {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 0 !important;
+  padding: 5px;
+  font-size: 0.8rem;
+}
+
+body.sidebar-mini.sidebar-collapse > .wrapper {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+body.sidebar-mini.sidebar-collapse > .wrapper > .main-sidebar.app-sidebar {
+  width: 0;
+}
+
+#sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  body.sidebar-mini > .wrapper {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.sidebar-mini > .wrapper > .app-navbar,
+  body.sidebar-mini > .wrapper > .content-wrapper,
+  body.sidebar-mini > .wrapper > .main-footer {
+    grid-column: 1;
+  }
+
+  body.sidebar-mini > .wrapper > .main-sidebar.app-sidebar {
+    position: fixed !important;
+    z-index: 1040;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 250px;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-in-out;
+  }
+
+  body.sidebar-mini.sidebar-open > .wrapper > .main-sidebar.app-sidebar {
+    transform: translateX(0);
+  }
+
+  body.sidebar-mini.sidebar-collapse > .wrapper > .main-sidebar.app-sidebar {
+    width: 250px;
+  }
+
+  body.sidebar-mini.sidebar-open > .wrapper > #sidebar-overlay {
+    position: fixed;
+    z-index: 1039;
+    inset: calc(var(--ore-size-unit) * 22) 0 0;
+    display: block;
+    background: var(--ore-color-overlay);
+  }
 }

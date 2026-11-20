@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import type { Player } from '@/scripts/types'
 import ButtonEdit from '@/components/ButtonEdit'
@@ -42,12 +43,18 @@ const Row: React.FC<Props> = (props) => {
         <ButtonEdit title={t('user.player.edit-pname')} onClick={handleEdit} />
       </td>
       <td className="d-flex">
-        <button className="btn btn-warning" onClick={props.onReset}>
+        <Button {...({ color: 'secondary', onClick: props.onReset } as any)}>
           {t('user.player.delete-texture')}
-        </button>
-        <button className="btn btn-danger ml-2" onClick={handleDelete}>
+        </Button>
+        <Button
+          {...({
+            color: 'destructive',
+            className: 'ml-2',
+            onClick: handleDelete,
+          } as any)}
+        >
           {t('user.player.delete-player')}
-        </button>
+        </Button>
       </td>
     </tr>
   )

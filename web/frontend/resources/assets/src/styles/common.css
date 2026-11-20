@@ -8,6 +8,145 @@ a {
   outline: none;
 }
 
+ore-navbar.app-navbar {
+  width: 100%;
+  z-index: 1030;
+  color: var(--ore-color-neutral-border);
+}
+
+.app-navbar .app-navbar-title {
+  max-width: min(52vw, 640px);
+}
+
+.app-navbar-title {
+  font-family: var(--ore-font-body) !important;
+  font-size: calc(var(--ore-navbar-unit) * 8) !important;
+}
+
+.app-navbar .ore-navbar-button {
+  color: inherit;
+}
+
+.app-navbar .ore-navbar-button i {
+  width: auto;
+}
+
+.app-navbar-dropdown {
+  min-width: 0;
+  color: inherit;
+}
+
+.app-navbar-dropdown > .app-navbar-action {
+  width: auto;
+  min-width: 0;
+  min-height: calc(var(--ore-navbar-unit) * 18);
+  padding: 0 calc(var(--ore-navbar-unit) * 5);
+  border: 0;
+  border-left: var(--ore-navbar-unit) solid var(--ore-navbar-action-shadow);
+  color: inherit;
+  background: var(--ore-navbar-action-background);
+  box-shadow: inset var(--ore-navbar-unit) 0 0
+    var(--ore-navbar-action-highlight);
+  font: inherit;
+  font-size: calc(var(--ore-navbar-unit) * 8);
+}
+
+.app-navbar-dropdown > .ore-dropdown-trigger::after {
+  display: none;
+  content: none;
+}
+
+.app-navbar-dropdown .ore-dropdown-menu {
+  --ore-dropdown-unit: 2px;
+
+  min-width: 240px;
+  width: max-content;
+  margin-top: 45px;
+}
+
+.app-navbar-dropdown .ore-dropdown-item {
+  min-height: calc(var(--ore-dropdown-unit) * 20);
+  color: var(--ore-color-white);
+  font-size: calc(var(--ore-dropdown-unit) * 7);
+  text-decoration: none;
+}
+
+.app-navbar-dropdown .ore-dropdown-item:hover,
+.app-navbar-dropdown .ore-dropdown-item:focus-visible {
+  color: var(--ore-color-white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.app-navbar .app-navbar-notice-menu > .app-navbar-action {
+  position: relative;
+}
+
+.app-navbar-notice-count {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  min-width: 14px;
+  height: 14px;
+  place-items: center;
+  padding: 0 2px;
+  color: var(--ore-color-white);
+  background: var(--ore-color-red-30);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.app-navbar-no-notifications {
+  margin: 0;
+  padding: 12px;
+  color: var(--ore-color-disabled-foreground-dim);
+  font-size: 13px;
+}
+
+.app-navbar-user > .app-navbar-action {
+  width: auto;
+  gap: calc(var(--ore-navbar-unit) * 3);
+}
+
+.app-navbar-user .pcs-avatar {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  object-fit: cover;
+}
+
+.app-navbar-notifications {
+  display: flex;
+  align-items: stretch;
+}
+
+.app-navbar-notice-menu > .app-navbar-action {
+  position: relative;
+}
+
+.app-navbar-notice-count {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  min-width: 14px;
+  height: 14px;
+  place-items: center;
+  padding: 0 2px;
+  color: var(--ore-color-white);
+  background: var(--ore-color-red-30);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.app-navbar-no-notifications {
+  margin: 0;
+  padding: 12px;
+  color: var(--ore-color-disabled-foreground-dim);
+  font-size: 13px;
+}
+
 .brand-link,
 .navbar-brand {
   font-family: Minecraft;
@@ -28,4 +167,21 @@ aside [data-mark='nickname'] {
 .fas {
   text-align: center;
   width: 1.25em;
+}
+
+/* Pagination items are ore buttons; the fixed width compacts the numbers. */
+.pagination .page-item ore-button {
+    width: 45px;
+    min-width: unset;
+}
+
+/* The active page number shows as a pressed-down button. */
+.pagination .page-item.active ore-button {
+  --ore-button-background: var(--ore-button-background-pressed);
+  --ore-button-highlight: var(--ore-button-highlight-pressed);
+  --ore-button-shadow: transparent;
+  --ore-button-face-offset: calc(var(--ore-button-unit) * 2);
+
+  padding-top: var(--ore-button-face-offset);
+  padding-bottom: 0;
 }

@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import type { Player } from '@/scripts/types'
 import ButtonEdit from '@/components/ButtonEdit'
@@ -64,15 +65,20 @@ const Row: React.FC<Props> = (props) => {
       </td>
       <td>{player.last_modified}</td>
       <td className="d-flex flex-wrap">
-        <button
-          className="btn btn-default mr-2"
-          onClick={props.onUpdateTexture}
+        <Button
+          {...({
+            color: 'secondary',
+            className: 'mr-2',
+            onClick: props.onUpdateTexture,
+          } as any)}
         >
           {t('admin.changeTexture')}
-        </button>
-        <button className="btn btn-danger" onClick={props.onDelete}>
+        </Button>
+        <Button
+          {...({ color: 'destructive', onClick: props.onDelete } as any)}
+        >
           {t('admin.deletePlayer')}
-        </button>
+        </Button>
       </td>
     </tr>
   )

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Textfield } from '@oreui-web/react/textfield'
 import { t } from '@/scripts/i18n'
 import Modal from '@/components/Modal'
 
@@ -38,24 +39,24 @@ const ModalCreate: React.FC<Props> = (props) => {
     >
       <div className="form-group">
         <label htmlFor="new-app-name">{t('user.oauth.name')}</label>
-        <input
-          value={name}
-          onChange={handleNameChange}
-          className="form-control"
-          id="new-app-name"
-          type="text"
-          required
+        <Textfield
+          {...({
+            value: name,
+            onInput: handleNameChange,
+            type: 'text',
+            required: true,
+          } as any)}
         />
       </div>
       <div className="form-group">
         <label htmlFor="new-app-redirect">{t('user.oauth.redirect')}</label>
-        <input
-          value={url}
-          onChange={handleUrlChange}
-          className="form-control"
-          id="new-app-redirect"
-          type="url"
-          required
+        <Textfield
+          {...({
+            value: url,
+            onInput: handleUrlChange,
+            type: 'url',
+            required: true,
+          } as any)}
         />
       </div>
     </Modal>

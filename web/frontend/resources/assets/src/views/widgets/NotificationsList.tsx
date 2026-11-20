@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import * as fetch from '@/scripts/net'
 import { showModal } from '@/scripts/notify'
+import { Dropdown } from '@oreui-web/react/dropdown'
 
 export type Notification = {
   id: string
@@ -12,7 +13,7 @@ const NotificationsList: React.FC = () => {
   const [noUnreadText, setNoUnreadText] = useState('')
 
   useEffect(() => {
-    const dataset = document.querySelector<HTMLLIElement>(
+    const dataset = document.querySelector<HTMLElement>(
       '[data-notifications]',
     )?.dataset
     if (dataset) {
@@ -48,36 +49,29 @@ const NotificationsList: React.FC = () => {
   const hasUnread = notifications.length > 0
 
   return (
-    <>
-      <a className="nav-link" data-toggle="dropdown" href="#">
-        <i className="far fa-bell"></i>
-        {hasUnread && (
-          <span className="badge badge-warning navbar-badge">
-            {notifications.length}
-          </span>
-        )}
-      </a>
-      <div className="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+    <Dropdown {...({ className: 'app-navbar-dropdown app-navbar-notice-menu' } as any)}>
+      <button className="ore-dropdown-trigger app-navbar-action" type="button" aria-label={noUnreadText}>
+        <i className="far fa-bell" aria-hidden="true"></i>
+        {hasUnread && <span className="app-navbar-notice-count">{notifications.length}</span>}
+      </button>
+      <div className="ore-dropdown-menu">
         {hasUnread ? (
           notifications.map((notification) => (
-            <>
-              <a
-                href="#"
-                className="dropdown-item"
-                key={notification.id}
-                onClick={() => read(notification.id)}
-              >
-                <i className="far fa-circle text-info mr-2"></i>
-                {notification.title}
-              </a>
-              <div className="dropdown-divider"></div>
-            </>
+            <button
+              className="ore-dropdown-item"
+              data-value={notification.id}
+              type="button"
+              key={notification.id}
+              onClick={() => read(notification.id)}
+            >
+              {notification.title}
+            </button>
           ))
         ) : (
-          <p className="text-center text-muted pt-2 pb-2">{noUnreadText}</p>
+          <p className="app-navbar-no-notifications">{noUnreadText}</p>
         )}
       </div>
-    </>
+    </Dropdown>
   )
 }
 

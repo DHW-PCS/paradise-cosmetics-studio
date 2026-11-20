@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import type { Plugin } from './types'
 
@@ -48,10 +49,8 @@ const Row: React.FC<Props> = (props) => {
       </td>
       <td style={{ width: '12%' }}>
         {plugin.can_update ? (
-          <button
-            className="btn btn-success"
-            disabled={isInstalling}
-            onClick={props.onUpdate}
+          <Button
+            {...({ disabled: isInstalling, onClick: props.onUpdate } as any)}
           >
             {isInstalling ? (
               <>
@@ -64,12 +63,14 @@ const Row: React.FC<Props> = (props) => {
                 {t('admin.updatePlugin')}
               </>
             )}
-          </button>
+          </Button>
         ) : (
-          <button
-            className="btn btn-default"
-            disabled={props.isInstalling || !!plugin.installed}
-            onClick={props.onInstall}
+          <Button
+            {...({
+              color: 'secondary',
+              disabled: props.isInstalling || !!plugin.installed,
+              onClick: props.onInstall,
+            } as any)}
           >
             {isInstalling ? (
               <>
@@ -82,7 +83,7 @@ const Row: React.FC<Props> = (props) => {
                 {t('admin.installPlugin')}
               </>
             )}
-          </button>
+          </Button>
         )}
       </td>
     </tr>

@@ -9,6 +9,8 @@ import { showModal, toast } from '@/scripts/notify'
 import { isAlex } from '@/scripts/textureUtils'
 import { TextureType } from '@/scripts/types'
 import urls from '@/scripts/urls'
+import { Button } from '@oreui-web/react/button'
+import { Textfield } from '@oreui-web/react/textfield'
 import FileInput from '@/components/FileInput'
 import ViewerSkeleton from '@/components/ViewerSkeleton'
 
@@ -127,13 +129,13 @@ const Upload: React.FC = () => {
             <label htmlFor="texture-name">
               {t('skinlib.upload.texture-name')}
             </label>
-            <input
-              className="form-control"
-              id="texture-name"
-              type="text"
-              placeholder={nameRule}
-              value={name}
-              onChange={handleNameChange}
+            <Textfield
+              {...({
+                type: 'text',
+                placeholder: nameRule,
+                value: name,
+                onInput: handleNameChange,
+              } as any)}
             />
           </div>
           <div className="form-group">
@@ -202,10 +204,8 @@ const Upload: React.FC = () => {
               />
               {t('skinlib.upload.set-as-private')}
             </label>
-            <button
-              className="btn btn-success"
-              disabled={isUploading}
-              onClick={handleUpload}
+            <Button
+              {...({ disabled: isUploading, onClick: handleUpload } as any)}
             >
               {isUploading ? (
                 <>
@@ -215,7 +215,7 @@ const Upload: React.FC = () => {
               ) : (
                 t('skinlib.upload.button')
               )}
-            </button>
+            </Button>
           </div>
           {file && (
             <div

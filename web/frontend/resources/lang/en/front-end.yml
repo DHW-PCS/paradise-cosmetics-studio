@@ -245,6 +245,7 @@ general:
   submit: Submit
   close: Close
   more: More
+  notice: Notice
   tip: Tip
   noResult: No result.
   texturePreview: Texture Preview

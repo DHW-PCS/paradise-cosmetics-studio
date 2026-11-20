@@ -1,21 +1,6 @@
-{{define "user-menu"}}<li class="nav-item dropdown user-menu"><a href="#" class="nav-link d-flex align-items-center" data-toggle="dropdown">
-  <picture>
-    <source srcset="{{.AvatarWebP}}" type="image/webp">
-    <img src="{{.AvatarPNG}}" class="pcs-avatar mr-2" alt="User Image">
-  </picture>
-  <span class="d-none d-md-inline d-sm-block" data-mark="nickname">{{.Nickname}}</span>
-</a>
-<div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-  <a class="dropdown-item" href="{{.BaseURL}}/user">{{.UserCenter}}</a>
-  <a class="dropdown-item" href="{{.BaseURL}}/user/profile">{{.Profile}}</a>
-  <div class="dropdown-divider"></div>
-  {{if .Admin}}
-  <a class="dropdown-item" href="{{.BaseURL}}/admin">{{.AdminPanel}}</a>
-  <a class="dropdown-item" href="{{.BaseURL}}/admin/users">{{.Users}}</a>
-  <a class="dropdown-item" href="{{.BaseURL}}/admin/reports">{{.Reports}}</a>
-  {{if .AdminPage}}<a class="dropdown-item" href="#" id="launch-cli">Web CLI</a>{{end}}
-  <div class="dropdown-divider"></div>
-  {{end}}
-  <a class="dropdown-item" href="#" id="logout-button">{{.Logout}}</a>
-</div>
-</li>{{end}}
+{{define "user-menu"}}<ore-dropdown class="app-navbar-dropdown app-navbar-user user-menu"><button class="ore-dropdown-trigger app-navbar-action" type="button" aria-label="{{.Nickname}}"><picture><source srcset="{{.AvatarWebP}}" type="image/webp"><img src="{{.AvatarPNG}}" class="pcs-avatar" alt=""></picture><span class="sr-only" data-mark="nickname">{{.Nickname}}</span></button><div class="ore-dropdown-menu">
+<a class="ore-dropdown-item" data-value="{{.BaseURL}}/user" href="{{.BaseURL}}/user">{{.UserCenter}}</a>
+<a class="ore-dropdown-item" data-value="{{.BaseURL}}/user/profile" href="{{.BaseURL}}/user/profile">{{.Profile}}</a>
+{{if .Admin}}<a class="ore-dropdown-item" data-value="{{.BaseURL}}/admin" href="{{.BaseURL}}/admin">{{.AdminPanel}}</a><a class="ore-dropdown-item" data-value="{{.BaseURL}}/admin/users" href="{{.BaseURL}}/admin/users">{{.Users}}</a><a class="ore-dropdown-item" data-value="{{.BaseURL}}/admin/reports" href="{{.BaseURL}}/admin/reports">{{.Reports}}</a>{{if .AdminPage}}<a class="ore-dropdown-item" data-value="cli" href="#" id="launch-cli">Web CLI</a>{{end}}{{end}}
+<button class="ore-dropdown-item" id="logout-button" type="button" data-value="logout">{{.Logout}}</button>
+</div></ore-dropdown>{{end}}

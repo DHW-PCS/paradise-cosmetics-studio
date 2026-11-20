@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import debounce from 'lodash.debounce'
 import useEmitMounted from '@/scripts/hooks/useEmitMounted'
 import { t } from '@/scripts/i18n'
@@ -11,6 +11,11 @@ import {
   TextureType,
 } from '@/scripts/types'
 import urls from '@/scripts/urls'
+import { Button as OreButton } from '@oreui-web/react/button'
+import { Card } from '@oreui-web/react/card'
+import { Container } from '@oreui-web/react/container'
+import { TabBar, TabButton } from '@oreui-web/react/tab-bar'
+import { Textfield } from '@oreui-web/react/textfield'
 import Pagination from '@/components/Pagination'
 import ClosetItem from './ClosetItem'
 import LoadingClosetItem from './LoadingClosetItem'
@@ -19,6 +24,9 @@ import ModalApply from './ModalApply'
 import removeClosetItem from './removeClosetItem'
 
 type Category = 'skin' | 'cape'
+
+// Items per page of the closet grid (200px cards wrap over two or three rows).
+const CLOSET_PER_PAGE = 6
 
 const updater = debounce(
   <T extends unknown>(
@@ -39,28 +47,15 @@ const Closet: React.FC = () => {
   const [skin, setSkin] = useState<Texture | null>(null)
   const [cape, setCape] = useState<Texture | null>(null)
   const [showModalApply, setShowModalApply] = useState(false)
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const perPageRef = useRef(6)
 
   useEmitMounted()
-
-  useEffect(() => {
-    const element = containerRef.current
-    /* istanbul ignore next */
-    if (element) {
-      const { width } = element.getBoundingClientRect()
-      if (width >= 500) {
-        perPageRef.current = Math.floor(width / 235) * 2
-      }
-    }
-  }, [])
 
   useEffect(() => {
     const getItems = async () => {
       setIsLoading(true)
       const { data, last_page } = await fetch.get<Paginator<Item>>(
         urls.user.closet.list(),
-        { category, q: query, page, perPage: perPageRef.current },
+        { category, q: query, page, perPage: CLOSET_PER_PAGE },
       )
 
       setItems(data)
@@ -164,59 +159,69 @@ const Closet: React.FC = () => {
 
   return (
     <>
-      <div className="card card-primary card-tabs" ref={containerRef}>
-        <div className="card-header p-0 pt-1 pl-1">
-          <div className="d-flex justify-content-between">
-            <ul className="nav nav-tabs" role="tablist">
-              <li className="nav-item">
-                <a
-                  href="#"
-                  className={`nav-link ${category === 'skin' ? 'active' : ''}`}
-                  data-toggle="pill"
-                  role="tab"
-                  onClick={switchCategoryToSkin}
-                >
-                  {t('general.skin')}
-                </a>
-              </li>
-              <li className="nav-item">
-                <a
-                  href="#"
-                  className={`nav-link ${
-                    category === TextureType.Cape ? 'active' : ''
-                  }`}
-                  data-toggle="pill"
-                  role="tab"
-                  onClick={switchCategoryToCape}
-                >
-                  {t('general.cape')}
-                </a>
-              </li>
-              <li className="nav-item d-none d-md-block">
-                <a
-                  href={`${pcs.base_url}/skinlib/upload`}
-                  className="nav-link"
-                >
-                  {t('user.closet.upload')}
-                </a>
-              </li>
-            </ul>
-            <div className="mr-3 my-2 my-lg-0">
-              <input
-                type="search"
-                value={search}
-                className="form-control mr-sm-2"
-                aria-label="Search"
-                placeholder={t('user.typeToSearch')}
-                onChange={handleSearch}
-              />
-            </div>
+      <Card {...({ className: 'user-card closet-card' } as any)}>
+        <Container {...({ className: 'user-card-header', variant: 'light' } as any)}>
+          <div className="d-flex justify-content-between w-100">
+            <TabBar>
+              <TabButton
+                {...({
+                  palette: 'toggle',
+                  selected: category === 'skin',
+                  onChange: switchCategoryToSkin,
+                } as any)}
+              >
+                {t('general.skin')}
+              </TabButton>
+              <TabButton
+                {...({
+                  palette: 'toggle',
+                  selected: category === TextureType.Cape,
+                  onChange: switchCategoryToCape,
+                } as any)}
+              >
+                {t('general.cape')}
+              </TabButton>
+              <TabButton
+                {...({
+                  palette: 'toggle',
+                  className: 'd-none d-md-inline-flex',
+                  href: `${pcs.base_url}/skinlib/upload`,
+                  onClick: (event: React.MouseEvent) => {
+                    // lit-react 包装下 href 生成的内层链接未生效，这里显式跳转兜底；
+                    // 保留 href 以支持中键打开等原生行为
+                    const url = `${pcs.base_url}/skinlib/upload`
+                    if (event.metaKey || event.ctrlKey) {
+                      event.preventDefault()
+                      window.open(url, '_blank')
+                    } else if (
+                      event.button === 0 &&
+                      !event.shiftKey &&
+                      !event.altKey
+                    ) {
+                      event.preventDefault()
+                      window.location.assign(url)
+                    }
+                  },
+                } as any)}
+              >
+                {t('user.closet.upload')}
+              </TabButton>
+            </TabBar>
+            <Textfield
+              {...({
+                type: 'search',
+                value: search,
+                placeholder: t('user.typeToSearch'),
+                'aria-label': t('user.typeToSearch'),
+                onInput: handleSearch,
+              } as any)}
+            />
           </div>
-        </div>
-        <div className="card-body">
+        </Container>
+        <div className="ore-card-body user-card-body">
           {isLoading ? (
             <div className="d-flex flex-wrap">
-              {new Array(perPageRef.current).fill(null).map((_, i) => (
+              {new Array(CLOSET_PER_PAGE).fill(null).map((_, i) => (
                 <LoadingClosetItem key={i} />
               ))}
             </div>
@@ -249,7 +254,7 @@ const Closet: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="card-footer">
+        <Container {...({ className: 'user-card-footer', variant: 'light' } as any)}>
           <div className="float-right">
             <Pagination
               page={page}
@@ -257,20 +262,22 @@ const Closet: React.FC = () => {
               onChange={handlePageChange}
             />
           </div>
-        </div>
-      </div>
+        </Container>
+      </Card>
       <Previewer
         skin={skin?.hash}
         cape={cape?.hash}
         isAlex={skin?.type === TextureType.Alex}
       >
         <div className="d-flex justify-content-between">
-          <button className="btn btn-primary" onClick={applyToPlayer}>
+          <OreButton {...({ onClick: applyToPlayer } as any)}>
             {t('user.useAs')}
-          </button>
-          <button className="btn btn-default" onClick={resetSelected}>
+          </OreButton>
+          <OreButton
+            {...({ color: 'secondary', onClick: resetSelected } as any)}
+          >
             {t('user.resetSelected')}
-          </button>
+          </OreButton>
         </div>
       </Previewer>
       <ModalApply

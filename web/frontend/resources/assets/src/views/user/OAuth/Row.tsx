@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import ButtonEdit from '@/components/ButtonEdit'
 import type { App } from './types'
@@ -32,9 +33,9 @@ const Row: React.FC<Props> = (props) => {
         />
       </td>
       <td>
-        <button className="btn btn-danger" onClick={props.onDelete}>
+        <Button {...({ color: 'destructive', onClick: props.onDelete } as any)}>
           {t('report.delete')}
-        </button>
+        </Button>
       </td>
     </tr>
   )

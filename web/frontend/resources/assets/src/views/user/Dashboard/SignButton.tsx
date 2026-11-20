@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '@oreui-web/react/button'
 import { t } from '@/scripts/i18n'
 import * as scoreUtils from './scoreUtils'
 
@@ -7,7 +8,7 @@ interface Props {
   lastSign: Date
   canSignAfterZero: boolean
   signGap: number
-  onClick: React.MouseEventHandler<HTMLButtonElement>
+  onClick: React.MouseEventHandler<HTMLElement>
 }
 
 const SignButton: React.FC<Props> = (props) => {
@@ -21,15 +22,17 @@ const SignButton: React.FC<Props> = (props) => {
   const canSign = remainingTime <= 0
 
   return (
-    <button
-      className="btn bg-gradient-primary pl-4 pr-4"
-      role="button"
-      disabled={!canSign || props.isLoading}
-      onClick={props.onClick}
+    <Button
+      {...({
+        type: 'button',
+        color: 'primary',
+        disabled: !canSign || props.isLoading,
+        onClick: props.onClick,
+      } as any)}
     >
-      <i className="far fa-calendar-check" aria-hidden="true" /> &nbsp;
+      <i className="far fa-calendar-check" aria-hidden="true" />{' '}
       {canSign ? t('user.sign') : remainingTimeText}
-    </button>
+    </Button>
   )
 }
 

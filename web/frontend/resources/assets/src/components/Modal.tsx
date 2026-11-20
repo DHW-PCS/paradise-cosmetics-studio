@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react'
-import $ from 'jquery'
-import 'bootstrap'
+import React, { useRef, useState } from 'react'
+import { Modal as OreModal } from '@oreui-web/react/modal'
+import { Container } from '@oreui-web/react/container'
+import { Button } from '@oreui-web/react/button'
 import { t } from '../scripts/i18n'
-import ModalHeader from './ModalHeader'
-import ModalBody from './ModalBody'
-import ModalFooter from './ModalFooter'
-import type { Props as HeaderProps } from './ModalHeader'
-import type { Props as BodyProps } from './ModalBody'
-import type { Props as FooterProps } from './ModalFooter'
+import ModalContent from './ModalContent'
+import ModalInput from './ModalInput'
+import type { Props as ContentProps } from './ModalContent'
+import type {
+  Props as InputProps,
+  InternalProps as InputInternalProps,
+} from './ModalInput'
 
 type BasicOptions = {
   mode?: 'alert' | 'confirm' | 'prompt'
@@ -20,11 +22,21 @@ type BasicOptions = {
   children?: React.ReactNode
 }
 
-export type ModalOptions = BasicOptions & HeaderProps & BodyProps & FooterProps
+type FooterOptions = {
+  title?: string
+  okButtonText?: string
+  okButtonType?: string
+  cancelButtonText?: string
+  cancelButtonType?: string
+}
+
+export type ModalOptions = BasicOptions &
+  FooterOptions &
+  ContentProps &
+  InputProps
 
 type Props = {
   id?: string
-  children?: React.ReactNode
   footer?: React.ReactNode
   onConfirm?(payload: { value: string }): void
   onDismiss?(): void
@@ -33,6 +45,14 @@ type Props = {
 
 export type ModalResult = {
   value: string
+}
+
+// legacy bootstrap button classes used by callers, mapped to ore colors
+const toOreColor = (type?: string): string | undefined => {
+  if (!type) return undefined
+  if (type.includes('danger')) return 'destructive'
+  if (type === 'secondary' || type.includes('outline')) return 'secondary'
+  return undefined
 }
 
 const Modal: React.FC<ModalOptions & Props> = (props) => {
@@ -44,37 +64,17 @@ const Modal: React.FC<ModalOptions & Props> = (props) => {
     placeholder = '',
     inputType = 'text',
     inputMode,
-    type = 'default',
     showHeader = true,
-    center = false,
     okButtonText = t('general.confirm'),
-    okButtonType = 'primary',
+    okButtonType,
     cancelButtonText = t('general.cancel'),
-    cancelButtonType = 'secondary',
-    flexFooter = false,
+    cancelButtonType,
   } = props
 
   const [value, setValue] = useState(input)
   const [valid, setValid] = useState(true)
   const [validatorMessage, setValidatorMessage] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
-
-  const { show } = props
-
-  useEffect(() => {
-    if (!show) {
-      return
-    }
-
-    const onHidden = () => props.onClose?.()
-
-    const el = $(ref.current!)
-    el.on('hidden.bs.modal', onHidden)
-
-    return () => {
-      el.off('hidden.bs.modal', onHidden)
-    }
-  }, [show, props.onClose])
+  const modalRef = useRef<HTMLElement>(null)
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value)
@@ -91,74 +91,100 @@ const Modal: React.FC<ModalOptions & Props> = (props) => {
       }
     }
 
-    props.onConfirm?.({ value })
-    $(ref.current!).modal('hide')
-
-    // The "hidden.bs.modal" event can't be trigged automatically when testing.
-    /* istanbul ignore next */
-    if (process.env.NODE_ENV === 'test') {
-      $(ref.current!).trigger('hidden.bs.modal')
-    }
+    ;(modalRef.current as any)?.close('confirm')
   }
 
   const dismiss = () => {
-    props.onDismiss?.()
-    $(ref.current!).modal('hide')
-
-    /* istanbul ignore next */
-    if (process.env.NODE_ENV === 'test') {
-      $(ref.current!).trigger('hidden.bs.modal')
-    }
+    ;(modalRef.current as any)?.close('dismiss')
   }
 
-  useEffect(() => {
-    if (show) {
-      setTimeout(() => $(ref.current!).modal('show'), 50)
+  const handleModalClose = (event: Event) => {
+    const reason = (event as CustomEvent).detail?.reason as string
+    if (reason === 'confirm') {
+      props.onConfirm?.({ value })
+    } else if (reason === 'dismiss') {
+      props.onDismiss?.()
     }
-  }, [show])
-
-  if (!show) {
-    return null
+    props.onClose?.()
   }
+
+  const hasDefaultFooter = Boolean(
+    props.footer || props.onConfirm || props.onDismiss,
+  )
 
   return (
-    <div id={props.id} className="modal fade" role="dialog" ref={ref}>
-      <div
-        className={`modal-dialog ${center ? 'modal-dialog-centered' : ''}`}
-        role="document"
-      >
-        <div className={`modal-content bg-${type}`}>
-          <ModalHeader show={showHeader} title={title} onDismiss={dismiss} />
-          <ModalBody
-            text={text}
-            dangerousHTML={props.dangerousHTML}
-            showInput={mode === 'prompt'}
-            value={value}
-            choices={props.choices}
-            onChange={handleInputChange}
-            inputType={inputType}
-            inputMode={inputMode}
-            placeholder={placeholder}
-            invalid={!valid}
-            validatorMessage={validatorMessage}
-          >
+    <OreModal
+      id={props.id}
+      {...({
+        className: 'global-modal',
+        open: props.show ?? true,
+        ref: modalRef,
+        onModalClose: handleModalClose,
+      } as any)}
+    >
+      <dialog className="ore-modal-dialog">
+        <div className="ore-modal-content">
+        {showHeader && (
+          <div className="ore-modal-header">
+            <h3 className="ore-modal-title">{title}</h3>
+            <button
+              type="button"
+              className="ore-modal-header-button"
+              aria-label={t('general.close')}
+              onClick={dismiss}
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        )}
+        <Container {...({ variant: 'dark' } as any)}>
+          <ModalContent text={text} dangerousHTML={props.dangerousHTML}>
             {props.children}
-          </ModalBody>
-          <ModalFooter
-            showCancelButton={mode !== 'alert'}
-            flexFooter={flexFooter}
-            okButtonType={okButtonType}
-            okButtonText={okButtonText}
-            cancelButtonType={cancelButtonType}
-            cancelButtonText={cancelButtonText}
-            onConfirm={confirm}
-            onDismiss={dismiss}
+          </ModalContent>
+          {mode === 'prompt' && (
+            <ModalInput
+              inputType={inputType}
+              inputMode={inputMode}
+              choices={props.choices}
+              placeholder={placeholder}
+              value={value}
+              invalid={!valid}
+              validatorMessage={validatorMessage}
+              onChange={handleInputChange}
+            />
+          )}
+        </Container>
+        {hasDefaultFooter && (
+          <Container
+            {...({ variant: 'light', className: 'global-modal-footer' } as any)}
           >
-            {props.footer}
-          </ModalFooter>
+            {props.footer ?? (
+              <>
+                {mode !== 'alert' && props.onDismiss && (
+                  <Button
+                    {...({
+                      color: toOreColor(cancelButtonType) ?? 'secondary',
+                      onClick: dismiss,
+                    } as any)}
+                  >
+                    {cancelButtonText}
+                  </Button>
+                )}
+                <Button
+                  {...({
+                    color: toOreColor(okButtonType),
+                    onClick: confirm,
+                  } as any)}
+                >
+                  {okButtonText}
+                </Button>
+              </>
+            )}
+          </Container>
+        )}
         </div>
-      </div>
-    </div>
+      </dialog>
+    </OreModal>
   )
 }
 

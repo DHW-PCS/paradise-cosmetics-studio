@@ -239,6 +239,7 @@ general:
   submit: Someter
   close: Cerrar
   more: Más
+  notice: Aviso
   tip: Consejo
   noResult: Sin resultados.
   texturePreview: Preestreno de textura
